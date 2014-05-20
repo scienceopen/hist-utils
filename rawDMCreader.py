@@ -179,7 +179,7 @@ if __name__ == "__main__":
     p.add_argument('-s','--startutc',help='utc time of nights recording',nargs=1,default=None)
     args = vars(p.parse_args())
 
-    BigFN = BigFN = os.path.expanduser(args['in'])
+    BigFN = os.path.expanduser(args['in'])
     xyPix = args['pix']
     xyBin = args['bin']
     FrameInd = args['frames']
