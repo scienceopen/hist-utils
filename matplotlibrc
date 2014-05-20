@@ -4,8 +4,8 @@
 # put this file in the directory your code is in -- this overrides the global settings for matplotlib
 # tested with Python 3.4 and matplotlib1 1.3.1 on Linux
 
-#backend      : qt4agg
-#backend.qt4  : PySide
+backend      : qt4agg
+backend.qt4  : PySide #PyQt4 #PySide
 
 figure.dpi   : 110
 figure.facecolor: white
