@@ -3,9 +3,9 @@
 # we consider arbitrarily two worst case dates:
 # Dec 21 worst-case heating need -- 10th percentile
 # Sept 1 worst-case cooling need
+import math
 
-
-def worstHeat(Albedo,Aair,Asun,R,Qequip):
+def worstHeat(Albedo,Aair,A,R,Qequip):
     # assume sun is below horizon 24 hours a day
     Qsolar = 0 #[W]
  #http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States 
@@ -13,7 +13,7 @@ def worstHeat(Albedo,Aair,Asun,R,Qequip):
     Tout = -40 #[C]
     Tin = 10 #[C]
     
-    Qext = Qsolar*Asun*(1-Albedo) 
+    Qext = Qsolar*0
     Qxfer =  Aair/R*(Tout-Tin)
 
     Qcooler = Qext + Qxfer + Qequip #[W]
@@ -25,15 +25,22 @@ def worstHeat(Albedo,Aair,Asun,R,Qequip):
     print('Qequip [Watts]: {:0.1f}'.format(Qequip))
 
 
-def worstCool(Albedo,Aair,Asun,R,Qequip):
+def worstCool(Albedo,Aair,A,R,Qequip):
     #assume sun is at 45 degree elev, neglect cabinet albedo
-    Qsolar = 850 #[W]
+    Qsun = 850 #[W]
  #http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States 
     # 25th percentile 18C, 10th percentile 21C  
     Tout = 20 #[C]
     Tin =  30 #[C]
+    
 
-    Qext = Qsolar*Asun*(1-Albedo)        
+    Qtop  = A['top']  * Qsun * math.sin(math.radians(45)) #max sun elev ~ 45 deg.
+    Qside = A['side'] * Qsun * math.sin(math.radians(45)) #worst case(?)
+    Qend  = 0 #A['end']  * Qsun * math.sin(math.radians(45)) #consistent with angle used for top,side
+    Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
+    
+
+    Qext = Qsolar*(1-Albedo)        
     Qxfer =  Aair/R*(Tout-Tin)
     
     Qcooler = Qext + Qxfer + Qequip #[W]
@@ -44,17 +51,20 @@ def worstCool(Albedo,Aair,Asun,R,Qequip):
     print('Qxfer [Watts]: {:0.1f}'.format(Qxfer))
     print('Qequip [Watts]: {:0.1f}'.format(Qequip))
 #------------------
-Aair = 4*0.45 + 1*0.35 #[m^2] roughly #neglect bottom side
-Asun = 2*0.45 + 1*0.35 #[m^2] roughly 
-print('enclosure area exposed to air is {:0.1f}'.format(Aair) +' m^2')
-print('enclosure area exposed to sun is {:0.1f}'.format(Asun) +' m^2')
+
+A = {'side':0.45, 'end':0.35,'top':0.45}
+Aair = 1*A['top'] + 2*A['side'] + 2*A['end'] #[m^2] roughly #neglect bottom side
+Asun = A['top'] + A['side'] + A['end'] #[m^2] roughly 
+
+print('enclosure area exposed to air is {:0.2f}'.format(Aair) +' m^2')
+print('enclosure area exposed to sun is {:0.2f}'.format(Asun) +' m^2')
 R = 0.18 #[m^2 C/W]
 Qequip = { 'rest': 125, 'record': 175, 'compress': 250 } #[W]
-Albedo = 0.8
+Albedo = 0.7
 print('Assuming albedo: {0:0.1f}'.format(Albedo))
 #http://books.google.com/books?id=PePq7o6mAbwC&lpg=PA282&ots=gOYd86tmHh&dq=house%20paint%20albedo&pg=PA283#v=onepage&q=house%20paint%20albedo&f=false
 print('Sign convention: negative watts is outgoing heat flux')
 print('-------------------------------------------')
-worstHeat(Albedo,Aair,Asun,R,Qequip['rest'])
+worstHeat(Albedo,Aair,A,R,Qequip['rest'])
 print('-------------------------------------------')
-worstCool(Albedo,Aair,Asun,R,Qequip['rest'])
+worstCool(Albedo,Aair,A,R,Qequip['rest'])
