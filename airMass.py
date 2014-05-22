@@ -25,3 +25,5 @@ plt.title('Solar Irradiance at ground level vs. Elevation Angle')
 plt.xlabel('Solar Elevation Angle  [deg.]')
 plt.ylabel('Solar Irradiance at ground level [W m^2]')
 plt.grid(True)
+
+plt.show()
