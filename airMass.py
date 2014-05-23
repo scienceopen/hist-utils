@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Michael Hirsch
 # following http://www.pveducation.org/pvcdrom/properties-of-sunlight/air-mass
+# assumes observer at sea level, altitude h \approx 0
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -21,9 +22,9 @@ I = I0 * 0.7**M**0.678
 
 plt.figure(2)
 plt.plot(thetaE,I)
-plt.title('Solar Irradiance at ground level vs. Elevation Angle')
+plt.title('Solar Irradiance at sea level vs. Solar Elevation Angle')
 plt.xlabel('Solar Elevation Angle  [deg.]')
-plt.ylabel('Solar Irradiance at ground level [W m^2]')
+plt.ylabel('Solar Irradiance at sea level [W m^2]')
 plt.grid(True)
 
 plt.show()
