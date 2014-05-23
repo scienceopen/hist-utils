@@ -11,7 +11,7 @@ def worstHeat(Albedo,Aair,A,R,Qequip):
  #http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States 
     # 25th percentile -35C, 10th percentile -40C
     Tout = -40 #[C]
-    Tin = 10 #[C]
+    Tin = -10 #[C]
     
     Qext = Qsolar*0
     Qxfer =  Aair/R*(Tout-Tin)
@@ -34,8 +34,8 @@ def worstCool(Albedo,Aair,A,R,Qequip):
     Tin =  30 #[C]
     
 
-    Qtop  = A['top']  * Qsun * math.sin(math.radians(45)) #max sun elev ~ 45 deg.
-    Qside = A['side'] * Qsun * math.sin(math.radians(45)) #worst case(?)
+    Qtop  = A['top']  * Qsun * math.sin(math.radians(35)) #max sun elev ~ 45 deg.
+    Qside = A['side'] * Qsun * math.sin(math.radians(35)) #worst case(?)
     Qend  = 0 #A['end']  * Qsun * math.sin(math.radians(45)) #consistent with angle used for top,side
     Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
     
@@ -50,6 +50,33 @@ def worstCool(Albedo,Aair,A,R,Qequip):
     print('Qext [Watts]: {:0.1f}'.format(Qext))
     print('Qxfer [Watts]: {:0.1f}'.format(Qxfer))
     print('Qequip [Watts]: {:0.1f}'.format(Qequip))
+
+def SummerCool(Albedo,Aair,A,R,Qequip):
+    #assume sun is at 45 degree elev, neglect cabinet albedo
+    Qsun = 850 #[W]
+ #http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States 
+    # 25th percentile 18C, 10th percentile 21C  
+    Tout = 35 #[C]
+    Tin =  40 #[C]
+    
+
+    Qtop  = A['top']  * Qsun * math.sin(math.radians(45)) #max sun elev ~ 45 deg.
+    Qside = A['side'] * Qsun * math.sin(math.radians(45)) #worst case(?)
+    Qend  = 0 #A['end']  * Qsun * math.sin(math.radians(45)) #consistent with angle used for top,side
+    Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
+    
+
+    Qext = Qsolar*(1-Albedo)        
+    Qxfer =  Aair/R*(Tout-Tin)
+    
+    Qcooler = Qext + Qxfer + Qequip #[W]
+    
+    print('90th percentile Summer storage COOLing needs {:0.1f}'.format(Qcooler) + ' watts / {:0.1f}'.format(Qcooler*3.412) + ' BTU/hr.' )
+    print('Contributions:')
+    print('Qext [Watts]: {:0.1f}'.format(Qext))
+    print('Qxfer [Watts]: {:0.1f}'.format(Qxfer))
+    print('Qequip [Watts]: {:0.1f}'.format(Qequip))    
+    
 #------------------
 
 A = {'side':0.45, 'end':0.35,'top':0.45}
@@ -59,7 +86,7 @@ Asun = A['top'] + A['side'] + A['end'] #[m^2] roughly
 print('enclosure area exposed to air is {:0.2f}'.format(Aair) +' m^2')
 print('enclosure area exposed to sun is {:0.2f}'.format(Asun) +' m^2')
 R = 0.18 #[m^2 C/W]
-Qequip = { 'rest': 125, 'record': 175, 'compress': 250 } #[W]
+Qequip = { 'rest': 125, 'record': 175, 'compress': 250, 'off':5 } #[W]
 Albedo = 0.7
 print('Assuming albedo: {0:0.1f}'.format(Albedo))
 #http://books.google.com/books?id=PePq7o6mAbwC&lpg=PA282&ots=gOYd86tmHh&dq=house%20paint%20albedo&pg=PA283#v=onepage&q=house%20paint%20albedo&f=false
@@ -68,3 +95,5 @@ print('-------------------------------------------')
 worstHeat(Albedo,Aair,A,R,Qequip['rest'])
 print('-------------------------------------------')
 worstCool(Albedo,Aair,A,R,Qequip['rest'])
+print('-------------------------------------------')
+SummerCool(Albedo,Aair,A,R,Qequip['off'])
