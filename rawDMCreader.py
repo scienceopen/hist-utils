@@ -2,11 +2,12 @@
 # reads .DMCdata files and displays them
 # Michael Hirsch
 # GPL v3+ license
-import os,sys
+import os
+#import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
-import matplotlib.cm as cm
+#import matplotlib.cm as cm
 import argparse
 import struct
 import warnings
@@ -17,7 +18,7 @@ import getRawInd as gri
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
-def main(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC):
+def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None):
        
     # setup data parameters
     SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd = getDMCparam(BigFN,xyPix,xyBin,FrameInd)
@@ -43,6 +44,8 @@ def main(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC):
         #blit=False so that TItle updates!
         anim.FuncAnimation(hf,animate,range(nFrameExtract),fargs=(data,himg,ht), interval=playMovie, blit=False, repeat_delay=1000)
         plt.show()
+        
+    return data
 ########## END OF MAIN #######################
 
 def animate(i,data,himg,ht):
@@ -130,7 +133,7 @@ def getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY):
 
 def getRawFrameInd(fid,Nmetadata):
     metad = np.fromfile(fid, np.uint16,Nmetadata)
-    metad = struct.pack('<2H',metad[1],metad[0]) # reorder 2 uin16
+    metad = struct.pack('<2H',metad[1],metad[0]) # reorder 2 uint16
     rawFrameInd = struct.unpack('<I',metad)[0]
     #print(' raw ' + str(rawFrameInd[jFrm]))
     return rawFrameInd
@@ -173,7 +176,7 @@ if __name__ == "__main__":
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
     p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None,type=int)
-    p.add_argument('-m','--movie',help='seconds per frame. ',nargs=1,default=[None],type=float)
+    p.add_argument('-m','--movie',help='seconds per frame. ',nargs=1,default=None,type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
     p.add_argument('-r','--rate',help='raw frame rate of camera',nargs=1,default=None,type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording',nargs=1,default=None)
@@ -190,5 +193,5 @@ if __name__ == "__main__":
     
     
    
-    main(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC)
+    data = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC)
     
