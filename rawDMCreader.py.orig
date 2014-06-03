@@ -18,10 +18,14 @@ import getRawInd as gri
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
-def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None,verbose=True):
+<<<<<<< HEAD
+def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None):
+=======
+def main(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None):
+>>>>>>> 44978bfe0c9c578aeb9c94440c4e3ae7d858b365
        
     # setup data parameters
-    SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd = getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose)
+    SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd = getDMCparam(BigFN,xyPix,xyBin,FrameInd)
 
 # preallocate
     data = np.zeros((SuperY,SuperX,nFrameExtract),dtype=np.uint16)
@@ -41,7 +45,7 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
         hf = plt.figure(1)
         himg = plt.imshow(data[:,:,0])
         ht = plt.title('')
-        #blit=False so that Title updates!
+        #blit=False so that TItle updates!
         anim.FuncAnimation(hf,animate,range(nFrameExtract),fargs=(data,himg,ht), interval=playMovie, blit=False, repeat_delay=1000)
         plt.show()
         
@@ -59,7 +63,7 @@ def animate(i,data,himg,ht):
     #plt.show(False) #breaks (won't play)
     return himg,ht
 
-def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
+def getDMCparam(BigFN,xyPix,xyBin,FrameInd):
     SuperX = int(xyPix[0]/xyBin[0]) #for python 3
     SuperY = int(xyPix[1]/xyBin[1])
 
@@ -97,9 +101,8 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
     if FrameInd is None:
-        FrameInd = np.arange(nFrame,dtype=int) # has to be numpy for > comparison        
-        if verbose:
-            print('automatically selected all frames in file')
+        print('automatically selected all frames in file')
+        FrameInd = np.arange(nFrame,dtype=int) # has to be numpy for > comparison
     elif isinstance(FrameInd,int):
         FrameInd =np.arange(FrameInd,dtype=int) 
     elif len(FrameInd) == 3:
@@ -115,8 +118,8 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
     nFrameExtract = len(FrameInd) #to preallocate properly
 
     nBytesExtract = nFrameExtract*BytesPerFrame
-    print(BigFN + ' contains ' + str(nFrameExtract) + ' frames, totaling ' + str(nBytesExtract) + ' bytes.')
-    if nBytesExtract > 2e9 and verbose:
+    print('Extracting ' + str(nFrameExtract) + ' frames, totaling ' + str(nBytesExtract) + ' bytes.')
+    if nBytesExtract > 2e9:
         warnings.warn('This will require ' + str(nBytesExtract/1e9) + ' Gigabytes of RAM. Do you have enough RAM?')
     return SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd
 
@@ -194,5 +197,5 @@ if __name__ == "__main__":
     
     
    
-    data = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=True)
+    data = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC)
     
