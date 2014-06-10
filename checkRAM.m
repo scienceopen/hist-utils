@@ -7,8 +7,19 @@ function [OK,newSizeMB,RemainingMB,AvailMemMB] = checkRAM(newSize,newClass)
 % note, I expect this script is optimistic, that Matlab won't always be able to
 % create an array using ALL available RAM, but at least you know when you
 % certainly CAN'T create an array without digging deep into swap or worse.
+% TODO:
+% make work on Mac
+% test on Cygwin
+
 %% get available RAM
-if isunix
+
+if ismac
+warning('this function does not yet work for mac (TODO)')
+OK=[]; newSizeMB=[]; RemainingMB =[]; AvailmemMB = [];
+return 
+end
+
+if isunix 
 [~,ret] = unix('cat /proc/meminfo | grep MemFree | tr -s " " | cut -f2 -d" "');
 MemFreeMB = str2double(ret) / 1024;
 [~,ret] =  unix('cat /proc/meminfo | grep Buffers | tr -s " " | cut -f2 -d" "');
