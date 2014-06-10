@@ -19,6 +19,7 @@ OK=[]; newSizeMB=[]; RemainingMB =[]; AvailmemMB = [];
 return 
 end
 
+% it's silly to make three shell calls, should use regexp %FIXME
 if isunix 
 [~,ret] = unix('cat /proc/meminfo | grep MemFree | tr -s " " | cut -f2 -d" "');
 MemFreeMB = str2double(ret) / 1024;
