@@ -181,6 +181,7 @@ if __name__ == "__main__":
     p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording',default=None)
     p.add_argument('--fits',help='write a .FITS file of the data you extract',action='store_true')
+    p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     args = vars(p.parse_args())
 
     BigFN = os.path.expanduser(args['in'])
@@ -194,17 +195,35 @@ if __name__ == "__main__":
     startUTC = args['startutc'] 
     if startUTC: print('frame UTC timing not yet implemented')
     writeFITS = args['fits']
+    meanImg = args['avg']
     
    
     rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=True)
+    if meanImg:
+        meanStack = np.mean(rawImgData,axis=2).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
+#        plt.figure(32);plt.clf()
+#        plt.imshow(meanStack,cmap='gray')
+#        plt.xlabel('x')
+#        plt.ylabel('y')
+#        plt.title('mean of image frames')
+#        plt.colorbar()
+#        plt.show()
    # pdb.set_trace()
+        
+    
     
     if writeFITS:
         #TODO timestamp frames
-        fitsFN = os.path.splitext(BigFN)[0] + '.fits'
+        fitsStem = os.path.splitext(BigFN)[0]
+        if meanImg:
+            fitsFN = fitsStem + '_mean_frames.fits'
+            fitsData = meanStack
+        else:
+            fitsFN = fitsStem + '_frames.fits'
+            fitsData = rawImgData
         print('writing raw image data as ' + fitsFN)
         from astropy.io import fits 
-        hdu = fits.PrimaryHDU(np.transpose(rawImgData))
+        hdu = fits.PrimaryHDU(np.transpose(fitsData))
         hdulist = fits.HDUList([hdu])
         hdulist.writeto(fitsFN,clobber=True)
         
