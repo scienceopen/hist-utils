@@ -7,7 +7,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
-#import matplotlib.cm as cm
+#import pdb
 import argparse
 import struct
 import warnings
@@ -38,7 +38,7 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
     
     if playMovie:
         hf = plt.figure(1); plt.clf()
-        himg = plt.imshow(data[:,:,0])
+        himg = plt.imshow(data[:,:,0],cmap='gray')
         ht = plt.title('')
         plt.colorbar()
         plt.xlabel('x')
@@ -178,8 +178,9 @@ if __name__ == "__main__":
     p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None,type=int)
     p.add_argument('-m','--movie',help='seconds per frame. ',default=None,type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
-    p.add_argument('-r','--rate',help='raw frame rate of camera',nargs=1,default=None,type=float)
-    p.add_argument('-s','--startutc',help='utc time of nights recording',nargs=1,default=None)
+    p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)
+    p.add_argument('-s','--startutc',help='utc time of nights recording',default=None)
+    p.add_argument('--fits',help='write a .FITS file of the data you extract',action='store_true')
     args = vars(p.parse_args())
 
     BigFN = os.path.expanduser(args['in'])
@@ -190,8 +191,19 @@ if __name__ == "__main__":
     Clim = args['clim']
     rawFrameRate = args['rate']
     startUTC = args['startutc']
-    
+    writeFITS = args['fits']
     
    
-    data = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=True)
+    rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=True)
+   # pdb.set_trace()
+    
+    if writeFITS:
+        #TODO timestamp frames
+        fitsFN = os.path.splitext(BigFN)[0] + '.fits'
+        print('writing raw image data as ' + fitsFN)
+        from astropy.io import fits #put here in case a casual user doesn't have AstroPy and doesn't want to write FITS
+        hdu = fits.PrimaryHDU(np.transpose(rawImgData))
+        hdulist = fits.HDUList([hdu])
+        hdulist.writeto(fitsFN,clobber=True)
+        
     
