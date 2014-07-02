@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # reads .DMCdata files and displays them
+# Primarily tested with Python 3.4 on Linux, but should also work for Python 2.7 on any operating system.
 # Michael Hirsch
 # GPL v3+ license
 import os
-#import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
-#import pdb
+import pdb
 import argparse
 import struct
 import warnings
@@ -79,11 +79,12 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
         raise RuntimeError('File size ' + str(fileSizeBytes) + 
                  ' is smaller than a single image frame!')
 
-    nFrame = fileSizeBytes // BytesPerFrame
+    nFrame = fileSizeBytes / BytesPerFrame #for quick check diagnostic, left as float temporarily
 
     if nFrame%1 != 0:
         warnings.warn("Looks like I am not reading this file correctly, with BPF: " + 
               str(BytesPerFrame) )
+    nFrame = int(nFrame) # this is a nice quick check diagnostic above
 
 
     (firstRawInd,lastRawInd) = gri.getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata)
@@ -116,7 +117,7 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
     nBytesExtract = nFrameExtract*BytesPerFrame
     print(BigFN + ' contains ' + str(nFrameExtract) + ' frames, totaling ' + str(nBytesExtract) + ' bytes.')
     if nBytesExtract > 4e9 and verbose:
-        warnings.warn('This will require ' + str(nBytesExtract/1e9) + ' Gigabytes of RAM. Do you have enough RAM?')
+        warnings.warn('This will require ' + str(nBytesExtract/1e9) + ' Gigabytes of RAM.')
     return SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd
 
 def getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY):
@@ -223,10 +224,10 @@ if __name__ == "__main__":
             print('writing MEAN image data as ' + fitsFN)
         else:
             fitsFN = outStem + '_frames.fits'
-            fitsData = rawImgData
+            fitsData = np.transpose(rawImgData,axes=[2,0,1])
             print('writing raw image data as ' + fitsFN)
-
-        hdu = fits.PrimaryHDU(np.transpose(fitsData))
+        #pdb.set_trace()
+        hdu = fits.PrimaryHDU(fitsData)
         hdulist = fits.HDUList([hdu])
         hdulist.writeto(fitsFN,clobber=True)
     
