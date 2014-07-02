@@ -25,7 +25,7 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
 
 # preallocate
     data = np.zeros((SuperY,SuperX,nFrameExtract),dtype=np.uint16)
-    rawFrameInd = np.zeros((nFrameExtract,1)) 
+    rawFrameInd = np.zeros((nFrameExtract,1),dtype=int) 
 
     with open(BigFN, 'rb') as fid:
         jFrm=0 
@@ -37,10 +37,13 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
     #doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd)
     
     if playMovie:
-        print(playMovie)
-        hf = plt.figure(1)
+        hf = plt.figure(1); plt.clf()
         himg = plt.imshow(data[:,:,0])
         ht = plt.title('')
+        plt.colorbar()
+        plt.xlabel('x')
+        plt.ylabel('y')
+
         #blit=False so that Title updates!
         anim.FuncAnimation(hf,animate,range(nFrameExtract),fargs=(data,himg,ht), interval=playMovie, blit=False, repeat_delay=1000)
         plt.show()
@@ -49,8 +52,7 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
 ########## END OF MAIN #######################
 
 def animate(i,data,himg,ht):
-    #print(i)
-    #himg = plt.imshow(data[:,:,i])
+    #himg = plt.imshow(data[:,:,i]) #slow, use set_data instead
     himg.set_data(data[:,:,i])
     ht.set_text('RelFrame#' + str(i) )
     #'RawFrame#: ' + str(rawFrameInd[jFrm]) +
@@ -60,27 +62,24 @@ def animate(i,data,himg,ht):
     return himg,ht
 
 def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
-    SuperX = int(xyPix[0]/xyBin[0]) #for python 3
-    SuperY = int(xyPix[1]/xyBin[1])
+    SuperX = xyPix[0] // xyBin[0] # "//" keeps as integer
+    SuperY = xyPix[1] // xyBin[1]
 
     bpp = 16
     nHeadBytes = 4
-    Nmetadata = int(nHeadBytes/2) #TODO not true for DMC2data files!
+    Nmetadata = nHeadBytes//2 #TODO not true for DMC2data files!
     PixelsPerImage= SuperX * SuperY
-    BytesPerImage = int(PixelsPerImage*bpp/8)
+    BytesPerImage = PixelsPerImage*bpp//8
     BytesPerFrame = BytesPerImage + nHeadBytes
 
 # get file size
-    try: 
-        fileSizeBytes = os.path.getsize(BigFN)
-    except:
-        raise RuntimeError('file does not exist: ' + BigFN)
+    fileSizeBytes = os.path.getsize(BigFN)
 
     if fileSizeBytes < BytesPerImage:
         raise RuntimeError('File size ' + str(fileSizeBytes) + 
                  ' is smaller than a single image frame!')
 
-    nFrame = int(fileSizeBytes / BytesPerFrame)
+    nFrame = fileSizeBytes // BytesPerFrame
 
     if nFrame%1 != 0:
         warnings.warn("Looks like I am not reading this file correctly, with BPF: " + 
@@ -116,7 +115,7 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
 
     nBytesExtract = nFrameExtract*BytesPerFrame
     print(BigFN + ' contains ' + str(nFrameExtract) + ' frames, totaling ' + str(nBytesExtract) + ' bytes.')
-    if nBytesExtract > 2e9 and verbose:
+    if nBytesExtract > 4e9 and verbose:
         warnings.warn('This will require ' + str(nBytesExtract/1e9) + ' Gigabytes of RAM. Do you have enough RAM?')
     return SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd
 
@@ -177,7 +176,7 @@ if __name__ == "__main__":
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
     p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None,type=int)
-    p.add_argument('-m','--movie',help='seconds per frame. ',nargs=1,default=None,type=float)
+    p.add_argument('-m','--movie',help='seconds per frame. ',default=None,type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
     p.add_argument('-r','--rate',help='raw frame rate of camera',nargs=1,default=None,type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording',nargs=1,default=None)
@@ -187,7 +186,7 @@ if __name__ == "__main__":
     xyPix = args['pix']
     xyBin = args['bin']
     FrameInd = args['frames']
-    playMovie = args['movie'][0]
+    playMovie = args['movie']
     Clim = args['clim']
     rawFrameRate = args['rate']
     startUTC = args['startutc']
