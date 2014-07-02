@@ -203,7 +203,7 @@ if __name__ == "__main__":
         #TODO timestamp frames
         fitsFN = os.path.splitext(BigFN)[0] + '.fits'
         print('writing raw image data as ' + fitsFN)
-        from astropy.io import fits #put here in case a casual user doesn't have AstroPy and doesn't want to write FITS
+        from astropy.io import fits 
         hdu = fits.PrimaryHDU(np.transpose(rawImgData))
         hdulist = fits.HDUList([hdu])
         hdulist.writeto(fitsFN,clobber=True)
