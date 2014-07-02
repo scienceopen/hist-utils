@@ -190,7 +190,9 @@ if __name__ == "__main__":
     playMovie = args['movie']
     Clim = args['clim']
     rawFrameRate = args['rate']
-    startUTC = args['startutc']
+    if rawFrameRate: print('raw frame rate timing not yet implemented')
+    startUTC = args['startutc'] 
+    if startUTC: print('frame UTC timing not yet implemented')
     writeFITS = args['fits']
     
    
