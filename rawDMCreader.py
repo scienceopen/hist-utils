@@ -181,6 +181,7 @@ if __name__ == "__main__":
     p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording',default=None)
     p.add_argument('--fits',help='write a .FITS file of the data you extract',action='store_true')
+    p.add_argument('--mat',help="write a .mat MATLAB data file of the extracted data",action='store_true')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     args = vars(p.parse_args())
 
@@ -195,6 +196,7 @@ if __name__ == "__main__":
     startUTC = args['startutc'] 
     if startUTC: print('frame UTC timing not yet implemented')
     writeFITS = args['fits']
+    saveMat = args['mat']
     meanImg = args['avg']
     
    
@@ -211,20 +213,27 @@ if __name__ == "__main__":
    # pdb.set_trace()
         
     
-    
+    outStem = os.path.splitext(BigFN)[0]
     if writeFITS:
-        #TODO timestamp frames
-        fitsStem = os.path.splitext(BigFN)[0]
-        if meanImg:
-            fitsFN = fitsStem + '_mean_frames.fits'
-            fitsData = meanStack
-        else:
-            fitsFN = fitsStem + '_frames.fits'
-            fitsData = rawImgData
-        print('writing raw image data as ' + fitsFN)
         from astropy.io import fits 
+        #TODO timestamp frames
+        if meanImg:
+            fitsFN = outStem + '_mean_frames.fits'
+            fitsData = meanStack
+            print('writing MEAN image data as ' + fitsFN)
+        else:
+            fitsFN = outStem + '_frames.fits'
+            fitsData = rawImgData
+            print('writing raw image data as ' + fitsFN)
+
         hdu = fits.PrimaryHDU(np.transpose(fitsData))
         hdulist = fits.HDUList([hdu])
         hdulist.writeto(fitsFN,clobber=True)
-        
+    
+    if saveMat:
+        from scipy.io import savemat
+        matFN = outStem + '_frames.mat'
+        print('writing raw image data as ' + matFN)
+        matdata = {'rawimgdata':rawImgData}
+        savemat(matFN,matdata,oned_as='column')
     
