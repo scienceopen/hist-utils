@@ -3,7 +3,7 @@
 # we consider arbitrarily two worst case dates:
 # Dec 21 worst-case heating need -- 10th percentile
 # Sept 1 worst-case cooling need
-import math
+from numpy import sin,radians
 
 def worstHeat(Albedo,Aair,A,R,Qequip):
     # assume sun is below horizon 24 hours a day
@@ -34,9 +34,9 @@ def worstCool(Albedo,Aair,A,R,Qequip):
     Tin =  30 #[C]
     
 
-    Qtop  = A['top']  * Qsun * math.sin(math.radians(35)) #max sun elev ~ 45 deg.
-    Qside = A['side'] * Qsun * math.sin(math.radians(35)) #worst case(?)
-    Qend  = 0 #A['end']  * Qsun * math.sin(math.radians(45)) #consistent with angle used for top,side
+    Qtop  = A['top']  * Qsun * sin(radians(35)) #max sun elev ~ 45 deg.
+    Qside = A['side'] * Qsun * sin(radians(35)) #worst case(?)
+    Qend  = 0 #A['end']  * Qsun * sin(radians(45)) #consistent with angle used for top,side
     Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
     
 
@@ -60,9 +60,9 @@ def SummerCool(Albedo,Aair,A,R,Qequip):
     Tin =  40 #[C]
     
 
-    Qtop  = A['top']  * Qsun * math.sin(math.radians(45)) #max sun elev ~ 45 deg.
-    Qside = A['side'] * Qsun * math.sin(math.radians(45)) #worst case(?)
-    Qend  = 0 #A['end']  * Qsun * math.sin(math.radians(45)) #consistent with angle used for top,side
+    Qtop  = A['top']  * Qsun * sin(radians(45)) #max sun elev ~ 45 deg.
+    Qside = A['side'] * Qsun * sin(radians(45)) #worst case(?)
+    Qend  = 0 #A['end']  * Qsun * sin(radians(45)) #consistent with angle used for top,side
     Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
     
 
