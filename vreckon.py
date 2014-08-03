@@ -3,11 +3,11 @@
 # Original work by Joaquim Luis (LGPL), Michael Kleder, et al.
 
 from numpy import (abs, sin, cos, tan,arctan2, any,atleast_1d,
-                   radians, degrees, sign, ceil, mod, 
-                   zeros,array,arange,pi,sqrt,tile)
+                   radians, degrees, sign, ceil, mod,
+                   zeros,arange,pi,sqrt,tile)
 
-def vreckon(lat1, lon1, rng, azim=None, ellipsoid=None):
-    
+def vreckon(lat1, lon1, rng, azim, ellipsoid=None):
+
     '''
     % VRECKON -  Computes points at a specified azimuth and range in an ellipsoidal earth
     %
@@ -20,8 +20,8 @@ def vreckon(lat1, lon1, rng, azim=None, ellipsoid=None):
     %  Transmits ellipsoid definition (either as [a,b] or [a,f]) as fifth argument ELLIPSOIDE
     %
     % VARIABLES:
-    % lat1 = inital latitude (degrees)  
-    % lon1 = initial longitude (degrees) 
+    % lat1 = inital latitude (degrees)
+    % lon1 = initial longitude (degrees)
     % rng  = distance (meters)
     %               It can be a scalar or a vector. Latter case computes a series of
     %               circles (or arc circles, see azim) centered on X,Y (which are scalars)
@@ -68,15 +68,15 @@ def vreckon(lat1, lon1, rng, azim=None, ellipsoid=None):
     % Added ellipsoid and vectorized whenever possible.
     % Also, lon2 is always converted to the [-180 180] interval
     % Joaquim Luis
-    
+
     % $Id: $
     '''
-    lat1 = atleast_1d(lat1)    
+    lat1 = atleast_1d(lat1)
     lon1 = atleast_1d(lon1)
-    rng = atleast_1d(rng)    
+    rng = atleast_1d(rng)
     azim = atleast_1d(azim)
-        
-    
+
+
     if (abs(lat1) > 90):
         raise RuntimeError('VRECKON: Input latitude must be between -90 and 90 degrees, inclusive.')
     if (lat1.size != 1 and rng.size > 1):
@@ -92,28 +92,26 @@ def vreckon(lat1, lon1, rng, azim=None, ellipsoid=None):
         a = 6378137                 # semimajor axis
         b = 6356752.31424518        # computed from WGS84 earth flattening coefficient definition
         f = (a-b)/a
-    
+
     lat1 = radians(lat1)            # intial latitude in radians
     lon1 = radians(lon1)            # intial longitude in radians
 
     # correct for errors at exact poles by adjusting 0.6 millimeters:
     kidx = abs(pi/2-abs(lat1)) < 1e-10
     lat1[kidx] = sign(lat1[kidx])*(pi/2-(1e-10))
-       
+
     #  Allow for multiple circles starting from the same point
     if lat1.size == 1 and lon1.size == 1 and rng.size > 1:
         lat1 = tile(lat1,rng.shape)
         lon1 = tile(lon1,rng.shape)
-       
+
     if rng.size == 1:
         rng = tile(rng, azim.shape)
-    
+
     if rng.size != azim.shape[0]:
         raise RuntimeError('VRECKON: Range must be a scalar or a vector with the same shape as azim.')
 
-    az = azim
-       
-    alpha1 = radians(az) # inital azimuth in radians
+    alpha1 = radians(azim) # inital azimuth in radians
     sinAlpha1 = sin(alpha1)
     cosAlpha1 = cos(alpha1)
 
@@ -134,9 +132,9 @@ def vreckon(lat1, lon1, rng, azim=None, ellipsoid=None):
             cos2SigmaM = cos(2*sigma1 + sigma)
             sinSigma = sin(sigma)
             cosSigma = cos(sigma)
-            deltaSigma = B * sinSigma*(cos2SigmaM + B/4 * (cosSigma * 
+            deltaSigma = B * sinSigma*(cos2SigmaM + B/4 * (cosSigma *
                                    (-1 + 2*cos2SigmaM * cos2SigmaM) -
-                                   B/6 * cos2SigmaM * (-3+4*sinSigma * sinSigma) 
+                                   B/6 * cos2SigmaM * (-3+4*sinSigma * sinSigma)
                                    * (-3 + 4*cos2SigmaM * cos2SigmaM)))
             sigmaP = sigma
             sigma = rng / (b*A) + deltaSigma
@@ -152,50 +150,50 @@ def vreckon(lat1, lon1, rng, azim=None, ellipsoid=None):
                 sinSigma[k]   = sin(sigma[k])
                 cosSigma[k]   = cos(sigma[k])
                 tmp = 2*cos2SigmaM[k] * cos2SigmaM[k]
-                deltaSigma = (B[k] * sinSigma[k] * (cos2SigmaM[k] + B[k]/4 * 
+                deltaSigma = (B[k] * sinSigma[k] * (cos2SigmaM[k] + B[k]/4 *
                                 (cosSigma[k] * (-1 + tmp) -
-                                  B[k]/6 * cos2SigmaM[k] * 
+                                  B[k]/6 * cos2SigmaM[k] *
                                   (-3+4*sinSigma[k] * sinSigma[k]) * (-3 + 2*tmp))) )
                 sigmaP = sigma[k]
                 sigma[k] = rng[k] / (b*A[k]) + deltaSigma
-        
+
     tmp = sinU1  * sinSigma - cosU1 * cosSigma * cosAlpha1
-    lat2 = arctan2(sinU1 * cosSigma + cosU1 * sinSigma * cosAlpha1, 
+    lat2 = arctan2(sinU1 * cosSigma + cosU1 * sinSigma * cosAlpha1,
                    (1-f)*sqrt(sinAlpha * sinAlpha + tmp**2))
 
-    lamb = arctan2(sinSigma * sinAlpha1, 
+    lamb = arctan2(sinSigma * sinAlpha1,
                    cosU1 * cosSigma - sinU1 * sinSigma * cosAlpha1)
 
     C = f/16*cosSqAlpha * (4+f*(4-3*cosSqAlpha))
-    L = lamb - f * (1-C) * sinAlpha * (sigma + C * sinSigma * 
+    L = lamb - f * (1-C) * sinAlpha * (sigma + C * sinSigma *
              (cos2SigmaM + C * cosSigma * (-1+2*cos2SigmaM * cos2SigmaM)))
 
     lon2 = lon1 + L
-       
+
     # Truncates angles into the [-pi pi] range
     if any(lon2 > pi):
         lon2 = pi*((abs(lon2)/pi) - 2*ceil(((abs(lon2)/pi)-1)/2)) * sign(lon2)
-    
+
 
     # output degrees
     lat2 = degrees(lat2)
     lon2 = degrees(lon2)
-    # lon2 = mod(lon2,360); % follow [0,360] convention 
+    # lon2 = mod(lon2,360); % follow [0,360] convention
     a21 = arctan2(sinAlpha, -tmp)
     a21  = 180 + degrees(a21) # note direction reversal
     a21 = mod(a21,360)
 
-        
+
     return lat2,lon2,a21
-    
+
 if __name__ == '__main__':
     from argparse import ArgumentParser
-    
+
     p = ArgumentParser(description='Python port of vreckon.m')
     p.add_argument('--lat',help='latitude WGS-84 [degrees]',type=float,required=True)
     p.add_argument('--lon',help='longitude WGS-84 [degrees]',type=float,required=True)
-    p.add_argument('-r','--range',help='range to traverse from start point [meters]',type=float,required=True)    
-    p.add_argument('-a','--azimuth',help='azimuth to start [deg.]',type=float,required=True)    
+    p.add_argument('-r','--range',help='range to traverse from start point [meters]',type=float,required=True)
+    p.add_argument('-a','--azimuth',help='azimuth to start [deg.]',type=float,required=True)
     args = p.parse_args()
 
     lat2,lon2,a21 = vreckon(args.lat,args.lon,args.range,args.azimuth)
