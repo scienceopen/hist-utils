@@ -105,10 +105,6 @@ def vreckon(lat1, lon1, rng, azim=None, ellipsoid=None):
         lat1 = tile(lat1,rng.shape)
         lon1 = tile(lon1,rng.shape)
        
-    if azim is None:
-        azim = array([0, 360])
-        azim = tile(azim,lat1.shape)
-    
     if rng.size == 1:
         rng = tile(rng, azim.shape)
     
