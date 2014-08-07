@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # reads .DMCdata files and displays them
 # Primarily tested with Python 3.4 on Linux, but should also work for Python 2.7 on any operating system.
+# requires astropy if you want to write FITS
 # Michael Hirsch
 # GPL v3+ license
 import os
