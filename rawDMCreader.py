@@ -18,24 +18,24 @@ import getRawInd as gri
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
-def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None,verbose=True):
-       
+def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None,verbose=0):
+
     # setup data parameters
     SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd = getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose)
 
 # preallocate
     data = np.zeros((SuperY,SuperX,nFrameExtract),dtype=np.uint16)
-    rawFrameInd = np.zeros((nFrameExtract,1),dtype=int) 
+    rawFrameInd = np.zeros((nFrameExtract,1),dtype=int)
 
     with open(BigFN, 'rb') as fid:
-        jFrm=0 
+        jFrm=0
         for iFrm in FrameInd:
             data[:,:,jFrm],rawFrameInd[jFrm] = getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY)
             jFrm += 1
 
- 
+
     #doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd)
-    
+
     if playMovie:
         hf = plt.figure(1); plt.clf()
         himg = plt.imshow(data[:,:,0],cmap='gray')
@@ -47,7 +47,7 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
         #blit=False so that Title updates!
         anim.FuncAnimation(hf,animate,range(nFrameExtract),fargs=(data,himg,ht), interval=playMovie, blit=False, repeat_delay=1000)
         plt.show()
-        
+
     return data
 ########## END OF MAIN #######################
 
@@ -56,12 +56,12 @@ def animate(i,data,himg,ht):
     himg.set_data(data[:,:,i])
     ht.set_text('RelFrame#' + str(i) )
     #'RawFrame#: ' + str(rawFrameInd[jFrm]) +
-                
+
     plt.draw() #plot won't update without plt.draw()!
     #plt.show(False) #breaks (won't play)
     return himg,ht
 
-def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
+def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose=0):
     SuperX = xyPix[0] // xyBin[0] # "//" keeps as integer
     SuperY = xyPix[1] // xyBin[1]
 
@@ -76,32 +76,33 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
     fileSizeBytes = os.path.getsize(BigFN)
 
     if fileSizeBytes < BytesPerImage:
-        raise RuntimeError('File size ' + str(fileSizeBytes) + 
+        raise RuntimeError('File size ' + str(fileSizeBytes) +
                  ' is smaller than a single image frame!')
 
     nFrame = fileSizeBytes / BytesPerFrame #for quick check diagnostic, left as float temporarily
 
     if nFrame%1 != 0:
-        warnings.warn("Looks like I am not reading this file correctly, with BPF: " + 
+        warnings.warn("Looks like I am not reading this file correctly, with BPF: " +
               str(BytesPerFrame) )
     nFrame = int(nFrame) # this is a nice quick check diagnostic above
 
 
     (firstRawInd,lastRawInd) = gri.getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata)
-    print(str(nFrame) + ' frames in file ' + BigFN)
-    print('   file size in Bytes: '  +str(fileSizeBytes))
-    print("first / last raw frame #'s: " + str(firstRawInd) + " / " + 
+    if verbose >=0:
+        print(str(nFrame) + ' frames in file ' + BigFN)
+        print('   file size in Bytes: '  +str(fileSizeBytes))
+        print("first / last raw frame #'s: " + str(firstRawInd) + " / " +
           str(lastRawInd))
 
 # setup frame indices
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
     if FrameInd is None:
-        FrameInd = np.arange(nFrame,dtype=int) # has to be numpy for > comparison        
-        if verbose:
+        FrameInd = np.arange(nFrame,dtype=int) # has to be numpy for > comparison
+        if verbose>=0:
             print('automatically selected all frames in file')
     elif isinstance(FrameInd,int):
-        FrameInd =np.arange(FrameInd,dtype=int) 
+        FrameInd =np.arange(FrameInd,dtype=int)
     elif len(FrameInd) == 3:
         FrameInd =np.arange(FrameInd[0],FrameInd[1],FrameInd[2],dtype=int)
 
@@ -115,20 +116,21 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose):
     nFrameExtract = len(FrameInd) #to preallocate properly
 
     nBytesExtract = nFrameExtract*BytesPerFrame
-    print(BigFN + ' contains ' + str(nFrameExtract) + ' frames, totaling ' + str(nBytesExtract) + ' bytes.')
-    if nBytesExtract > 4e9 and verbose:
+    if verbose >= 0:
+        print(BigFN + ' contains ' + str(nFrameExtract) + ' frames, totaling ' + str(nBytesExtract) + ' bytes.')
+    if nBytesExtract > 4e9:
         warnings.warn('This will require ' + str(nBytesExtract/1e9) + ' Gigabytes of RAM.')
     return SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd
 
-def getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY):
-    #print(type(iFrm)); print(type(BytesPerFrame)); 
+def getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY,verbose=0):
+    #print(type(iFrm)); print(type(BytesPerFrame));
     currByte = int((iFrm) * BytesPerFrame) # to fix that mult casts to float64 here!
 
 	#advance to start of frame in bytes
     fid.seek(currByte,0) #no return value
 	#read data
     currFrame = np.fromfile(fid, np.uint16,PixelsPerImage).reshape((SuperY,SuperX))
-    
+
     rawFrameInd = getRawFrameInd(fid,Nmetadata)
     return currFrame,rawFrameInd
 
@@ -143,7 +145,7 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
   if playMovie:
     print('attemping movie playback')
     hf1 = plt.figure(1)
-    hAx = hf1.add_subplot(111)   
+    hAx = hf1.add_subplot(111)
     if not Clim:
         hIm = plt.imshow(data[:,:,0], cmap = plt.get_cmap('gray') )
     else:
@@ -154,13 +156,13 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
     hf1.colorbar(hIm)
     hAx.set_xlabel('x-pixels')
     hAx.set_ylabel('y-pixels')
-    
+
     jFrm = 0
     for iFrm in FrameInd:
         print(str(iFrm) + ' ' + str(jFrm))
         plt.imshow(data[:,:,jFrm])
         #hIm.set_data(data[:,:,jFrm])  #
-        hT.set_text('RawFrame#: ' + str(rawFrameInd[jFrm]) + 
+        hT.set_text('RawFrame#: ' + str(rawFrameInd[jFrm]) +
                 'RelFrame#' + str(iFrm) )
         plt.show(True)
         plt.pause(playMovie)
@@ -194,14 +196,14 @@ if __name__ == "__main__":
     Clim = args['clim']
     rawFrameRate = args['rate']
     if rawFrameRate: print('raw frame rate timing not yet implemented')
-    startUTC = args['startutc'] 
+    startUTC = args['startutc']
     if startUTC: print('frame UTC timing not yet implemented')
     writeFITS = args['fits']
     saveMat = args['mat']
     meanImg = args['avg']
-    
-   
-    rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=True)
+
+
+    rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=0)
     if meanImg:
         meanStack = np.mean(rawImgData,axis=2).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
 #        plt.figure(32);plt.clf()
@@ -212,11 +214,11 @@ if __name__ == "__main__":
 #        plt.colorbar()
 #        plt.show()
    # pdb.set_trace()
-        
-    
+
+
     outStem = os.path.splitext(BigFN)[0]
     if writeFITS:
-        from astropy.io import fits 
+        from astropy.io import fits
         #TODO timestamp frames
         if meanImg:
             fitsFN = outStem + '_mean_frames.fits'
@@ -230,11 +232,11 @@ if __name__ == "__main__":
         hdu = fits.PrimaryHDU(fitsData)
         hdulist = fits.HDUList([hdu])
         hdulist.writeto(fitsFN,clobber=True)
-    
+
     if saveMat:
         from scipy.io import savemat
         matFN = outStem + '_frames.mat'
         print('writing raw image data as ' + matFN)
         matdata = {'rawimgdata':rawImgData}
         savemat(matFN,matdata,oned_as='column')
-    
+
