@@ -7,6 +7,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+from matplotlib.ticker import ScalarFormatter
 #import matplotlib.animation as anim
 #import pdb
 import argparse
@@ -147,17 +149,18 @@ def getRawFrameInd(fid,Nmetadata):
 
 def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
   if playMovie is not None:
+    sfmt = ScalarFormatter(useMathText=True)
     print('attemping movie playback')
     hf1 = plt.figure(1)
     hAx = hf1.add_subplot(111)
     if Clim is None:
-        hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower' )
+        hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower',norm=LogNorm() )
     else:
         hIm = hAx.imshow(data[0,:,:],
                         vmin=Clim[0],vmax=Clim[1],
-                        cmap = 'gray', origin='lower' )
+                        cmap = 'gray', origin='lower', norm=LogNorm())
     hT = hAx.text(0.5,1.005,'', transform=hAx.transAxes)
-    hc = hf1.colorbar(hIm)
+    hc = hf1.colorbar(hIm,format=sfmt)
     hc.set_label('data numbers ' + str(data.dtype))
     hAx.set_xlabel('x-pixels')
     hAx.set_ylabel('y-pixels')
@@ -215,9 +218,9 @@ if __name__ == "__main__":
             plt.figure(32)
             ax = plt.axes()
             if Clim is None:
-                ax.imshow(meanStack,cmap='gray',origin='lower')
+                ax.imshow(meanStack,cmap='gray',origin='lower',norm=LogNorm())
             else:
-                ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1])
+                ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1],norm=LogNorm())
             ax.set_xlabel('x')
             ax.set_ylabel('y')
             ax.set_title('mean of image frames')
@@ -235,11 +238,11 @@ if __name__ == "__main__":
             print('writing MEAN image data as ' + fitsFN)
         else:
             fitsFN = outStem + '_frames.fits'
-            fitsData = rawImgData#np.transpose(rawImgData,axes=[2,0,1]) #because astropy.fits axes order
-            print('writing raw image data as ' + fitsFN)
+            fitsData = rawImgData
+            print('writing ' + str(fitsData.dtype) + ' raw image data as ' + fitsFN)
         hdu = fits.PrimaryHDU(fitsData)
-        hdulist = fits.HDUList([hdu])
-        hdulist.writeto(fitsFN,clobber=True)
+        hdu.writeto(fitsFN,clobber=True)
+
 
     if saveMat:
         from scipy.io import savemat
