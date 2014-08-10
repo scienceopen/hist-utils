@@ -24,8 +24,8 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
     # setup data parameters
     SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd = getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose)
 
-# preallocate
-    data = np.zeros((nFrameExtract,SuperY,SuperX),dtype=np.uint16,order='F')
+# preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
+    data = np.zeros((nFrameExtract,SuperY,SuperX),dtype=np.uint16,order='C')
     rawFrameInd = np.zeros(nFrameExtract,dtype=int)
 
     with open(BigFN, 'rb') as fid:
@@ -132,8 +132,8 @@ def getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY,ve
 
 	#advance to start of frame in bytes
     fid.seek(currByte,0) #no return value
-	#read data
-    currFrame = np.fromfile(fid, np.uint16,PixelsPerImage).reshape((SuperY,SuperX))
+	#read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
+    currFrame = np.fromfile(fid, np.uint16,PixelsPerImage).reshape((SuperY,SuperX),order='C')
 
     rawFrameInd = getRawFrameInd(fid,Nmetadata)
     return currFrame,rawFrameInd
@@ -214,7 +214,7 @@ if __name__ == "__main__":
         if playMovie is not None:
             plt.figure(32)
             ax = plt.axes()
-            ax.imshow(meanStack,cmap='gray',origin='lower')
+            ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1])
             ax.set_xlabel('x')
             ax.set_ylabel('y')
             ax.set_title('mean of image frames')
