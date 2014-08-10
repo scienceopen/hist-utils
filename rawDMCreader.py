@@ -150,7 +150,7 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
     print('attemping movie playback')
     hf1 = plt.figure(1)
     hAx = hf1.add_subplot(111)
-    if not Clim:
+    if Clim is None:
         hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower' )
     else:
         hIm = hAx.imshow(data[0,:,:],
@@ -214,7 +214,10 @@ if __name__ == "__main__":
         if playMovie is not None:
             plt.figure(32)
             ax = plt.axes()
-            ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1])
+            if Clim is None:
+                ax.imshow(meanStack,cmap='gray',origin='lower')
+            else:
+                ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1])
             ax.set_xlabel('x')
             ax.set_ylabel('y')
             ax.set_title('mean of image frames')
