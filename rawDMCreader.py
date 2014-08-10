@@ -151,11 +151,11 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
     hf1 = plt.figure(1)
     hAx = hf1.add_subplot(111)
     if not Clim:
-        hIm = hAx.imshow(data[0,:,:], cmap = plt.get_cmap('gray'), origin='lower' )
+        hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower' )
     else:
         hIm = hAx.imshow(data[0,:,:],
                         vmin=Clim[0],vmax=Clim[1],
-                        cmap = plt.get_cmap('gray'), origin='lower' )
+                        cmap = 'gray', origin='lower' )
     hT = hAx.text(0.5,1.005,'', transform=hAx.transAxes)
     hc = hf1.colorbar(hIm)
     hc.set_label('data numbers ' + str(data.dtype))
@@ -210,15 +210,15 @@ if __name__ == "__main__":
 
     rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=0)
     if meanImg:
-        meanStack = np.mean(rawImgData,axis=2).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
+        meanStack = np.mean(rawImgData,axis=0).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
         if playMovie is not None:
             plt.figure(32)
-            ax = plt.axes(0)
-            ax.imshow(meanStack,cmap='gray')
+            ax = plt.axes()
+            ax.imshow(meanStack,cmap='gray',origin='lower')
             ax.set_xlabel('x')
             ax.set_ylabel('y')
             ax.set_title('mean of image frames')
-            plt.colorbar(ax)
+            #plt.colorbar()
             plt.show()
 
 
