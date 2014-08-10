@@ -7,7 +7,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as anim
+#import matplotlib.animation as anim
 #import pdb
 import argparse
 import struct
@@ -25,13 +25,13 @@ def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None
     SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd = getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose)
 
 # preallocate
-    data = np.zeros((SuperY,SuperX,nFrameExtract),dtype=np.uint16)
-    rawFrameInd = np.zeros((nFrameExtract,1),dtype=int)
+    data = np.zeros((nFrameExtract,SuperY,SuperX),dtype=np.uint16,order='F')
+    rawFrameInd = np.zeros(nFrameExtract,dtype=int)
 
     with open(BigFN, 'rb') as fid:
         jFrm=0
         for iFrm in FrameInd:
-            data[:,:,jFrm],rawFrameInd[jFrm] = getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY)
+            data[jFrm,:,:],rawFrameInd[jFrm] = getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY)
             jFrm += 1
 
     #more reliable if slower playback
@@ -151,13 +151,14 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
     hf1 = plt.figure(1)
     hAx = hf1.add_subplot(111)
     if not Clim:
-        hIm = hAx.imshow(data[:,:,0], cmap = plt.get_cmap('gray'), origin='lower' )
+        hIm = hAx.imshow(data[0,:,:], cmap = plt.get_cmap('gray'), origin='lower' )
     else:
-        hIm = hAx.imshow(data[:,:,0],
+        hIm = hAx.imshow(data[0,:,:],
                         vmin=Clim[0],vmax=Clim[1],
                         cmap = plt.get_cmap('gray'), origin='lower' )
     hT = hAx.text(0.5,1.005,'', transform=hAx.transAxes)
-    hf1.colorbar(hIm)
+    hc = hf1.colorbar(hIm)
+    hc.set_label('data numbers ' + str(data.dtype))
     hAx.set_xlabel('x-pixels')
     hAx.set_ylabel('y-pixels')
 
@@ -165,7 +166,7 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
     for iFrm in FrameInd:
         #print(str(iFrm) + ' ' + str(jFrm))
         #hAx.imshow(data[:,:,jFrm]) #slower
-        hIm.set_data(data[:,:,jFrm])  # faster
+        hIm.set_data(data[jFrm,:,:])  # faster
         hT.set_text('RawFrame#: ' + str(rawFrameInd[jFrm]) +
                 'RelFrame#' + str(iFrm) )
         plt.draw()
@@ -231,7 +232,7 @@ if __name__ == "__main__":
             print('writing MEAN image data as ' + fitsFN)
         else:
             fitsFN = outStem + '_frames.fits'
-            fitsData = np.transpose(rawImgData,axes=[2,0,1]) #because astropy.fits axes order
+            fitsData = rawImgData#np.transpose(rawImgData,axes=[2,0,1]) #because astropy.fits axes order
             print('writing raw image data as ' + fitsFN)
         hdu = fits.PrimaryHDU(fitsData)
         hdulist = fits.HDUList([hdu])
