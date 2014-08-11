@@ -151,7 +151,8 @@ for iFrame = FrameInd
     
     %read data
     %we transpose because Labview writes ROW MAJOR and Matlab is COLUMN MAJOR
-    data(:,:,jFrm) = transpose(fread(fid,[SuperX,SuperY],dFormat,0,'l')); %first read the image
+	 % we actually don't transpose because lab measurements showed the orientation WITHOUT transpose is correct!?
+    data(:,:,jFrm) = fread(fid,[SuperX,SuperY],dFormat,0,'l'); %first read the image
     metadata = fread(fid,nHeader,dFormat,0,'l'); % we have to typecast this
     
     %stick two 16-bit numbers together again to make the actual 32-bit raw
