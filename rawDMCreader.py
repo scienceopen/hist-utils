@@ -248,6 +248,7 @@ if __name__ == "__main__":
             print('writing ' + str(fitsData.dtype) + ' raw image data as ' + fitsFN)
         hdu = fits.PrimaryHDU(fitsData)
         hdu.writeto(fitsFN,clobber=True)
+        print('the orientation of this FITS in NASA FV program and the preview image shown in Python should/must have the same orientation and pixel indexing')
 
 
     if saveMat:
