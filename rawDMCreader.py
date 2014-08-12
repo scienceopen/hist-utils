@@ -183,7 +183,7 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description='Raw .DMCdata file reader')
-    p.add_argument('-i','--in',help='.DMCdata file name and path',required=True)
+    p.add_argument('-i','--infile',help='.DMCdata file name and path',required=True)
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
     p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None,type=int)
@@ -194,41 +194,47 @@ if __name__ == "__main__":
     p.add_argument('--fits',help='write a .FITS file of the data you extract',action='store_true')
     p.add_argument('--mat',help="write a .mat MATLAB data file of the extracted data",action='store_true')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
-    args = vars(p.parse_args())
+    p.add_argument('--png',help='writes a .png of the data you extract (currently only for --avg))',action='store_true')
+    args = p.parse_args()
 
-    BigFN = os.path.expanduser(args['in'])
-    xyPix = args['pix']
-    xyBin = args['bin']
-    FrameInd = args['frames']
-    playMovie = args['movie']
-    Clim = args['clim']
-    rawFrameRate = args['rate']
+    BigFN = os.path.expanduser(args.infile)
+    xyPix = args.pix
+    xyBin = args.bin
+    FrameInd = args.frames
+    playMovie = args.movie
+    Clim = args.clim
+    rawFrameRate = args.rate
     if rawFrameRate: print('raw frame rate timing not yet implemented')
-    startUTC = args['startutc']
+    startUTC = args.startutc
     if startUTC: print('frame UTC timing not yet implemented')
-    writeFITS = args['fits']
-    saveMat = args['mat']
-    meanImg = args['avg']
+    writeFITS = args.fits
+    saveMat = args.mat
+    meanImg = args.avg
 
 
     rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=0)
+    outStem = os.path.splitext(BigFN)[0]
+
     if meanImg:
         meanStack = np.mean(rawImgData,axis=0).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
-        if playMovie is not None:
-            plt.figure(32)
-            ax = plt.axes()
-            if Clim is None:
-                ax.imshow(meanStack,cmap='gray',origin='lower',norm=LogNorm())
-            else:
-                ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1],norm=LogNorm())
-            ax.set_xlabel('x')
-            ax.set_ylabel('y')
-            ax.set_title('mean of image frames')
-            #plt.colorbar()
-            plt.show()
+        #if playMovie is not None:
+        plt.figure(32)
+        ax = plt.axes()
+        if Clim is None:
+            ax.imshow(meanStack,cmap='gray',origin='lower',norm=LogNorm())
+        else:
+            ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1],norm=LogNorm())
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_title('mean of image frames')
+        #plt.colorbar()
+        if args.png:
+            pngfn = outStem + '.png'
+            print('writing mean PNG ' + pngfn)
+            plt.savefig(pngfn,dpi=150,bbox_inches='tight')
+        plt.show()
 
 
-    outStem = os.path.splitext(BigFN)[0]
     if writeFITS:
         from astropy.io import fits
         #TODO timestamp frames
@@ -250,4 +256,3 @@ if __name__ == "__main__":
         print('writing raw image data as ' + matFN)
         matdata = {'rawimgdata':rawImgData}
         savemat(matFN,matdata,oned_as='column')
-
