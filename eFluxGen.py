@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
 # based on Strickland 1993
 
-from numpy import (pi,exp,logspace,sum,argmin,array,newaxis,repeat,
+from numpy import (pi,exp,logspace,sum,argmin,array,newaxis,repeat,copy,
                    arange,zeros,atleast_1d,isscalar,set_printoptions)
 from matplotlib.pyplot import (figure,clf,gca, show)
 from findnearest import find_nearest
 #from warnings import warn
 
 
-def fluxgen(E0,Q0,Wbc,Bm,bl,bm,bh):
+def fluxgen(E,E0,Q0,Wbc,Bm,bl,bm,bh):
     E0 = atleast_1d(E0)
-    nE0 = len(E0)
+    nE0 = E0.size
     Wb=Wbc*E0
 
-    E = logspace(2,4.35,num=200,base=10)
     isimE0 = find_nearest(E,E0)[0]
     isimE0 += -1 # FIXME to get left of E0
     E = repeat(E[:,newaxis],nE0,axis=1) #identical columns
 
     base = gaussflux(E,E0,nE0,Q0,Wb)
-    low = letail(E,E0,bl)
-    arc = base + low #intermediate result
+    arc = copy(base)
+
+    low = letail(E,E0,Q0,bl)
+    arc += low #intermediate result
+
     mid = midtail(Bm,E,E0,nE0,arc,isimE0,bm)
     arc += mid #intermediate result
-    hi = hitail(E,E0,nE0,arc,isimE0,bh)
 
+    hi = hitail(E,E0,nE0,arc,isimE0,bh)
     arc += hi
 
     diprat(E,E0,nE0,arc,isimE0)
@@ -34,9 +36,9 @@ def fluxgen(E0,Q0,Wbc,Bm,bl,bm,bh):
     print('total flux Q:'+str(Q))
     #print('E0 flux =' + str(arc[isimE0]))
 
-    return E,arc,low,mid,hi,base
+    return arc,low,mid,hi,base
 
-def letail(E,E0,bl):
+def letail(E,E0,Q0,bl):
     # for LET, 1<b<2
     #Bl = 8200.   #820 (typo?)
     Bl = 0.4*Q0/(2*pi*E0**2)*exp(-1)
@@ -85,7 +87,7 @@ def gaussflux(E,E0,nE0,Q0,Wb):
     base = Qc * exp(-((E-E0)/Wb)**2)
     return base
 
-def plotflux(E,E0,hi,low,mid,arc):
+def plotflux(E,E0,hi,low,mid,arc,dbglvl):
     figure(1);clf()
     ax = gca()
     if isscalar(E0):
@@ -101,39 +103,40 @@ def plotflux(E,E0,hi,low,mid,arc):
     ax.legend(['500','1000','2500','5000','10000'])
     #ax.set_xlim((1e2,1e4))
 
-    figure(2);clf()
-    ax = gca()
-    ax.loglog(E,base)
-    ax.set_ylim((1e2,1e6))
-    #ax.set_xlim((1e2,1e4))
-    ax.set_title('arc Gaussian base function, E0=' + str(E0)+ '[eV]')
-    ax.set_xlabel('Electron Energy [eV]')
-    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
-    ax.legend(['500','1000','2500','5000','10000'])
-
-    figure(3); clf()
-    ax = gca()
-    ax.loglog(E,low)
-    ax.set_ylim((1e2,1e6))
-    ax.set_title('arc low (E<E0)')
-    ax.set_xlabel('Electron Energy [eV]')
-    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+    if dbglvl>0:
+        figure(2);clf()
+        ax = gca()
+        ax.loglog(E,base)
+        ax.set_ylim((1e2,1e6))
+        #ax.set_xlim((1e2,1e4))
+        ax.set_title('arc Gaussian base function, E0=' + str(E0)+ '[eV]')
+        ax.set_xlabel('Electron Energy [eV]')
+        ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+        ax.legend(['500','1000','2500','5000','10000'])
     
-    figure(4); clf()
-    ax = gca()
-    ax.loglog(E,mid)
-    ax.set_ylim((1e2,1e6))
-    ax.set_title('arc mid')
-    ax.set_xlabel('Electron Energy [eV]')
-    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
-    
-    figure(5); clf()
-    ax = gca()
-    ax.loglog(E,hi)
-    ax.set_ylim((1e2,1e6))
-    ax.set_title('arc hi (E>E0)')
-    ax.set_xlabel('Electron Energy [eV]')
-    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+        figure(3); clf()
+        ax = gca()
+        ax.loglog(E,low)
+        ax.set_ylim((1e2,1e6))
+        ax.set_title('arc low (E<E0)')
+        ax.set_xlabel('Electron Energy [eV]')
+        ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+        
+        figure(4); clf()
+        ax = gca()
+        ax.loglog(E,mid)
+        ax.set_ylim((1e2,1e6))
+        ax.set_title('arc mid')
+        ax.set_xlabel('Electron Energy [eV]')
+        ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+        
+        figure(5); clf()
+        ax = gca()
+        ax.loglog(E,hi)
+        ax.set_ylim((1e2,1e6))
+        ax.set_title('arc hi (E>E0)')
+        ax.set_xlabel('Electron Energy [eV]')
+        ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
 
     show()
     
@@ -144,7 +147,7 @@ def writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh):
     progms = time() * 1000
     with h5py.File(str(progms) + '.h5', libver='latest') as fid:
         fid.create_dataset('/arc',data=arc)
-        hE = fid.create_dataset('/E',data=E[:,0]); hE.attrs['Units'] = 'eV'
+        hE = fid.create_dataset('/E',data=E); hE.attrs['Units'] = 'eV'
         hE = fid.create_dataset('/params/E0',data=E0); hE.attrs['Units'] = 'eV'
         fid.create_dataset('/Q0',data=Q0)
         fid.create_dataset('/params/Wbc',data=Wbc)
@@ -155,6 +158,7 @@ def writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh):
 
 if __name__ == '__main__':
     set_printoptions(precision=2)
+    E = logspace(2,4.35,num=200,base=10)
     #E0 = 2500.
     #Q0 = 8.e11
     E0 = array([500., 1000., 2500., 5000., 1e4])
@@ -168,8 +172,8 @@ if __name__ == '__main__':
     #E0 = array([2500., 5000., 7500., 10000.])
     #Q0 = array([8.0e11, 8.0e11, 8.0e11, 8.0e11])
 
-    E,arc,low,mid,hi,base = fluxgen(E0,Q0,Wbc,Bm,bl,bm,bh)
+    arc,low,mid,hi,base = fluxgen(E,E0,Q0,Wbc,Bm,bl,bm,bh)
 
-    plotflux(E,E0,hi,low,mid,arc)
+    plotflux(E,E0,hi,low,mid,arc,dbglvl=1)
     
     writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh)
