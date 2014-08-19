@@ -2,29 +2,31 @@
 # Michael Hirsch
 # following http://www.pveducation.org/pvcdrom/properties-of-sunlight/air-mass
 # assumes observer at sea level, altitude h \approx 0
-import numpy as np
-import matplotlib.pyplot as plt
+from numpy import sin,radians,arange
+from matplotlib.pyplot import figure,gca,show
 
-thetaE = np.arange(91,dtype=float)  #solar elevation angle above horizon
+thetaE = arange(91,dtype=float)  #solar elevation angle above horizon
 
-M = ( np.sin(np.radians(thetaE)) + 0.50572*(6.07995+thetaE)**(-1.6364) )**-1 #air mass factor
+M = ( sin(radians(thetaE)) + 0.50572*(6.07995+thetaE)**(-1.6364) )**-1 #air mass factor
 
-plt.figure(1)
-plt.plot(thetaE,M)
-plt.xlabel('Solar Elevation Angle  [deg.]')
-plt.ylabel('Air Mass Factor')
-plt.title('Air Mass Factor vs. elevation angle')
-plt.grid(True)
+figure(1)
+ax=gca()
+ax.plot(thetaE,M)
+ax.set_xlabel('Solar Elevation Angle  [deg.]')
+ax.set_ylabel('Air Mass Factor')
+ax.set_title('Air Mass Factor vs. elevation angle')
+ax.grid(True)
 
 I0 = 1353 # [W]
 
 I = I0 * 0.7**M**0.678
 
-plt.figure(2)
-plt.plot(thetaE,I)
-plt.title('Solar Irradiance at sea level vs. Solar Elevation Angle')
-plt.xlabel('Solar Elevation Angle  [deg.]')
-plt.ylabel('Solar Irradiance at sea level [W m^2]')
-plt.grid(True)
+figure(2)
+ax=gca()
+ax.plot(thetaE,I)
+ax.set_title('Solar Irradiance at sea level vs. Solar Elevation Angle')
+ax.set_xlabel('Solar Elevation Angle  [deg.]')
+ax.set_ylabel('Solar Irradiance at sea level [W m^2]')
+ax.grid(True)
 
-plt.show()
+show()
