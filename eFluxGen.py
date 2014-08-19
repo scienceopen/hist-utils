@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # based on Strickland 1993
 
-from numpy import (pi,exp,logspace,sum,where,min,argmin,array,newaxis,repeat,
-                   arange,zeros,all,atleast_1d,isscalar)
-from matplotlib.pyplot import xlabel,ylabel,title,loglog,figure,clf,grid,gca,show,legend
+from numpy import (pi,exp,logspace,sum,argmin,array,newaxis,repeat,
+                   arange,zeros,atleast_1d,isscalar,set_printoptions)
+from matplotlib.pyplot import (figure,clf,gca, show)
 from findnearest import find_nearest
-from warnings import warn
+#from warnings import warn
 
 
 def fluxgen(E0,Q0,Wbc,Bm,bl,bm,bh):
@@ -29,9 +29,9 @@ def fluxgen(E0,Q0,Wbc,Bm,bl,bm,bh):
 
     diprat(E,E0,nE0,arc,isimE0)
 
-    Q = sum(arc,axis=0).tolist()
+    Q = sum(arc,axis=0)
     #rint('total flux Q: ' + (' '.join(' {:.1e}'.format(*q) for q in enumerate(Q))))
-    print('total flux Q: ' + str(Q))
+    print('total flux Q:'+str(Q))
     #print('E0 flux =' + str(arc[isimE0]))
 
     return E,arc,low,mid,hi,base
@@ -85,11 +85,80 @@ def gaussflux(E,E0,nE0,Q0,Wb):
     base = Qc * exp(-((E-E0)/Wb)**2)
     return base
 
+def plotflux(E,E0,hi,low,mid,arc):
+    figure(1);clf()
+    ax = gca()
+    if isscalar(E0):
+        ax.loglog(E,hi,'k:')
+        ax.loglog(E,low,'k:')
+        ax.loglog(E,mid,'k:')
+    ax.loglog(E,arc)
+    ax.grid(True,which='both')
+    ax.set_xlabel('Electron Energy [eV]')
+    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+    ax.set_title('arc flux, $E_0=$' + str(E0) + '[eV]')
+    ax.set_ylim((1e2,1e6))
+    ax.legend(['500','1000','2500','5000','10000'])
+    #ax.set_xlim((1e2,1e4))
+
+    figure(2);clf()
+    ax = gca()
+    ax.loglog(E,base)
+    ax.set_ylim((1e2,1e6))
+    #ax.set_xlim((1e2,1e4))
+    ax.set_title('arc Gaussian base function, E0=' + str(E0)+ '[eV]')
+    ax.set_xlabel('Electron Energy [eV]')
+    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+    ax.legend(['500','1000','2500','5000','10000'])
+
+    figure(3); clf()
+    ax = gca()
+    ax.loglog(E,low)
+    ax.set_ylim((1e2,1e6))
+    ax.set_title('arc low (E<E0)')
+    ax.set_xlabel('Electron Energy [eV]')
+    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+    
+    figure(4); clf()
+    ax = gca()
+    ax.loglog(E,mid)
+    ax.set_ylim((1e2,1e6))
+    ax.set_title('arc mid')
+    ax.set_xlabel('Electron Energy [eV]')
+    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+    
+    figure(5); clf()
+    ax = gca()
+    ax.loglog(E,hi)
+    ax.set_ylim((1e2,1e6))
+    ax.set_title('arc hi (E>E0)')
+    ax.set_xlabel('Electron Energy [eV]')
+    ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
+
+    show()
+    
+def writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh):
+    from time import time
+    import h5py
+    
+    progms = time() * 1000
+    with h5py.File(str(progms) + '.h5', libver='latest') as fid:
+        fid.create_dataset('/arc',data=arc)
+        hE = fid.create_dataset('/E',data=E[:,0]); hE.attrs['Units'] = 'eV'
+        hE = fid.create_dataset('/params/E0',data=E0); hE.attrs['Units'] = 'eV'
+        fid.create_dataset('/Q0',data=Q0)
+        fid.create_dataset('/params/Wbc',data=Wbc)
+        fid.create_dataset('/params/bl',data=bl)
+        fid.create_dataset('/params/bm',data=bm)
+        fid.create_dataset('/params/bh',data=bh)
+    
+
 if __name__ == '__main__':
+    set_printoptions(precision=2)
     #E0 = 2500.
     #Q0 = 8.e11
     E0 = array([500., 1000., 2500., 5000., 1e4])
-    Q0 = array([8e10, 3.2e11, 1.e12, 2.8e12, 5.e12])
+    Q0 = array([8e10, 3.2e11, 1.0e12, 2.8e12, 5.0e12])
     Wbc = array([1, 0.75, 0.5, 0.375, 0.25])
     bl = array([2., 1.5, 1.4, 1.2, 1.])
     bm = array([3., 3.,  3.,   2.5,  2.])
@@ -101,31 +170,6 @@ if __name__ == '__main__':
 
     E,arc,low,mid,hi,base = fluxgen(E0,Q0,Wbc,Bm,bl,bm,bh)
 
-    figure(1);clf()
-    if isscalar(E0):
-        loglog(E,hi,'k:')
-        loglog(E,low,'k:')
-        loglog(E,mid,'k:')
-    loglog(E,arc)
-    grid(True,which='both')
-    xlabel('Electron Energy [eV]')
-    ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
-    title('arc flux, $E_0=$' + str(E0) + '[eV]')
-    gca().set_ylim((1e2,1e6))
-    legend(['500','1000','2500','5000','10000'])
-    #gca().set_xlim((1e2,1e4))
-
-    figure(2);clf()
-    loglog(E,base)
-    gca().set_ylim((1e2,1e6))
-    #gca().set_xlim((1e2,1e4))
-    title('arc Gaussian base function, E0=' + str(E0)+ '[eV]')
-    xlabel('Electron Energy [eV]')
-    ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
-    legend(['500','1000','2500','5000','10000'])
-
-    figure(3); clf()
-    loglog(E,low)
-    gca().set_ylim((1e2,1e6))
-
-    show()
+    plotflux(E,E0,hi,low,mid,arc)
+    
+    writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh)
