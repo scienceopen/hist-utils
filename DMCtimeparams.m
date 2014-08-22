@@ -1,4 +1,14 @@
 function [rawFrameRate,startUTC] = DMCtimeparams(BigFN,rawFrameRate,startUTC)
+% INPUTS:
+% -------
+% BigFN: huge .DMCdata filename to read
+% rawFrameRate: {'auto'} get from XML file (recommended) or manually specify [fps]
+% startUTC: {'auto'} get from NMEA file (recommended) or manually specify as  "datenum"
+%
+% OUTPUTS:
+% --------
+% rawFrameRate: computed from XML file, or pass back user specified frame rate [fps]
+% startUTC: datenum of time camera (supposedly!) started the frame with raw frame index 1
 
 [BigDir,BigStem] = fileparts(BigFN);
 % handle the case where we have a partial filename (with _frames....)
@@ -59,10 +69,9 @@ if ~isempty(startUTC)
           
           startUTC = datenum([dates,times],'ddmmyyHHMMSS'); 
       end %don't want nan's
-   elseif isnumeric(startUTC) && length(startUTC)==6 %use user specified frame rate
+   elseif isnumeric(startUTC) && length(startUTC)==6     %use user specified datevec
      startUTC = datenum(startUTC);
-   elseif isnumeric(startUTC) && length(startUTC) == 1 
-       % assume already datenum
+   elseif isnumeric(startUTC) && length(startUTC) == 1   % assume already datenum
    else
        error(['unknown starttime ',startUTC])
    end %if strcmpi auto
