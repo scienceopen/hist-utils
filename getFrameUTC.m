@@ -1,4 +1,4 @@
-function [firstUTC, lastUTC, reqUTC] = getFrameUTC(BigFN,ReqFrameInd,BytesPerImage,nHeadBytes)
+function reqUTC = getFrameUTC(BigFN,ReqFrameInd,BytesPerImage,nHeadBytes)
 % Michael Hirsch
 % summing up scattered functions from 2011 to 2014
 % this UTC timing is NOT guaranteed, that's what we're working to verify!
@@ -23,11 +23,12 @@ spd = 86400; %seconds/day
 %% estimate frame timing
 [rawFrameRate,startUTC] = DMCtimeparams(BigFN,rawFrameRate,startUTC);
 %% use estimated parameters to estimate timing for other frames
-firstUTC = (startUTC*spd + (firstRawIndex - 1) / rawFrameRate)/spd;
-lastUTC = (startUTC*spd + (lastRawIndex - 1) / rawFrameRate)/spd; 
+if isempty(ReqFrameInd)
+    ReqRawInd = [firstRawIndex, lastRawIndex];
+end
+
+reqUTC = (startUTC*spd + (ReqRawInd - 1) ./ rawFrameRate)./spd;
 %% print
-display(['first frame UTC estimate: ',datestr(firstUTC)])
-display(['last frame UTC estimate: ',datestr(lastUTC)])
-%% cleanup
-if ~nargout, clear, end
+%display(['first / last frame UTC estimate: ',datestr(reqUTC(1)),'  ',datestr(reqUTC(end))])
+
 end %function

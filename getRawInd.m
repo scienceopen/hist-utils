@@ -21,7 +21,7 @@ if nargin > 3 && nargout > 2
     for iFrm = ReqFrameInd
         jFrm = jFrm + 1;
         
-        currByte = (iFrm - 0) * BytesPerImage;  %remember, we want the header, not the image
+        currByte = (iFrm - 0) * (BytesPerImage+nHeadBytes) -nHeadBytes;  %goes just past frame, then backs up
         fseek(fid,currByte,'bof');
         ReqRawInd(jFrm) = meta2rawInd(fid,Nmetadata);
     end %for
