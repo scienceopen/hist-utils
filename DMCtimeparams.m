@@ -1,4 +1,4 @@
-function [rawFrameRate,startUTC] = DMCtimeparams(BigFN,rawFrameRate,startUTC)
+function [rawFrameRate,startUTC] = DMCtimeparams(BigFN,rawFrameRate,startUTC,verbose)
 % INPUTS:
 % -------
 % BigFN: huge .DMCdata filename to read
@@ -10,6 +10,7 @@ function [rawFrameRate,startUTC] = DMCtimeparams(BigFN,rawFrameRate,startUTC)
 % rawFrameRate: computed from XML file, or pass back user specified frame rate [fps]
 % startUTC: datenum of time camera (supposedly!) started the frame with raw frame index 1
 
+if nargin<4, verbose = 0; end
 [BigDir,BigStem] = fileparts(BigFN);
 % handle the case where we have a partial filename (with _frames....)
 BigStem = regexp(BigStem,'.*CamSer\d{3,6}(?<=.*)','match'); 
@@ -29,7 +30,9 @@ if ~isempty(rawFrameRate)
      xmltxt=[]; 
      lbtxt = '<I32><Name>Number Of iXon Pulses</Name><Val>';  latxt = '</Val></I32>';
      regtxt = ['(?<=',lbtxt,')','\d{1,4}','(?=',latxt,')'];
-     display(['finding framerate, using regexp ',regtxt])
+     if verbose>1
+        display(['finding framerate, using regexp ',regtxt])
+     end
      fidxml = fopen(XMLfn,'r');
      while ~feof(fidxml)
       xmltxt = [xmltxt, fgetl(fidxml)]; %#ok<AGROW> %easier to parse w/o newlines
@@ -41,7 +44,9 @@ if ~isempty(rawFrameRate)
    else
        error(['unknown frame rate ',rawFrameRate])
    end %if strcmpi auto
-   display(['using frame rate ',num2str(rawFrameRate),' Hz'])
+   if verbose>0
+    fprintf('using frame rate %s Hz   ',num2str(rawFrameRate))
+   end
    fclose(fidxml);
 else
    %do nothing
@@ -53,7 +58,9 @@ if ~isempty(startUTC)
      %crude but works
      lbtxt = '\$GPRMC,';  latxt = ',[AV],';
      regtxt = ['(?<=',lbtxt,')','\d{6}','(?=',latxt,')'];
-     display(['finding startUTC, using regexp ',regtxt])
+     if verbose>1
+        fprintf('finding startUTC, using regexp %s ',regtxt)
+     end
      fidnmea = fopen(NMEAfn,'r');
      while ~feof(fidnmea)
       nmeatxt = fgetl(fidnmea); % %easier to parse w/o newlines
@@ -76,7 +83,9 @@ if ~isempty(startUTC)
    else
        error(['unknown starttime ',startUTC])
    end %if strcmpi auto
-   display(['using start time ',datestr(startUTC),' UTC']) 
+   if verbose>0
+    fprintf('using start time %s UTC\n',datestr(startUTC)) 
+   end
    fclose(fidnmea);
 end %is empty startUTC
 
