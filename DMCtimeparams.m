@@ -55,18 +55,19 @@ if ~isempty(startUTC)
      regtxt = ['(?<=',lbtxt,')','\d{6}','(?=',latxt,')'];
      display(['finding startUTC, using regexp ',regtxt])
      fidnmea = fopen(NMEAfn,'r');
-     while ~feof(fidxml)
+     while ~feof(fidnmea)
       nmeatxt = fgetl(fidnmea); % %easier to parse w/o newlines
       if strcmp(nmeatxt(1:6),'$GPRMC')
           %keeps only the last GPRMC sentence
           gprmc = textscan(nmeatxt,'%s %d %s %f %s %f %s %f %f %d %f %s','delimiter',',','emptyvalue',nan);
       end
      end %while
-      dates = int2str(gprmc{10}); %for ensuring no decimal point is thrown in
-      times = int2str(gprmc{2}); %likewise
+     
+     %it was easiest to use fixed length strings to do the conversion
+      dates = num2str(gprmc{10},'%06d'); 
+      times = num2str(gprmc{2},'%06d'); 
 
-      if ~isempty(dates) && all(~isnan(dates)), 
-          
+      if ~isempty(dates) && all(~isnan(dates))          
           startUTC = datenum([dates,times],'ddmmyyHHMMSS'); 
       end %don't want nan's
    elseif isnumeric(startUTC) && length(startUTC)==6     %use user specified datevec
