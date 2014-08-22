@@ -12,7 +12,6 @@ if nargin<1 || isempty(BigFN), error('Currently you must specify .DMCdata filena
 if nargin<2, ReqFrameInd = []; end
 if nargin<3, BytesPerImage = 512*512*16/8; end
 if nargin<4, nHeadBytes = 4; end
-reqUTC = []; %in case not used
 
 rawFrameRate = 'auto';
 startUTC = 'auto';
