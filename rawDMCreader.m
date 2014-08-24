@@ -99,12 +99,16 @@ if strcmpi(FrameInd,'all')
     FrameInd = 1:nFrame;
 end
 badReqInd = FrameInd > nFrame;
+
 % check if we requested frames beyond what the BigFN contains
 if any(badReqInd)
-    error(['You have requested Frames ',int2str(FrameInd(badReqInd)),', which exceed the length of the BigFN'])
+    warning(['You have requested Frames ',int2str(FrameInd(badReqInd)),', which exceed the length of the BigFN'])
 end
-nFrameExtract = length(FrameInd); %to preallocate properly
 
+%excise bad requests
+FrameInd(badReqInd) = [];
+% more parameters
+nFrameExtract = length(FrameInd); %to preallocate properly
 nBytesExtract = nFrameExtract*BytesPerFrame;
 if verbose
     display(['Extracting ',sprintf('%ld',nBytesExtract),' bytes.'])
