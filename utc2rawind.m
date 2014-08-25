@@ -18,6 +18,6 @@ spd = 86400; %seconds/day
 %% esimate raw frame indices
 % TODO check for off-by-one error in frame indices
 secondsSinceStart = (utcdatenum - startUTC)*spd;
-rawind = secondsSinceStart * rawFrameRate; %in matlab, better to leave the indices as class double!
+rawind = round(secondsSinceStart * rawFrameRate); %in matlab, better to leave the indices as class double!
 
 end
