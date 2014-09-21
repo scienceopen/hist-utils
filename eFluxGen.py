@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-# based on Strickland 1993
-
+''' Michael Hirsch
+ based on Strickland 1993
+'''
 from numpy import (pi,exp,logspace,sum,argmin,array,newaxis,repeat,copy,
                    arange,zeros,atleast_1d,isscalar,set_printoptions)
-from matplotlib.pyplot import (figure,clf,gca, show)
+from matplotlib.pyplot import figure, show
 from findnearest import find_nearest
-#from warnings import warn
+
 
 
 def fluxgen(E,E0,Q0,Wbc,Bm,bl,bm,bh):
@@ -14,7 +15,7 @@ def fluxgen(E,E0,Q0,Wbc,Bm,bl,bm,bh):
     Wb=Wbc*E0
 
     isimE0 = find_nearest(E,E0)[0]
-    isimE0 += -1 # FIXME to get left of E0
+    isimE0 -= 1 # FIXME to get left of E0
     E = repeat(E[:,newaxis],nE0,axis=1) #identical columns
 
     base = gaussflux(E,E0,nE0,Q0,Wb)
@@ -88,8 +89,7 @@ def gaussflux(E,E0,nE0,Q0,Wb):
     return base
 
 def plotflux(E,E0,hi,low,mid,arc,dbglvl):
-    figure(1);clf()
-    ax = gca()
+    ax = figure(1).gca()
     if isscalar(E0):
         ax.loglog(E,hi,'k:')
         ax.loglog(E,low,'k:')
@@ -100,38 +100,34 @@ def plotflux(E,E0,hi,low,mid,arc,dbglvl):
     ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
     ax.set_title('arc flux, $E_0=$' + str(E0) + '[eV]')
     ax.set_ylim((1e2,1e6))
-    ax.legend(['500','1000','2500','5000','10000'])
+    ax.legend(list(map(str,E0)))
     #ax.set_xlim((1e2,1e4))
 
     if dbglvl>0:
-        figure(2);clf()
-        ax = gca()
+        ax = figure(2).gca()
         ax.loglog(E,base)
         ax.set_ylim((1e2,1e6))
         #ax.set_xlim((1e2,1e4))
         ax.set_title('arc Gaussian base function, E0=' + str(E0)+ '[eV]')
         ax.set_xlabel('Electron Energy [eV]')
         ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
-        ax.legend(['500','1000','2500','5000','10000'])
-    
-        figure(3); clf()
-        ax = gca()
+        ax.legend(str(E0))
+
+        ax = figure(3).gca()
         ax.loglog(E,low)
         ax.set_ylim((1e2,1e6))
         ax.set_title('arc low (E<E0)')
         ax.set_xlabel('Electron Energy [eV]')
         ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
-        
-        figure(4); clf()
-        ax = gca()
+
+        ax = figure(4).gca()
         ax.loglog(E,mid)
         ax.set_ylim((1e2,1e6))
         ax.set_title('arc mid')
         ax.set_xlabel('Electron Energy [eV]')
         ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
-        
-        figure(5); clf()
-        ax = gca()
+
+        ax = figure(5).gca()
         ax.loglog(E,hi)
         ax.set_ylim((1e2,1e6))
         ax.set_title('arc hi (E>E0)')
@@ -139,11 +135,11 @@ def plotflux(E,E0,hi,low,mid,arc,dbglvl):
         ax.set_ylabel('Flux  [cm$^{-2}$s$^{-1}$eV$^{-1}$sr$^{-1}$]')
 
     show()
-    
+
 def writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh):
     from time import time
     import h5py
-    
+
     progms = time() * 1000
     with h5py.File(str(progms) + '.h5', libver='latest') as fid:
         fid.create_dataset('/arc',data=arc)
@@ -154,26 +150,34 @@ def writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh):
         fid.create_dataset('/params/bl',data=bl)
         fid.create_dataset('/params/bm',data=bm)
         fid.create_dataset('/params/bh',data=bh)
-    
+
 
 if __name__ == '__main__':
+    from argparse import ArgumentParser
+    p = ArgumentParser(description='generates diff. num flux based on Strickland 1993')
+    p.add_argument('-d','--debug',help='set debugging verbosity',default=0,type=float)
+    p.add_argument('--E0min',help='of preset scenarios, use only those with E0>',default=0,type=float)
+    args = p.parse_args()
+
     set_printoptions(precision=2)
     E = logspace(2,4.35,num=200,base=10)
     #E0 = 2500.
     #Q0 = 8.e11
     E0 = array([500., 1000., 2500., 5000., 1e4])
-    Q0 = array([8e10, 3.2e11, 1.0e12, 2.8e12, 5.0e12])
-    Wbc = array([1, 0.75, 0.5, 0.375, 0.25])
-    bl = array([2., 1.5, 1.4, 1.2, 1.])
-    bm = array([3., 3.,  3.,   2.5,  2.])
-    bh = array([4., 4.,  4.,   3.5,  2.5])
-    Bm = array([2e3, 5e3, 6e3, 8e3, 5e3])
+    useE0 = E0>args.E0min
+    E0 = E0[useE0]
+    Q0 = array([8e10, 3.2e11, 1.0e12, 2.8e12, 5.0e12]); Q0 = Q0[useE0]
+    Wbc = array([1, 0.75, 0.5, 0.375, 0.25]); Wbc = Wbc[useE0]
+    bl = array([2., 1.5, 1.4, 1.2, 1.]); bl = bl[useE0]
+    bm = array([3., 3.,  3.,   2.5,  2.]); bm = bm[useE0]
+    bh = array([4., 4.,  4.,   3.5,  2.5]); bh = bh[useE0]
+    Bm = array([2e3, 5e3, 6e3, 8e3, 5e3]); Bm = Bm[useE0]
 
     #E0 = array([2500., 5000., 7500., 10000.])
     #Q0 = array([8.0e11, 8.0e11, 8.0e11, 8.0e11])
 
     arc,low,mid,hi,base = fluxgen(E,E0,Q0,Wbc,Bm,bl,bm,bh)
 
-    plotflux(E,E0,hi,low,mid,arc,dbglvl=1)
-    
+    plotflux(E,E0,hi,low,mid,arc,args.debug)
+
     writeh5(arc,E,E0,Q0,Wbc,bl,bm,bh)
