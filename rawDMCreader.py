@@ -184,7 +184,7 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description='Raw .DMCdata file reader')
-    p.add_argument('-i','--infile',help='.DMCdata file name and path',required=True)
+    p.add_argument('infile',help='.DMCdata file name and path',type=str)
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
     p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None,type=int)
