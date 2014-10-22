@@ -4,6 +4,7 @@
 # requires astropy if you want to write FITS
 # Michael Hirsch
 # GPL v3+ license
+from __future__ import division
 import os
 import numpy as np
 import matplotlib.pyplot as plt
