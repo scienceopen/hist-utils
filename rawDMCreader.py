@@ -153,7 +153,7 @@ def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
     sfmt = ScalarFormatter(useMathText=True)
     print('attemping movie playback')
     hf1 = plt.figure(1)
-    hAx = hf1.add_subplot(111)
+    hAx = hf1.gca()
     if Clim is None:
         hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower',norm=LogNorm() )
     else:
