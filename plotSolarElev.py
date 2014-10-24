@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
-#tested in Python 3.4.0 and Python 2.7.6
-# Michael Hirsch
-# Aug 2012
-import sys
+'''
+tested in Python 3.4 and Python 2.7
+Michael Hirsch
+ Aug 2012
+'''
 import ephem  #pip install ephem
 import datetime
 import matplotlib.pyplot as plt
-import numpy as np
+from numpy import degrees,empty_like,empty
 from dateutil.relativedelta import relativedelta
 
-def main(argv):
-    
-    year = 2014
+def main(site,coord,year):
 
-    if len(argv) < 2:
-        site = 'PFISR'
-    else:
-        site = argv[1]
-
-    SiteNames = {
-    "Sondrestrom": Sondrestrom,
-    "PFISR": PFISR,
-    "BU": BU,
-    "Svalbard": Svalbard}
-
-    lat, lon, elv = SiteNames.get(site)()
+    if site:
+        # one weird trick
+        SiteNames = {
+        "Sondrestrom": Sondrestrom,
+        "PFISR": PFISR,
+        "BU": BU,
+        "Svalbard": Svalbard}
+        lat, lon, elv = SiteNames.get(site)()
+    elif coord is not None:
+        lat,lon,elv = coord[0],coord[1],coord[2]
 
 
     obs=ephem.Observer()
@@ -34,7 +31,7 @@ def main(argv):
     obs.lat = lat #STRING
     obs.lon= lon #STRING
     obs.elevation = elv # meters
-    
+
 
     sun = ephem.Sun()
 
@@ -45,19 +42,19 @@ def main(argv):
     d = date_range(d0, d1,1,'days')
 
     t0 = d0
-    
-    sunaltdate=np.empty((24*4+1,len(d)),dtype=float)
+
+    sunaltdate=empty((24*4+1,len(d)),dtype=float)
     for j,dd in enumerate(d):
         t1 = t0 + relativedelta(days=1)
         t = date_range(t0, t1,15,'minutes')
 
-        sunalt = np.empty(len(t))
+        sunalt = empty_like(t)
         for i,tt in enumerate(t):
             #print(tt)
             obs.date = tt
             sun.compute(obs)
 
-            sunalt[i] = np.rad2deg(sun.alt)
+            sunalt[i] = degrees(sun.alt)
 
         sunaltdate[:,j] = sunalt
         t0 = t1
@@ -69,21 +66,25 @@ def main(argv):
 #    plt.grid(1)
 #    plt.title(site + ' ' + t0.strftime(dfmt))
 
-    fig = plt.figure(2,figsize=(12,7),dpi=110); plt.clf()
+    fg = plt.figure(2,figsize=(12,7),dpi=110)
+    ax = fg.gca()
     #plt.imshow(sunaltdate,extent=[0,365,0,23],aspect='auto')#extent=[d0,d1,t0,t1 ]) #contour is better
     V = (-18,-12,-6,-3,0,10,20,30,40,50,60,70,80,90)
-    CS = plt.contour(d,t,sunaltdate,V)
-    plt.clabel(CS, inline=1, fontsize=10)#, manual=manual_locations)
+    CS = ax.contour(d,t,sunaltdate,V)
+    ax.clabel(CS, inline=1, fontsize=10,fmt='%0.0f')#, manual=manual_locations)
     #plt.xlabel('DOY')
-    plt.ylabel('UTC')
-    plt.title(site +': ' + str(lat) + ', ' + str(lon) )
-    plt.grid(True)
-    fig.autofmt_xdate()
+    ax.set_ylabel('UTC')
+    ax.set_title(site +': ' + str(lat) + ', ' + str(lon) )
+    ax.grid(True)
+    fg.autofmt_xdate()
     #plt.colorbar()
 
     plt.show()
 
-#http://stackoverflow.com/questions/10688006/generate-a-list-of-datetimes-between-an-interval-in-python
+'''
+http://stackoverflow.com/questions/10688006/generate-a-list-of-datetimes-between-an-interval-in-python
+consider using pandas instead
+'''
 def date_range(start_date, end_date, increment, period):
     result = []
     nxt = start_date
@@ -93,7 +94,12 @@ def date_range(start_date, end_date, increment, period):
         nxt += delta
     return result
 
-# hmm, dictionary 
+class Site:
+    def __init__(self,lat,lon,elv):
+        #we're going to let pyephem do error checking
+        self.lat=lat
+        self.lon=lon
+        self.elv=elv
 def Sondrestrom():
     lat='66.98'
     lon='-50.94'
@@ -115,6 +121,12 @@ def Svalbard():
     elv=450
     return lat, lon, elv
 
-
-
-main(sys.argv)
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+    p = ArgumentParser(description='plots solar elevation angle')
+    p.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str,default='')
+    p.add_argument('-c','--coord',help='specify site lat lon [degrees] alt [meters]',
+                   nargs=3,type=float,default=[None, None, None])
+    p.add_argument('-y','--year',help='year to plot',type=int,default=2014)
+    ar = p.parse_args()
+    main(ar.site,ar.coord,ar.year)
