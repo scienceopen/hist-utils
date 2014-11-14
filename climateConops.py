@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""
- Michael Hirsch
+""" Michael Hirsch
+ crude thermal budget for outdoor enclosure
  we consider arbitrarily two worst case dates:
  Dec 21 worst-case heating need -- 10th percentile
  Sept 1 worst-case cooling need
  This should be done using classes...
 """
+from __future__ import division
 from numpy import sin,radians
 
 def worstHeat(Aair,R,Qequip):
     # assume sun is below horizon 24 hours a day
     Qsolar = 0 #[W]
- #http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
-    # 25th percentile -35C, 10th percentile -40C
+    """http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
+     25th percentile -35C, 10th percentile -40C
+    """
     Tout = -40 #[C]
     Tin = -10 #[C]
 
@@ -29,19 +31,18 @@ def worstHeat(Aair,R,Qequip):
 
 
 def worstCool(Albedo,Aair,A,R,Qequip):
-    #assume sun is at 45 degree elev, neglect cabinet albedo
+    """assume sun is at 45 degree elev, neglect cabinet albedo"""
     Qsun = 850 #[W]
- #http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
-    # 25th percentile 18C, 10th percentile 21C
+    """http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
+     25th percentile 18C, 10th percentile 21C
+    """
     Tout = 20 #[C]
     Tin =  30 #[C]
-
 
     Qtop  = A['top']  * Qsun * sin(radians(35)) #max sun elev ~ 45 deg.
     Qside = A['side'] * Qsun * sin(radians(35)) #worst case(?)
     Qend  = 0 #A['end']  * Qsun * sin(radians(45)) #consistent with angle used for top,side
     Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
-
 
     Qext = Qsolar*(1-Albedo)
     Qxfer =  Aair/R*(Tout-Tin)
@@ -57,11 +58,11 @@ def worstCool(Albedo,Aair,A,R,Qequip):
 def SummerCool(Albedo,Aair,A,R,Qequip):
     #assume sun is at 45 degree elev, neglect cabinet albedo
     Qsun = 850 #[W]
- #http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
-    # 25th percentile 18C, 10th percentile 21C
+    """http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
+     25th percentile 18C, 10th percentile 21C
+    """
     Tout = 35 #[C]
     Tin =  40 #[C]
-
 
     Qtop  = A['top']  * Qsun * sin(radians(45)) #max sun elev ~ 45 deg.
     Qside = A['side'] * Qsun * sin(radians(45)) #worst case(?)
