@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Michael Hirsch
 
 following http://www.pveducation.org/pvcdrom/properties-of-sunlight/air-mass
 assumes observer at sea level, altitude h \approx 0
 input: theta [deg] solar elevation angle above horizon
 """
-from __future__ import division
+from __future__ import division,unicode_literals
 from numpy import sin,radians,arange,nan
 from matplotlib.pyplot import figure,show
 
