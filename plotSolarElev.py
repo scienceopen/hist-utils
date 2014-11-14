@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 tested in Python 3.4 and Python 2.7
 Michael Hirsch
@@ -83,7 +84,7 @@ def plotIrr(dates,t,sunaltdate,site,lat,lon):
     CS = ax.contour(dates,t,sunaltdate)
     ax.clabel(CS, inline=1, fontsize=10,fmt='%0.0f')#, manual=manual_locations)
     ax.set_ylabel('UTC')
-    ax.set_title(''.join(('Sea level solar irradiance at ',site,': ',lat,', ',lon)))
+    ax.set_title(''.join(('Sea level solar irradiance [W/m$^2$] at ',site,': ',lat,', ',lon)))
     ax.grid(True)
     fg.autofmt_xdate()
     show()
