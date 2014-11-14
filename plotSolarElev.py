@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-'''
+"""
 tested in Python 3.4 and Python 2.7
 Michael Hirsch
  Aug 2012
-'''
+"""
 import ephem  #pip install ephem
 import datetime
 import matplotlib.pyplot as plt
@@ -81,10 +81,10 @@ def main(site,coord,year):
 
     plt.show()
 
-'''
+"""
 http://stackoverflow.com/questions/10688006/generate-a-list-of-datetimes-between-an-interval-in-python
 consider using pandas instead
-'''
+"""
 def date_range(start_date, end_date, increment, period):
     result = []
     nxt = start_date
@@ -101,25 +101,13 @@ class Site:
         self.lon=lon
         self.elv=elv
 def Sondrestrom():
-    lat='66.98'
-    lon='-50.94'
-    elv=180 # meters
-    return lat, lon, elv
+    return '66.98','-50.94', 180
 def PFISR():
-    lat='65.12'
-    lon='-147.49'
-    elv=210
-    return lat, lon, elv
+    return '65.12', '-147.49', 210
 def BU():
-    lat='42.4'
-    lon='-71.1'
-    elv=5
-    return lat, lon, elv
+    return '42.4', '-71.1', 5
 def Svalbard():
-    lat='78.23'
-    lon='15.4'
-    elv=450
-    return lat, lon, elv
+    return '78.23', '15.4', 450
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
