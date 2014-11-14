@@ -9,6 +9,8 @@ import pandas as pd
 from matplotlib.pyplot import figure,show
 from numpy import degrees,empty_like,empty
 from dateutil.relativedelta import relativedelta
+#
+from airMass import airmass
 
 def main(site,coord,year):
 
@@ -37,10 +39,15 @@ def main(site,coord,year):
     dates = pd.date_range(start=year+'-01-01', end=year+'-12-31', freq='D')
 
     sunaltdate,t = elofday(dates,obs,sun)
-
     plotyear(dates,t,sunaltdate,site,lat,lon)
-#%% compute solar elevation for each day of year
+
+    Irr = airmass(sunaltdate)[0]
+    plotIrr(dates,t,Irr,site,lat,lon)
+
+    show()
+
 def elofday(dates,obs,sun):
+    """ compute solar elevation for each day of year"""
     ploteachmin = 15
     sunaltdate=empty((24*60/ploteachmin+1,dates.size),dtype=float)
     t0 = dates[0]
@@ -62,12 +69,21 @@ def elminutes(times,obs,sun):
 def plotyear(dates,t,sunaltdate,site,lat,lon):
     fg = figure(figsize=(12,7),dpi=110)
     ax = fg.gca()
-    #plt.imshow(sunaltdate,extent=[0,365,0,23],aspect='auto')#extent=[d0,d1,t0,t1 ]) #contour is better
     V = (-18,-12,-6,-3,0,10,20,30,40,50,60,70,80,90)
     CS = ax.contour(dates,t,sunaltdate,V)
     ax.clabel(CS, inline=1, fontsize=10,fmt='%0.0f')#, manual=manual_locations)
     ax.set_ylabel('UTC')
     ax.set_title(''.join(('Solar elevation angle (deg.)  ',site,': ',lat,', ',lon)))
+    ax.grid(True)
+    fg.autofmt_xdate()
+
+def plotIrr(dates,t,sunaltdate,site,lat,lon):
+    fg = figure(figsize=(12,7),dpi=110)
+    ax = fg.gca()
+    CS = ax.contour(dates,t,sunaltdate)
+    ax.clabel(CS, inline=1, fontsize=10,fmt='%0.0f')#, manual=manual_locations)
+    ax.set_ylabel('UTC')
+    ax.set_title(''.join(('Sea level solar irradiance at ',site,': ',lat,', ',lon)))
     ax.grid(True)
     fg.autofmt_xdate()
     show()
