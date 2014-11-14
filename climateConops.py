@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """ Michael Hirsch
  crude thermal budget for outdoor enclosure
  we consider arbitrarily two worst case dates:
