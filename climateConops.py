@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-'''
+"""
  Michael Hirsch
  we consider arbitrarily two worst case dates:
  Dec 21 worst-case heating need -- 10th percentile
  Sept 1 worst-case cooling need
  This should be done using classes...
- '''
+"""
 from numpy import sin,radians
 
 def worstHeat(Aair,R,Qequip):
