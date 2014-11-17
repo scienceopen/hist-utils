@@ -24,5 +24,4 @@ def meta2rawInd(fid,Nmetadata):
     #TODO works for .DMCdata only, not bigger header files!
     metad = fromfile(fid, dtype=uint16, count=Nmetadata)
     metad = pack('<2H',metad[1],metad[0]) # reorder 2 uint16
-    rawInd = unpack('<I',metad)[0] #always a tuple
-    return rawInd
+    return unpack('<I',metad)[0] #always a tuple
