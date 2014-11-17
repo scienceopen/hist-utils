@@ -3,3 +3,8 @@ hist-utils
 ==========
 
 HiST project raw data reading utilities
+
+installation:
+```
+pip install https://github.com/scienceopen/hist-utils/archive/master.zip
+```
