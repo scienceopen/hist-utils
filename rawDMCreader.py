@@ -22,23 +22,23 @@ import getRawInd as gri
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
-def goRead(BigFN,xyPix,xyBin,FrameInd,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None,verbose=0):
+def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None,verbose=0):
 
     # setup data parameters
-    SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd = getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose)
+    finf = getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose)
 
 # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
-    data = np.zeros((nFrameExtract,SuperY,SuperX),dtype=np.uint16,order='C')
-    rawFrameInd = np.zeros(nFrameExtract,dtype=int)
+    data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),dtype=np.uint16,order='C')
+    rawFrameInd = np.zeros(finf['nframeextract'],dtype=int)
 
     with open(BigFN, 'rb') as fid:
         jFrm=0
         for iFrm in FrameInd:
-            data[jFrm,:,:],rawFrameInd[jFrm] = getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY)
+            data[jFrm,:,:],rawFrameInd[jFrm] = getDMCframe(fid,iFrm,finf,verbose)
             jFrm += 1
 
     #more reliable if slower playback
-    doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd)
+    doPlayMovie(data,finf,playMovie,Clim,rawFrameInd)
 
 # on some systems, just freezes at first frame
 #    if playMovie:
@@ -68,7 +68,7 @@ def animate(i,data,himg,ht):
     #plt.show(False) #breaks (won't play)
     return himg,ht
 
-def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose=0):
+def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
     SuperX = xyPix[0] // xyBin[0] # "//" keeps as integer
     SuperY = xyPix[1] // xyBin[1]
 
@@ -104,41 +104,45 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameInd,verbose=0):
 # setup frame indices
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
-    if FrameInd is None:
+    if FrameIndReq is None:
         FrameInd = np.arange(nFrame,dtype=int) # has to be numpy for > comparison
         if verbose>=0:
             print('automatically selected all frames in file')
-    elif isinstance(FrameInd,int):
-        FrameInd =np.arange(FrameInd,dtype=int)
-    elif len(FrameInd) == 3:
-        FrameInd =np.arange(FrameInd[0],FrameInd[1],FrameInd[2],dtype=int)
+    elif isinstance(FrameIndReq,int): #the user is specifying a step size
+        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=int)
+    elif len(FrameIndReq) == 3:
+        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int)
 
 
 
     badReqInd = FrameInd>nFrame
 # check if we requested frames beyond what the BigFN contains
     if np.any(badReqInd):
-        raise RuntimeError('You have requested Frames ' + str(FrameInd[badReqInd]) +
+        exit('*** You have requested Frames ' + str(FrameInd[badReqInd]) +
                  ', which exceeds the length of ' + BigFN)
-    nFrameExtract = len(FrameInd) #to preallocate properly
+    nFrameExtract = FrameInd.size #to preallocate properly
 
     nBytesExtract = nFrameExtract*BytesPerFrame
     if verbose >= 0:
-        print(BigFN + ' contains ' + str(nFrameExtract) + ' frames, totaling ' + str(nBytesExtract) + ' bytes.')
+        print('Extracted ' +  str(nFrameExtract) + ' frames from ' + BigFN + ' totaling ' + str(nBytesExtract) + ' bytes.')
     if nBytesExtract > 4e9:
         warnings.warn('This will require ' + str(nBytesExtract/1e9) + ' Gigabytes of RAM.')
-    return SuperX,SuperY,Nmetadata,BytesPerFrame,PixelsPerImage,nFrame,nFrameExtract,FrameInd
 
-def getDMCframe(fid,iFrm,BytesPerFrame,PixelsPerImage,Nmetadata,SuperX,SuperY,verbose=0):
+    finf = {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata, 'bytesperframe':BytesPerFrame,
+            'pixelsperimage':PixelsPerImage, 'nframe':nFrame, 'nframeextract':nFrameExtract,
+            'frameind':FrameInd}
+    return finf
+
+def getDMCframe(fid,iFrm,finf,verbose=0):
     #print(type(iFrm)); print(type(BytesPerFrame));
-    currByte = int(iFrm * BytesPerFrame) # to fix that mult casts to float64 here!
+    currByte = int(iFrm * finf['bytesperframe']) # to fix that mult casts to float64 here!
 
 	#advance to start of frame in bytes
     fid.seek(currByte,0) #no return value
 	#read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
-    currFrame = np.fromfile(fid, np.uint16,PixelsPerImage).reshape((SuperY,SuperX),order='C')
+    currFrame = np.fromfile(fid, np.uint16,finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),order='C')
 
-    rawFrameInd = getRawFrameInd(fid,Nmetadata)
+    rawFrameInd = getRawFrameInd(fid,finf['nmetadata'])
     return currFrame,rawFrameInd
 
 def getRawFrameInd(fid,Nmetadata):
@@ -148,7 +152,7 @@ def getRawFrameInd(fid,Nmetadata):
     #print(' raw ' + str(rawFrameInd[jFrm]))
     return rawFrameInd
 
-def doPlayMovie(data,SuperX,SuperY,FrameInd,playMovie,Clim,rawFrameInd):
+def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
   if playMovie is not None:
     sfmt = ScalarFormatter(useMathText=True)
     print('attemping movie playback')
