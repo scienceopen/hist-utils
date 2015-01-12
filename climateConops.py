@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """ Michael Hirsch
+Thanks to Amber Baurley and Sam Chen for climate research
  crude thermal budget for outdoor enclosure
  we consider arbitrarily two worst case dates:
  Dec 21 worst-case heating need -- 10th percentile
