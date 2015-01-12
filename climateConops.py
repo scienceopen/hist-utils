@@ -85,7 +85,7 @@ def SummerCool(Albedo,Aair,A,R,Qequip):
 
 #------------------
 if __name__ == '__main__':
-    A = {'side':0.45, 'end':0.35,'top':0.45}
+    A = {'side':0.45, 'end':0.35,'top':0.45} #[meters]
     Aair = 1*A['top'] + 2*A['side'] + 2*A['end'] #[m^2] roughly #neglect bottom side
     Asun = A['top'] + A['side'] + A['end'] #[m^2] roughly
 
