@@ -85,21 +85,26 @@ def SummerCool(Albedo,Aair,A,R,Qequip):
 
 #------------------
 if __name__ == '__main__':
-    A = {'side':0.45, 'end':0.35,'top':0.45}
-    Aair = 1*A['top'] + 2*A['side'] + 2*A['end'] #[m^2] roughly #neglect bottom side
-    Asun = A['top'] + A['side'] + A['end'] #[m^2] roughly
+    #[m^2] area of the panel
+    Areas = [{'side':0.45, 'end':0.35,'top':0.45,'model':'Zarges'},
+         {'side':0.51, 'end':0.5,'top':0.41,'model':'OD-30DXC'}]
 
-    print('enclosure area exposed to air is {:0.2f}'.format(Aair) +' m^2')
-    print('enclosure area exposed to sun is {:0.2f}'.format(Asun) +' m^2')
-    R = 0.18 #[m^2 C/W]
-    Qequip = { 'rest': 125, 'record': 175, 'compress': 250, 'off':5 } #[W]
-    Albedo = 0.7
-    print('Assuming albedo: {0:0.1f}'.format(Albedo))
-    #http://books.google.com/books?id=PePq7o6mAbwC&lpg=PA282&ots=gOYd86tmHh&dq=house%20paint%20albedo&pg=PA283#v=onepage&q=house%20paint%20albedo&f=false
-    print('Sign convention: negative watts is outgoing heat flux')
-    print('-------------------------------------------')
-    worstHeat(Aair,R,Qequip['rest'])
-    print('-------------------------------------------')
-    worstCool(Albedo,Aair,A,R,Qequip['rest'])
-    print('-------------------------------------------')
-    SummerCool(Albedo,Aair,A,R,Qequip['off'])
+    for A in Areas:
+        print('analysis of ' + A['model'])
+        Aair = 1*A['top'] + 2*A['side'] + 2*A['end'] #[m^2] roughly #neglect bottom side
+        Asun = A['top'] + A['side'] + A['end'] #[m^2] roughly
+
+        print('enclosure area exposed to air is {:0.2f}'.format(Aair) +' m^2')
+        print('enclosure area exposed to sun is {:0.2f}'.format(Asun) +' m^2')
+        R = 0.18 #[m^2 C/W]
+        Qequip = { 'rest': 125, 'record': 175, 'compress': 250, 'off':5 } #[W]
+        Albedo = 0.7
+        print('Assuming albedo: {0:0.1f}'.format(Albedo))
+        #http://books.google.com/books?id=PePq7o6mAbwC&lpg=PA282&ots=gOYd86tmHh&dq=house%20paint%20albedo&pg=PA283#v=onepage&q=house%20paint%20albedo&f=false
+        print('Sign convention: negative watts is outgoing heat flux')
+        print('-------------------------------------------')
+        worstHeat(Aair,R,Qequip['rest'])
+        print('-------------------------------------------')
+        worstCool(Albedo,Aair,A,R,Qequip['rest'])
+        print('-------------------------------------------')
+        SummerCool(Albedo,Aair,A,R,Qequip['off'])

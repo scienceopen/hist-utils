@@ -140,7 +140,13 @@ def getDMCframe(fid,iFrm,finf,verbose=0):
 	#advance to start of frame in bytes
     fid.seek(currByte,0) #no return value
 	#read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
-    currFrame = np.fromfile(fid, np.uint16,finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),order='C')
+    try:
+        currFrame = np.fromfile(fid, np.uint16,
+                            finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),
+                            order='C')
+    except ValueError:
+        print('*** we may have read past end of file?')
+        return None,None
 
     rawFrameInd = getRawFrameInd(fid,finf['nmetadata'])
     return currFrame,rawFrameInd
