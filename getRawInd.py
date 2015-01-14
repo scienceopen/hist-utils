@@ -10,11 +10,10 @@ def getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata):
     BigFN = expanduser(BigFN)
     # gets first and last raw indices from a big .DMCdata file
     with open(BigFN,'rb') as fid:
-
-        fid.seek( int(BytesPerImage) ,0) # get first raw frame index
+        fid.seek(BytesPerImage, 0) # get first raw frame index
         firstRawIndex = meta2rawInd(fid,Nmetadata)
 
-        fid.seek(-nHeadBytes,2) #get last raw frame index
+        fid.seek(-nHeadBytes, 2) #get last raw frame index
         lastRawIndex = meta2rawInd(fid,Nmetadata)
 
     return firstRawIndex, lastRawIndex
