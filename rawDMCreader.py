@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-# reads .DMCdata files and displays them
-# Primarily tested with Python 3.4 on Linux, but should also work for Python 2.7 on any operating system.
-# requires astropy if you want to write FITS
-# Michael Hirsch
-# GPL v3+ license
-from __future__ import division
+"""
+reads .DMCdata files and displays them
+ Primarily tested with Python 3.4 on Linux, but should also work for Python 2.7 on any operating system.
+ requires astropy if you want to write FITS
+ Michael Hirsch
+ GPL v3+ license
+ Observe the dtype='int64', this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
+ """
+from __future__ import division, print_function
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,12 +32,12 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,rawFrameRate=N
 
 # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
     data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),dtype=np.uint16,order='C')
-    rawFrameInd = np.zeros(finf['nframeextract'],dtype=int)
+    rawFrameInd = np.zeros(finf['nframeextract'],dtype='int64')
 
     with open(BigFN, 'rb') as fid:
         jFrm=0
         for iFrm in FrameInd:
-            data[jFrm,:,:],rawFrameInd[jFrm] = getDMCframe(fid,iFrm,finf,verbose)
+            data[jFrm,:,:], rawFrameInd[jFrm] = getDMCframe(fid,iFrm,finf,verbose)
             jFrm += 1
 
     #more reliable if slower playback
@@ -60,11 +63,12 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,rawFrameRate=N
 
 def animate(i,data,himg,ht):
     #himg = plt.imshow(data[:,:,i]) #slow, use set_data instead
-    himg.set_data(data[:,:,i])
+    himg.set_data(data[i,:,:])
     ht.set_text('RelFrame#' + str(i) )
     #'RawFrame#: ' + str(rawFrameInd[jFrm]) +
 
     plt.draw() #plot won't update without plt.draw()!
+    #plt.pause(0.01)
     #plt.show(False) #breaks (won't play)
     return himg,ht
 
@@ -83,19 +87,18 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
     fileSizeBytes = os.path.getsize(BigFN)
 
     if fileSizeBytes < BytesPerImage:
-        raise RuntimeError('File size ' + str(fileSizeBytes) +
+        exit('*** getDMCparam: File size ' + str(fileSizeBytes) +
                  ' is smaller than a single image frame!')
 
-    nFrame = fileSizeBytes / BytesPerFrame #for quick check diagnostic, left as float temporarily
-
-    if nFrame%1 != 0:
+     
+    if fileSizeBytes % BytesPerFrame:
         warnings.warn("Looks like I am not reading this file correctly, with BPF: " +
               str(BytesPerFrame) )
-    nFrame = int(nFrame) # this is a nice quick check diagnostic above
-
+    
+    nFrame = fileSizeBytes // BytesPerFrame
 
     (firstRawInd,lastRawInd) = gri.getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata)
-    if verbose >=0:
+    if verbose > 0:
         print(str(nFrame) + ' frames in file ' + BigFN)
         print('   file size in Bytes: '  +str(fileSizeBytes))
         print("first / last raw frame #'s: " + str(firstRawInd) + " / " +
@@ -104,29 +107,30 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
 # setup frame indices
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
+    #note these assignments have to be np.int64, not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     if FrameIndReq is None:
-        FrameInd = np.arange(nFrame,dtype=int) # has to be numpy for > comparison
-        if verbose>=0:
+        FrameInd = np.arange(nFrame,dtype='int64') # has to be numpy.arange for > comparison
+        if verbose>0:
             print('automatically selected all frames in file')
     elif isinstance(FrameIndReq,int): #the user is specifying a step size
-        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=int)
+        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype='int64')
     elif len(FrameIndReq) == 3:
-        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int)
-
-
+        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype='int64')
+    else:
+        exit('*** getDMCparam: I dont understand your frame request')
 
     badReqInd = FrameInd>nFrame
 # check if we requested frames beyond what the BigFN contains
-    if np.any(badReqInd):
+    if badReqInd.any():
         exit('*** You have requested Frames ' + str(FrameInd[badReqInd]) +
                  ', which exceeds the length of ' + BigFN)
     nFrameExtract = FrameInd.size #to preallocate properly
 
-    nBytesExtract = nFrameExtract*BytesPerFrame
-    if verbose >= 0:
+    nBytesExtract = nFrameExtract * BytesPerFrame
+    if verbose > 0:
         print('Extracted ' +  str(nFrameExtract) + ' frames from ' + BigFN + ' totaling ' + str(nBytesExtract) + ' bytes.')
     if nBytesExtract > 4e9:
-        warnings.warn('This will require ' + str(nBytesExtract/1e9) + ' Gigabytes of RAM.')
+        warnings.warn('This will require {:0.2f}'.format(nBytesExtract/1e9) + ' Gigabytes of RAM.')
 
     finf = {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata, 'bytesperframe':BytesPerFrame,
             'pixelsperimage':PixelsPerImage, 'nframe':nFrame, 'nframeextract':nFrameExtract,
@@ -134,11 +138,22 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
     return finf
 
 def getDMCframe(fid,iFrm,finf,verbose=0):
-    #print(type(iFrm)); print(type(BytesPerFrame));
-    currByte = int(iFrm * finf['bytesperframe']) # to fix that mult casts to float64 here!
+    # on windows, "int" is int32 and overflows at 2.1GB!
+    
+    currByte = iFrm * finf['bytesperframe'] # to fix that mult casts to float64 here!
 
 	#advance to start of frame in bytes
-    fid.seek(currByte,0) #no return value
+    if verbose>0:
+        if verbose>1:
+            print(type(finf['bytesperframe']))
+            print(type(currByte))
+        print('seeking to byte ' + str(currByte))
+    try:
+        fid.seek(currByte,0) #no return value
+    except IOError:
+        print('*** getDMCframe: I couldnt seek to byte ' + str(currByte))
+        print('try using a 64-bit integer for iFrm')
+        exit()
 	#read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
         currFrame = np.fromfile(fid, np.uint16,
@@ -197,7 +212,7 @@ if __name__ == "__main__":
     p.add_argument('infile',help='.DMCdata file name and path',type=str)
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
-    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None,type=int)
+    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type=int)
     p.add_argument('-m','--movie',help='seconds per frame. ',default=None,type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
     p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)
