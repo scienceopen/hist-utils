@@ -23,7 +23,7 @@ def walktree(root,pat):
     elif isfile(root):
         found = [root]
     else:
-        raise NotImplementedError("is",root,"a file or directory?")
+        exit("is " + root + " a file or directory?")
 
     return found
 
