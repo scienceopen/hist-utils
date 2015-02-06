@@ -8,9 +8,9 @@ reads .DMCdata files and displays them
  Observe the dtype='int64', this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
  """
 from __future__ import division, print_function
-import os
+from os.path import getsize, expanduser, splitext, isfile
 import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure,show, hist, draw, pause, close
 from matplotlib.colors import LogNorm
 from matplotlib.ticker import ScalarFormatter
 #import matplotlib.animation as anim
@@ -36,7 +36,7 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,rawFrameRate=N
 
     with open(BigFN, 'rb') as fid:
         jFrm=0
-        for iFrm in FrameInd:
+        for iFrm in finf['frameind']:
             data[jFrm,:,:], rawFrameInd[jFrm] = getDMCframe(fid,iFrm,finf,verbose)
             jFrm += 1
 
@@ -67,12 +67,14 @@ def animate(i,data,himg,ht):
     ht.set_text('RelFrame#' + str(i) )
     #'RawFrame#: ' + str(rawFrameInd[jFrm]) +
 
-    plt.draw() #plot won't update without plt.draw()!
+    draw() #plot won't update without plt.draw()!
     #plt.pause(0.01)
     #plt.show(False) #breaks (won't play)
     return himg,ht
 
 def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
+    if not isfile(BigFN):
+        exit('*** getDMCparam: ' + BigFN + ' is not a file!')
     SuperX = xyPix[0] // xyBin[0] # "//" keeps as integer
     SuperY = xyPix[1] // xyBin[1]
 
@@ -84,17 +86,17 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
     BytesPerFrame = BytesPerImage + nHeadBytes
 
 # get file size
-    fileSizeBytes = os.path.getsize(BigFN)
+    fileSizeBytes = getsize(BigFN)
 
     if fileSizeBytes < BytesPerImage:
         exit('*** getDMCparam: File size ' + str(fileSizeBytes) +
                  ' is smaller than a single image frame!')
 
-     
+
     if fileSizeBytes % BytesPerFrame:
         warnings.warn("Looks like I am not reading this file correctly, with BPF: " +
               str(BytesPerFrame) )
-    
+
     nFrame = fileSizeBytes // BytesPerFrame
 
     (firstRawInd,lastRawInd) = gri.getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata)
@@ -139,7 +141,7 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
 
 def getDMCframe(fid,iFrm,finf,verbose=0):
     # on windows, "int" is int32 and overflows at 2.1GB!
-    
+
     currByte = iFrm * finf['bytesperframe'] # to fix that mult casts to float64 here!
 
 	#advance to start of frame in bytes
@@ -177,7 +179,7 @@ def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
   if playMovie is not None:
     sfmt = ScalarFormatter(useMathText=True)
     print('attemping movie playback')
-    hf1 = plt.figure(1)
+    hf1 = figure(1)
     hAx = hf1.gca()
     if Clim is None:
         hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower',norm=LogNorm() )
@@ -198,10 +200,10 @@ def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
         hIm.set_data(data[jFrm,:,:])  # faster
         hT.set_text('RawFrame#: ' + str(rawFrameInd[jFrm]) +
                 'RelFrame#' + str(iFrm) )
-        plt.draw()
-        plt.pause(playMovie)
+        draw()
+        pause(playMovie)
         jFrm += 1  #yes, at end of for loop
-    plt.close()
+    close()
   else:
     print('skipped movie playback')
 
@@ -221,31 +223,36 @@ if __name__ == "__main__":
     p.add_argument('--mat',help="write a .mat MATLAB data file of the extracted data",action='store_true')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--png',help='writes a .png of the data you extract (currently only for --avg))',action='store_true')
-    args = p.parse_args()
+    p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
+    a = p.parse_args()
 
-    BigFN = os.path.expanduser(args.infile)
-    xyPix = args.pix
-    xyBin = args.bin
-    FrameInd = args.frames
-    playMovie = args.movie
-    Clim = args.clim
-    rawFrameRate = args.rate
+    BigFN = expanduser(a.infile)
+    xyPix = a.pix
+    xyBin = a.bin
+    FrameInd = a.frames
+    playMovie = a.movie
+    Clim = a.clim
+    rawFrameRate = a.rate
     if rawFrameRate: print('raw frame rate timing not yet implemented')
-    startUTC = args.startutc
+    startUTC = a.startutc
     if startUTC: print('frame UTC timing not yet implemented')
-    writeFITS = args.fits
-    saveMat = args.mat
-    meanImg = args.avg
+    writeFITS = a.fits
+    saveMat = a.mat
+    meanImg = a.avg
 
 
     rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=0)
-    outStem = os.path.splitext(BigFN)[0]
+    outStem = splitext(BigFN)[0]
+
+    if a.hist:
+        hist(rawImgData.ravel(), bins=256)
+        show()
 
     if meanImg:
         meanStack = np.mean(rawImgData,axis=0).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
         #if playMovie is not None:
-        plt.figure(32)
-        ax = plt.axes()
+        fg = figure(32)
+        ax = fg.gca()
         if Clim is None:
             ax.imshow(meanStack,cmap='gray',origin='lower',norm=LogNorm())
         else:
@@ -254,11 +261,11 @@ if __name__ == "__main__":
         ax.set_ylabel('y')
         ax.set_title('mean of image frames')
         #plt.colorbar()
-        if args.png:
+        if a.png:
             pngfn = outStem + '.png'
             print('writing mean PNG ' + pngfn)
-            plt.savefig(pngfn,dpi=150,bbox_inches='tight')
-        plt.show()
+            fg.savefig(pngfn,dpi=150,bbox_inches='tight')
+        show()
 
 
     if writeFITS:
