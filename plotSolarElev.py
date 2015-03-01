@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 tested in Python 3.4 and Python 2.7
 Michael Hirsch
@@ -26,7 +25,7 @@ def main(site,coord,year):
     elif coord[0] is not None:
         obs.lat,obs.lon = coord[0],coord[1]
     else:
-        exit('you must specifiy a site or coordinates')
+        exit('*** you must specify a site or coordinates')
 
     obs.pressure = 1010 # millibar FLOAT
     obs.temp = 15 # deg. Celcius FLOAT
