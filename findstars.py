@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #from scipy.ndimage.filters import maximum_filter
 from skimage.feature import peak_local_max
 from astropy.io import fits
