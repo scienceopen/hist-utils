@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
+Computes solar irradiance and hence solar elevation angle for a year.
+Updated to use AstroPy 1.0+, vectorized computation instead of PyEphem
 tested in Python 3.4 and Python 2.7
 Michael Hirsch
- Aug 2012
+ Aug 2012 -- updated to Astropy Feb 2015
 """
 import astropy.units as u
 from astropy.time import Time, TimeDelta
