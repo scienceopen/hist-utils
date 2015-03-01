@@ -8,7 +8,6 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from matplotlib.pyplot import figure,show
-from numpy import arange
 #
 from airMass import airmass
 
