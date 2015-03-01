@@ -16,13 +16,13 @@ def main(site,coord,year,plotperhour,doplot):
     site = site.lower()
     if len(site) == 0 and coord[0] is not None:
         obs = EarthLocation(lat=coord[0]*u.deg, lon=coord[1]*u.deg, height=coord[2]*u.m)
-    elif site == "Sondrestrom":
+    elif site == "sondrestrom":
         obs.lat='66.98';obs.lon='-50.94';obs.elevation=180
-    elif site=="PFISR":
+    elif site=="pfisr":
         obs.lat='65.12';obs.lon='-147.49';obs.elevation=210
-    elif site=="BU":
+    elif site=="bu":
         obs.lat='42.4'; obs.lon='-71.1';obs.elevation=5
-    elif site=="Svalbard":
+    elif site=="svalbard":
         obs.lat='78.23'; obs.lon='15.4';obs.elevation=450
     else:
         exit('*** you must specify a site or coordinates')
