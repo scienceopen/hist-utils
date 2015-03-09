@@ -5,7 +5,9 @@ reads .DMCdata files and displays them
  requires astropy if you want to write FITS
  Michael Hirsch
  GPL v3+ license
- Observe the dtype=long, this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
+
+NOTE: Observe the dtype='int64', this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
+    --- we can't use long, because that's only for Python 2.7
  """
 from __future__ import division, print_function
 from os.path import getsize, expanduser, splitext, isfile
@@ -34,8 +36,8 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,
 # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
     data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=np.uint16, order='C')
-    rawFrameInd = np.zeros(finf['nframeextract'], dtype=long) #windows made "int" int32, so use "long"
- 
+    rawFrameInd = np.zeros(finf['nframeextract'], dtype='int64')
+
     with open(BigFN, 'rb') as fid:
         jFrm=0
         for iFrm in finf['frameind']:
@@ -113,13 +115,13 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
 # return the requested frames
     #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     if FrameIndReq is None:
-        FrameInd = np.arange(nFrame,dtype=long) # has to be numpy.arange for > comparison
+        FrameInd = np.arange(nFrame,dtype='int64') # has to be numpy.arange for > comparison
         if verbose>0:
             print('automatically selected all frames in file')
     elif isinstance(FrameIndReq,int): #the user is specifying a step size
-        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=long)
+        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype='int64')
     elif len(FrameIndReq) == 3:
-        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=long)
+        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype='int64')
     else:
         exit('*** getDMCparam: I dont understand your frame request')
 
@@ -215,7 +217,7 @@ if __name__ == "__main__":
     p.add_argument('infile',help='.DMCdata file name and path',type=str)
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
-    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type=long)
+    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type='int64')
     p.add_argument('-m','--movie',help='seconds per frame. ',default=None,type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
     p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)
