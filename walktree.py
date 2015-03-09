@@ -34,5 +34,6 @@ if __name__ == '__main__':
     p.add_argument('rootdir',help='path including and below which to search',type=str,default=getcwd(),nargs='?')
     p.add_argument('pattern',help='text to search for (use double apostrophes and globbing e.g. "myfile*" ',type=str)
     a=p.parse_args()
+    
     found = walktree(a.rootdir,a.pattern)
     print(found)
