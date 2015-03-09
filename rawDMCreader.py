@@ -5,7 +5,7 @@ reads .DMCdata files and displays them
  requires astropy if you want to write FITS
  Michael Hirsch
  GPL v3+ license
- Observe the dtype='int64', this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
+ Observe the dtype=long, this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
  """
 from __future__ import division, print_function
 from os.path import getsize, expanduser, splitext, isfile
@@ -25,15 +25,17 @@ import getRawInd as gri
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
-def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,rawFrameRate=None,startUTC=None,verbose=0):
+def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,
+                                    rawFrameRate=None,startUTC=None,verbose=0):
 
     # setup data parameters
     finf = getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose)
 
 # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
-    data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),dtype=np.uint16,order='C')
-    rawFrameInd = np.zeros(finf['nframeextract'],dtype='int64')
-
+    data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),
+                    dtype=np.uint16, order='C')
+    rawFrameInd = np.zeros(finf['nframeextract'], dtype=long) #windows made "int" int32, so use "long"
+ 
     with open(BigFN, 'rb') as fid:
         jFrm=0
         for iFrm in finf['frameind']:
@@ -109,15 +111,15 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
 # setup frame indices
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
-    #note these assignments have to be np.int64, not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
+    #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     if FrameIndReq is None:
-        FrameInd = np.arange(nFrame,dtype='int64') # has to be numpy.arange for > comparison
+        FrameInd = np.arange(nFrame,dtype=long) # has to be numpy.arange for > comparison
         if verbose>0:
             print('automatically selected all frames in file')
     elif isinstance(FrameIndReq,int): #the user is specifying a step size
-        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype='int64')
+        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=long)
     elif len(FrameIndReq) == 3:
-        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype='int64')
+        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=long)
     else:
         exit('*** getDMCparam: I dont understand your frame request')
 
@@ -171,9 +173,8 @@ def getDMCframe(fid,iFrm,finf,verbose=0):
 def getRawFrameInd(fid,Nmetadata):
     metad = np.fromfile(fid, np.uint16,Nmetadata)
     metad = struct.pack('<2H',metad[1],metad[0]) # reorder 2 uint16
-    rawFrameInd = struct.unpack('<I',metad)[0]
-    #print(' raw ' + str(rawFrameInd[jFrm]))
-    return rawFrameInd
+    return struct.unpack('<I',metad)[0] # reconnect into 1 uint32
+
 
 def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
   if playMovie is not None:
@@ -214,7 +215,7 @@ if __name__ == "__main__":
     p.add_argument('infile',help='.DMCdata file name and path',type=str)
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
-    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type=int)
+    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type=long)
     p.add_argument('-m','--movie',help='seconds per frame. ',default=None,type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
     p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)

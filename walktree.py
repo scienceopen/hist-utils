@@ -18,7 +18,6 @@ def walktree(root,pat):
             for f in filter(files,pat):
                 found.append(join(top,f))
 
-        # this is optional--I like to use None as a sentinal value
         if len(found)==0:
             found=None
     elif isfile(root):
