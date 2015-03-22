@@ -6,14 +6,13 @@ reads .DMCdata files and displays them
  Michael Hirsch
  GPL v3+ license
 
-NOTE: Observe the dtype='int64', this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
+NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
     --- we can't use long, because that's only for Python 2.7
  """
 from __future__ import division, print_function
 from os.path import getsize, expanduser, splitext, isfile
 import numpy as np
 import argparse
-import struct
 ### local imports
 import getRawInd as gri
 
@@ -31,7 +30,7 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,
 # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
     data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=np.uint16, order='C')
-    rawFrameInd = np.zeros(finf['nframeextract'], dtype='int64')
+    rawFrameInd = np.zeros(finf['nframeextract'], dtype=np.int64)
 
     with open(BigFN, 'rb') as fid:
         jFrm=0
@@ -77,9 +76,9 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
         print('*** getDMCparam: {:s} is not a file!'.format(bigfn))
         return None
 
-    #int() in case we are fed a float of int
-    SuperX = int(xyPix[0]) // int(xyBin[0]) # "//" keeps as integer
-    SuperY = int(xyPix[1]) // int(xyBin[1])
+    #np.int64() in case we are fed a float of int
+    SuperX = np.int64(xyPix[0]) // np.int64(xyBin[0]) # "//" keeps as integer
+    SuperY = np.int64(xyPix[1]) // np.int64(xyBin[1])
 
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
     PixelsPerImage= SuperX * SuperY
@@ -112,13 +111,13 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
 # return the requested frames
     #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     if FrameIndReq is None:
-        FrameInd = np.arange(nFrame,dtype='int64') # has to be numpy.arange for > comparison
+        FrameInd = np.arange(nFrame,dtype=np.int64) # has to be numpy.arange for > comparison
         if verbose>0:
             print('automatically selected all frames in file')
     elif isinstance(FrameIndReq,int): #the user is specifying a step size
-        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype='int64')
+        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=np.int64)
     elif len(FrameIndReq) == 3:
-        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype='int64')
+        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=np.int64)
     else:
         exit('*** getDMCparam: I dont understand your frame request')
 
@@ -140,40 +139,33 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
             'bytesperframe':BytesPerFrame, 'pixelsperimage':PixelsPerImage,
             'nframe':nFrame, 'nframeextract':nFrameExtract,'frameind':FrameInd}
 
-def getDMCframe(fid,iFrm,finf,verbose=0):
-    # on windows, "int" is int32 and overflows at 2.1GB!
-
-    currByte = iFrm * finf['bytesperframe'] # to fix that mult casts to float64 here!
-
-	#advance to start of frame in bytes
+def getDMCframe(f,iFrm,finf,verbose=0):
+    # on windows, "int" is int32 and overflows at 2.1GB!  We need np.int64
+    currByte = iFrm * finf['bytesperframe']
+#%% advance to start of frame in bytes
     if verbose>0:
-        if verbose>1:
-            print(type(finf['bytesperframe']))
-            print(type(currByte))
         print('seeking to byte ' + str(currByte))
+
+    assert currByte.dtype == np.int64
     try:
-        fid.seek(currByte,0) #no return value
-    except IOError:
+        f.seek(currByte,0) #no return value
+    except IOError as e:
         print('*** getDMCframe: I couldnt seek to byte {:d}'.format(currByte))
         print('try using a 64-bit integer for iFrm')
-        exit()
-	#read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
+        print(str(e))
+        return None, None
+#%% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
-        currFrame = np.fromfile(fid, np.uint16,
+        currFrame = np.fromfile(f, np.uint16,
                             finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),
                             order='C')
-    except ValueError:
+    except ValueError as e:
         print('*** we may have read past end of file?')
+        print(str(e))
         return None,None
 
-    rawFrameInd = getRawFrameInd(fid,finf['nmetadata'])
+    rawFrameInd = gri.meta2rawInd(f,finf['nmetadata'])
     return currFrame,rawFrameInd
-
-def getRawFrameInd(fid,Nmetadata):
-    metad = np.fromfile(fid, np.uint16,Nmetadata)
-    metad = struct.pack('<2H',metad[1],metad[0]) # reorder 2 uint16
-    return struct.unpack('<I',metad)[0] # reconnect into 1 uint32
-
 
 def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
   if playMovie is not None:
@@ -233,7 +225,10 @@ if __name__ == "__main__":
 
     if a.selftest:
         import sys
-        getDMCparam('testframes.DMCdata',(512,512),(1,1),None,True)
+        bigfn='testframes.DMCdata'
+        finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
+        with open(bigfn,'rb') as f:
+            testframe = getDMCframe(f,iFrm=1,finf=finf,verbose=2)
         sys.exit(0)
 
 
