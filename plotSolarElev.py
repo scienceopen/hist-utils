@@ -10,6 +10,7 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from matplotlib.pyplot import figure,show
+from datetime import datetime
 #
 from airMass import airmass
 
@@ -18,15 +19,16 @@ def main(site,coord,year,plotperhour,doplot):
     if len(site) == 0 and coord[0] is not None:
         obs = EarthLocation(lat=coord[0]*u.deg, lon=coord[1]*u.deg, height=coord[2]*u.m)
     elif site == "sondrestrom":
-        obs.lat='66.98';obs.lon='-50.94';obs.elevation=180
+        obs = EarthLocation(lat=66.98*u.deg, lon=-50.94*u.deg, height=180*u.m)
     elif site=="pfisr":
-        obs.lat='65.12';obs.lon='-147.49';obs.elevation=210
+        obs = EarthLocation(lat=65.12*u.deg, lon=-147.49*u.deg, height=210*u.m)
     elif site=="bu":
-        obs.lat='42.4'; obs.lon='-71.1';obs.elevation=5
+        obs = EarthLocation(lat=42.4*u.deg, lon=-71.1*u.deg, height=5*u.m)
     elif site=="svalbard":
-        obs.lat='78.23'; obs.lon='15.4';obs.elevation=450
+        obs = EarthLocation(lat=78.23*u.deg, lon=15.4*u.deg, height=450*u.m)
     else:
-        exit('*** you must specify a site or coordinates')
+        print('*** you must specify a site or coordinates')
+        return None, None
 
     plotperday = 24*plotperhour
     dt = TimeDelta(3600/plotperhour, format='sec')
@@ -84,10 +86,17 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plots solar elevation angle')
     p.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str,default='')
-    p.add_argument('-c','--coord',help='specify site lat lon [degrees] ',
-                   nargs=3,type=float,default=(None, None, None))
-    p.add_argument('-y','--year',help='year to plot',type=str,default='2015')
+    p.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float,default=(None, None, None))
+    p.add_argument('-y','--year',help='year to plot',type=str,default=datetime.now().strftime('%Y'))
     p.add_argument('--pph',help='plot steps per hour (default 1)',type=int,default=1)
     p.add_argument('--noplot',help='disable plotting',action='store_false')
-    ar = p.parse_args()
-    Irr, sunel = main(ar.site,ar.coord,ar.year,ar.pph,ar.noplot)
+    p.add_argument('--selftest',help='debug only',action='store_true')
+    p = p.parse_args()
+
+    if p.selftest:
+        from numpy import isclose
+        Irr,sunel = main('pfisr',(None,None,None), '2015', 1, False)
+        assert isclose(Irr[6,174],   403.17394679495857)
+        assert isclose(sunel[6,174],  9.0549755440225681)
+    else:
+        Irr, sunel = main(p.site, p.coord, p.year, p.pph, p.noplot)
