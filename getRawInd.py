@@ -1,6 +1,10 @@
-# gets headers from raw .DMCdata binary file
-# Michael Hirsch
-# GPL v3+ license
+"""
+gets headers from raw .DMCdata binary file
+Michael Hirsch
+GPL v3+ license
+
+TRAVIS CI: this file is covered by rawDMCreader.py selftest
+"""
 from numpy import fromfile,uint16
 from struct import pack,unpack
 from os.path import expanduser
