@@ -228,7 +228,11 @@ if __name__ == "__main__":
         bigfn='testframes.DMCdata'
         finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
         with open(bigfn,'rb') as f:
-            testframe = getDMCframe(f,iFrm=1,finf=finf,verbose=2)
+            testframe,testind = getDMCframe(f,iFrm=1,finf=finf,verbose=2)
+        assert testind == 710731
+        #test a handful of pixels
+        assert (testframe[:5,0] == np.array([642, 1321,  935,  980, 1114])).all()
+        assert (testframe[-5:,-1] == np.array([2086, 1795, 2272, 1929, 1914])).all()
         sys.exit(0)
 
 
