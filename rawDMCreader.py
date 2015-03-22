@@ -17,7 +17,8 @@ import struct
 ### local imports
 import getRawInd as gri
 
-
+bpp = 16
+nHeadBytes = 4
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
@@ -70,39 +71,41 @@ def animate(i,data,himg,ht):
     #plt.show(False) #breaks (won't play)
     return himg,ht
 
-def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
-    if not isfile(BigFN):
-        exit('*** getDMCparam: ' + BigFN + ' is not a file!')
-    SuperX = xyPix[0] // xyBin[0] # "//" keeps as integer
-    SuperY = xyPix[1] // xyBin[1]
+def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
+    bigfn = expanduser(bigfn)
+    if not isfile(bigfn): #leave this here, getsize() doesn't fail on directory
+        print('*** getDMCparam: {:s} is not a file!'.format(bigfn))
+        return None
 
-    bpp = 16
-    nHeadBytes = 4
+    #int() in case we are fed a float of int
+    SuperX = int(xyPix[0]) // int(xyBin[0]) # "//" keeps as integer
+    SuperY = int(xyPix[1]) // int(xyBin[1])
+
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
     PixelsPerImage= SuperX * SuperY
     BytesPerImage = PixelsPerImage*bpp//8
     BytesPerFrame = BytesPerImage + nHeadBytes
 
 # get file size
-    fileSizeBytes = getsize(BigFN)
+    fileSizeBytes = getsize(bigfn)
 
     if fileSizeBytes < BytesPerImage:
-        exit('*** getDMCparam: File size ' + str(fileSizeBytes) +
-                 ' is smaller than a single image frame!')
+        print('*** getDMCparam: File size {:d} is smaller than a single image frame!'.format(
+               fileSizeBytes))
+        return None
 
 
     if fileSizeBytes % BytesPerFrame:
-        print("** getDMCparam: Looks like I am not reading this file correctly, with BPF: " +
-              str(BytesPerFrame) )
+        print("** getDMCparam: Looks like I am not reading this file correctly, with BPF: {:d}".format(
+              BytesPerFrame))
 
     nFrame = fileSizeBytes // BytesPerFrame
 
-    (firstRawInd,lastRawInd) = gri.getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata)
+    (firstRawInd,lastRawInd) = gri.getRawInd(bigfn,BytesPerImage,nHeadBytes,Nmetadata)
     if verbose > 0:
-        print(str(nFrame) + ' frames in file ' + BigFN)
-        print('   file size in Bytes: '  +str(fileSizeBytes))
-        print("first / last raw frame #'s: " + str(firstRawInd) + " / " +
-          str(lastRawInd))
+        print('{:d} frames in file {:s}'.format(nFrame,bigfn))
+        print('   file size in Bytes: {:d}'.format(fileSizeBytes))
+        print("first / last raw frame #'s: {:d}  / {:d} ".format(firstRawInd,lastRawInd))
 
 # setup frame indices
 # if no requested frames were specified, read all frames. Otherwise, just
@@ -123,19 +126,19 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
         exit('*** You have requested Frames ' + str(FrameInd[badReqInd]) +
-                 ', which exceeds the length of ' + BigFN)
+                 ', which exceeds the length of {:s}'.format(bigfn))
     nFrameExtract = FrameInd.size #to preallocate properly
 
     nBytesExtract = nFrameExtract * BytesPerFrame
     if verbose > 0:
-        print('Extracted ' +  str(nFrameExtract) + ' frames from ' + BigFN + ' totaling ' + str(nBytesExtract) + ' bytes.')
+        print('Extracted {:d} frames from {:s} totaling {:d} bytes.'.format(
+                   nFrameExtract,bigfn,nBytesExtract))
     if nBytesExtract > 4e9:
-        print('** This will require {:0.2f}'.format(nBytesExtract/1e9) + ' Gigabytes of RAM.')
+        print('** This will require {:0.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
 
-    finf = {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata, 'bytesperframe':BytesPerFrame,
-            'pixelsperimage':PixelsPerImage, 'nframe':nFrame, 'nframeextract':nFrameExtract,
-            'frameind':FrameInd}
-    return finf
+    return {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata,
+            'bytesperframe':BytesPerFrame, 'pixelsperimage':PixelsPerImage,
+            'nframe':nFrame, 'nframeextract':nFrameExtract,'frameind':FrameInd}
 
 def getDMCframe(fid,iFrm,finf,verbose=0):
     # on windows, "int" is int32 and overflows at 2.1GB!
@@ -151,7 +154,7 @@ def getDMCframe(fid,iFrm,finf,verbose=0):
     try:
         fid.seek(currByte,0) #no return value
     except IOError:
-        print('*** getDMCframe: I couldnt seek to byte ' + str(currByte))
+        print('*** getDMCframe: I couldnt seek to byte {:d}'.format(currByte))
         print('try using a 64-bit integer for iFrm')
         exit()
 	#read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
@@ -212,10 +215,10 @@ if __name__ == "__main__":
     from matplotlib.ticker import ScalarFormatter
     #import matplotlib.animation as anim
     p = argparse.ArgumentParser(description='Raw .DMCdata file reader')
-    p.add_argument('infile',help='.DMCdata file name and path',type=str)
+    p.add_argument('infile',help='.DMCdata file name and path',type=str,nargs='?',default='')
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
-    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type='int64')
+    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type=np.int64) #don't use string
     p.add_argument('-m','--movie',help='seconds per frame. ',default=None,type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
     p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)
@@ -225,7 +228,14 @@ if __name__ == "__main__":
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--png',help='writes a .png of the data you extract (currently only for --avg))',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
+    p.add_argument('--selftest',help='for travis ci debug',action='store_true')
     a = p.parse_args()
+
+    if a.selftest:
+        import sys
+        getDMCparam('testframes.DMCdata',(512,512),(1,1),None,True)
+        sys.exit(0)
+
 
     BigFN = expanduser(a.infile)
     xyPix = a.pix
@@ -234,9 +244,13 @@ if __name__ == "__main__":
     playMovie = a.movie
     Clim = a.clim
     rawFrameRate = a.rate
-    if rawFrameRate: print('raw frame rate timing not yet implemented')
+    if rawFrameRate:
+        print('raw frame rate timing not yet implemented')
+
     startUTC = a.startutc
-    if startUTC: print('frame UTC timing not yet implemented')
+    if startUTC:
+        print('frame UTC timing not yet implemented')
+
     writeFITS = a.fits
     saveMat = a.mat
     meanImg = a.avg
