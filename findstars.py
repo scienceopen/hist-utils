@@ -59,7 +59,7 @@ def getstarsums(img,pks,crad):
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
-    p = ArgumentParser()
+    p = ArgumentParser(description='finds stars in images, computes sum within radius of star')
     p.add_argument('imgs',help='list of images you want to load',nargs='+',type=str)
     p.add_argument('-c','--crad',help='circle summation radius',type=int,default=4)
     p.add_argument('-m','--mindist',help='minimum distance to neighor peak (pixels)',type=int,default=80)
