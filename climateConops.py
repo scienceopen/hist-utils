@@ -87,7 +87,7 @@ def SummerCool(Albedo,Aair,A,R,Qequip):
 if __name__ == '__main__':
     #[m^2] area of the panel
     Areas = [{'side':0.45, 'end':0.35,'top':0.45,'model':'Zarges'},
-         {'side':0.51, 'end':0.5,'top':0.41,'model':'OD-30DXC'}]
+             {'side':0.51, 'end':0.5,'top':0.41,'model':'OD-30DXC'}]
 
     for A in Areas:
         print('analysis of ' + A['model'])

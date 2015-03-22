@@ -1,17 +1,15 @@
 """
+This find_nearest function does NOT assume sorted input
+
 inputs:
-x: array within which to search for x0
+x: array (float, int, datetime) within which to search for x0
 x0: singleton or array of values to search for in x
 
 outputs:
 idx: index of x nearest to x0
 xidx: x[idx]
 
-Note: You should consider using Python's bisect command instead of this function.
-I made this function for people coming from Matlab who didn't know about bisect yet.
-If you need the index and not just the value, consider the 'sortedcontainers' package
-http://grantjenks.com/docs/sortedcontainers/
-This find_nearest function does NOT assume sorted input
+Observe how bisect.bisect() gives the incorrect result!
 
 idea based on http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
 
@@ -19,16 +17,38 @@ Michael Hirsch
 GPLv3+
 """
 from numpy import empty_like,absolute,atleast_1d,asanyarray
+from bisect import bisect
 
 def find_nearest(x,x0):
     x = asanyarray(x) #for indexing upon return
     x0 = atleast_1d(x0)
-    idx = empty_like(x0,dtype=int)
+    ind = empty_like(x0,dtype=int)
 
     for i,xi in enumerate(x0):
-       idx[i] = absolute(x-xi).argmin()
+       ind[i] = absolute(x-xi).argmin()
 
-    return idx,x[idx]
+    return ind,x[ind]
+
+def INCORRECTRESULT_using_bisect(x,X0):
+    X0 = atleast_1d(X0)
+    x.sort()
+    ind = [bisect(x,x0) for x0 in X0]
+
+    x = asanyarray(x)
+    return asanyarray(ind),x[ind]
 
 if __name__ == '__main__': #test case
-    print(find_nearest([10,15,12,20,14,33],[32,12.01]))
+    from argparse import ArgumentParser
+    p = ArgumentParser(description='find nearest value in array')
+    p.add_argument('--selftest',help='for debug purposes',action='store_true')
+    p = p.parse_args()
+
+    if p.selftest:
+        from numpy.testing import assert_almost_equal
+        indf,xf = find_nearest([10,15,12,20,14,33],[32,12.01])
+        assert_almost_equal(indf,[5,2])
+        assert_almost_equal(xf,[33.,12.])
+    else: #demo
+        print(find_nearest([10,15,12,20,14,33],[32,12.01]))
+
+        print(INCORRECTRESULT_using_bisect([10,15,12,20,14,33],[32,12.01]))

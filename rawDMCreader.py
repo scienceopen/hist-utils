@@ -12,14 +12,8 @@ NOTE: Observe the dtype='int64', this is for Windows Python, that wants to defau
 from __future__ import division, print_function
 from os.path import getsize, expanduser, splitext, isfile
 import numpy as np
-from matplotlib.pyplot import figure,show, hist, draw, pause, close
-from matplotlib.colors import LogNorm
-from matplotlib.ticker import ScalarFormatter
-#import matplotlib.animation as anim
-#import pdb
 import argparse
 import struct
-import warnings
 ### local imports
 import getRawInd as gri
 
@@ -84,7 +78,7 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
 
     bpp = 16
     nHeadBytes = 4
-    Nmetadata = nHeadBytes//2 #TODO not true for DMC2data files!
+    Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
     PixelsPerImage= SuperX * SuperY
     BytesPerImage = PixelsPerImage*bpp//8
     BytesPerFrame = BytesPerImage + nHeadBytes
@@ -98,7 +92,7 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
 
 
     if fileSizeBytes % BytesPerFrame:
-        warnings.warn("Looks like I am not reading this file correctly, with BPF: " +
+        print("** getDMCparam: Looks like I am not reading this file correctly, with BPF: " +
               str(BytesPerFrame) )
 
     nFrame = fileSizeBytes // BytesPerFrame
@@ -136,7 +130,7 @@ def getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose=0):
     if verbose > 0:
         print('Extracted ' +  str(nFrameExtract) + ' frames from ' + BigFN + ' totaling ' + str(nBytesExtract) + ' bytes.')
     if nBytesExtract > 4e9:
-        warnings.warn('This will require {:0.2f}'.format(nBytesExtract/1e9) + ' Gigabytes of RAM.')
+        print('** This will require {:0.2f}'.format(nBytesExtract/1e9) + ' Gigabytes of RAM.')
 
     finf = {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata, 'bytesperframe':BytesPerFrame,
             'pixelsperimage':PixelsPerImage, 'nframe':nFrame, 'nframeextract':nFrameExtract,
@@ -213,6 +207,10 @@ def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
 
 
 if __name__ == "__main__":
+    from matplotlib.pyplot import figure,show, hist, draw, pause, close
+    from matplotlib.colors import LogNorm
+    from matplotlib.ticker import ScalarFormatter
+    #import matplotlib.animation as anim
     p = argparse.ArgumentParser(description='Raw .DMCdata file reader')
     p.add_argument('infile',help='.DMCdata file name and path',type=str)
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)

@@ -7,12 +7,12 @@ assumes observer at sea level, altitude h \approx 0
 input: theta [deg] solar elevation angle above horizon
 """
 from __future__ import division
-from numpy import sin,radians,arange,nan
+from numpy import sin,radians,arange,nan, atleast_1d
 from matplotlib.pyplot import figure,show
 
 def airmass(thetadeg):
-    thetadeg[thetadeg<0] = nan
-    thetadeg[thetadeg>90] = nan
+    thetadeg=atleast_1d(thetadeg)
+    thetadeg[(thetadeg<0) | (thetadeg>90)] = nan
     thr = radians(thetadeg)
     """
     Kasten, F., and A. T. Young. 1989. Revised optical air mass tables and approximation formula.
@@ -27,10 +27,7 @@ def airmass(thetadeg):
 
     return I0 * 0.7**My**0.678, My
 
-if __name__ =='__main__':
-    theta = arange(90+1,dtype=float)
-    Irr,M = airmass(theta)
-
+def plotam(Irr,M,theta):
     ax=figure().gca()
     ax.plot(theta,Irr)
     ax.set_title('Solar Irradiance at sea level vs. Solar Elevation Angle')
@@ -45,4 +42,21 @@ if __name__ =='__main__':
     ax.set_title('Air Mass Factor vs. elevation angle')
     ax.grid(True)
 
-    show()
+
+if __name__ =='__main__':
+    from argparse import ArgumentParser
+    p = ArgumentParser(description='compute Air Mass and Solar Irradiance at sea level')
+    p.add_argument('--selftest',help='for debug use only',action='store_true')
+    p = p.parse_args()
+
+    if p.selftest:
+        from numpy.testing import assert_allclose
+        theta=38.
+        Irr,M = airmass(theta)
+        assert_allclose(Irr,824.93586543623621)
+        assert_allclose(M,1.6204571165273085)
+    else:
+        theta = arange(90.+1)
+        Irr,M = airmass(theta)
+        plotam(Irr,M,theta)
+        show()

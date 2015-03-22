@@ -6,21 +6,19 @@ from struct import pack,unpack
 from os.path import expanduser
 
 def getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata):
-    #handle ~ in filename
-    BigFN = expanduser(BigFN)
     # gets first and last raw indices from a big .DMCdata file
-    with open(BigFN,'rb') as fid:
-        fid.seek(BytesPerImage, 0) # get first raw frame index
-        firstRawIndex = meta2rawInd(fid,Nmetadata)
+    with open(expanduser(BigFN),'rb') as f:
+        f.seek(BytesPerImage, 0) # get first raw frame index
+        firstRawIndex = meta2rawInd(f,Nmetadata)
 
-        fid.seek(-nHeadBytes, 2) #get last raw frame index
-        lastRawIndex = meta2rawInd(fid,Nmetadata)
+        f.seek(-nHeadBytes, 2) #get last raw frame index
+        lastRawIndex = meta2rawInd(f,Nmetadata)
 
     return firstRawIndex, lastRawIndex
 
 
-def meta2rawInd(fid,Nmetadata):
-    #TODO works for .DMCdata only, not bigger header files!
-    metad = fromfile(fid, dtype=uint16, count=Nmetadata)
+def meta2rawInd(f,Nmetadata):
+    #FIXME works for .DMCdata version 1 only
+    metad = fromfile(f, dtype=uint16, count=Nmetadata)
     metad = pack('<2H',metad[1],metad[0]) # reorder 2 uint16
     return unpack('<I',metad)[0] #always a tuple
