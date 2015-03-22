@@ -1,0 +1,4 @@
+scipy>=0.10
+scikit-image>=0.10
+astropy>=1.0
+matplotlib>=1.3
