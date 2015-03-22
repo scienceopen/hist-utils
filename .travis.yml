@@ -15,4 +15,5 @@ install:
 script:  
  - python airMass.py --selftest
  - python findnearest.py --selftest
+ - python plotSolarElev.py --selftest
  - python rawDMCreader.py --selftest
