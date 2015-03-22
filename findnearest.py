@@ -27,7 +27,7 @@ def find_nearest(x,x0):
     for i,xi in enumerate(x0):
        ind[i] = absolute(x-xi).argmin()
 
-    return ind,x[ind]
+    return ind.squeeze(), x[ind].squeeze()
 
 def INCORRECTRESULT_using_bisect(x,X0):
     X0 = atleast_1d(X0)
