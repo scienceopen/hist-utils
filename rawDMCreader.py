@@ -152,6 +152,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     except IOError as e:
         print('*** getDMCframe: I couldnt seek to byte {:d}'.format(currByte))
         print('try using a 64-bit integer for iFrm')
+        print('is ' + str(f.name) +' a valid .DMCdata file?')
         print(str(e))
         return None, None
 #%% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
