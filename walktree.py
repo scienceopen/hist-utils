@@ -10,20 +10,22 @@ from fnmatch import filter
 #from stat import S_ISDIR, S_ISREG
 
 def walktree(root,pat):
-    root = expanduser(root)
-    if isdir(root):
-        found = []
+    found = []
 
-        for top,dirs,files in walk(root):
-            for f in filter(files,pat):
-                found.append(join(top,f))
+    for r in root:
+        r = expanduser(r)
+        if isdir(r):
+            for top,dirs,files in walk(r):
+                for f in filter(files,pat):
+                    found.append(join(top,f))
 
-        if len(found)==0:
-            found=None
-    elif isfile(root):
-        found = [root]
-    else:
-        exit("is " + root + " a file or directory?")
+            if len(found)==0:
+                found=None
+        elif isfile(r):
+            found.append(r)
+        else:
+            print("***walktree: is " + r + " a file or directory?")
+            #found.append(None)
 
     return found
 
@@ -34,6 +36,6 @@ if __name__ == '__main__':
     p.add_argument('rootdir',help='path including and below which to search',type=str,default=getcwd(),nargs='?')
     p.add_argument('pattern',help='text to search for (use double apostrophes and globbing e.g. "myfile*" ',type=str)
     a=p.parse_args()
-    
+
     found = walktree(a.rootdir,a.pattern)
     print(found)
