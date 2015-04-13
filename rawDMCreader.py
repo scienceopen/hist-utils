@@ -221,21 +221,7 @@ if __name__ == "__main__":
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--png',help='writes a .png of the data you extract (currently only for --avg))',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
-    p.add_argument('--selftest',help='for travis ci debug',action='store_true')
     a = p.parse_args()
-
-    if a.selftest:
-        import sys
-        bigfn='testframes.DMCdata'
-        finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
-        with open(bigfn,'rb') as f:
-            testframe,testind = getDMCframe(f,iFrm=1,finf=finf,verbose=2)
-        assert testind == 710731
-        #test a handful of pixels
-        assert (testframe[:5,0] == np.array([642, 1321,  935,  980, 1114])).all()
-        assert (testframe[-5:,-1] == np.array([2086, 1795, 2272, 1929, 1914])).all()
-        sys.exit(0)
-
 
     BigFN = expanduser(a.infile)
     xyPix = a.pix

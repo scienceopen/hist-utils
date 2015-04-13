@@ -14,7 +14,7 @@ from datetime import datetime
 #
 from airMass import airmass
 
-def main(site,coord,year,plotperhour,doplot):
+def compsolar(site,coord,year,plotperhour,doplot):
     site = site.lower()
     if len(site) == 0 and coord[0] is not None:
         obs = EarthLocation(lat=coord[0]*u.deg, lon=coord[1]*u.deg, height=coord[2]*u.m)
@@ -90,13 +90,6 @@ if __name__ == '__main__':
     p.add_argument('-y','--year',help='year to plot',type=str,default=datetime.now().strftime('%Y'))
     p.add_argument('--pph',help='plot steps per hour (default 1)',type=int,default=1)
     p.add_argument('--noplot',help='disable plotting',action='store_false')
-    p.add_argument('--selftest',help='debug only',action='store_true')
     p = p.parse_args()
 
-    if p.selftest:
-        from numpy import isclose
-        Irr,sunel = main('pfisr',(None,None,None), '2015', 1, False)
-        assert isclose(Irr[6,174],   403.17394679495857)
-        assert isclose(sunel[6,174],  9.0549755440225681)
-    else:
-        Irr, sunel = main(p.site, p.coord, p.year, p.pph, p.noplot)
+    Irr, sunel = compsolar(p.site, p.coord, p.year, p.pph, p.noplot)

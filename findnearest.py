@@ -40,15 +40,8 @@ def INCORRECTRESULT_using_bisect(x,X0):
 if __name__ == '__main__': #test case
     from argparse import ArgumentParser
     p = ArgumentParser(description='find nearest value in array')
-    p.add_argument('--selftest',help='for debug purposes',action='store_true')
     p = p.parse_args()
 
-    if p.selftest:
-        from numpy.testing import assert_almost_equal
-        indf,xf = find_nearest([10,15,12,20,14,33],[32,12.01])
-        assert_almost_equal(indf,[5,2])
-        assert_almost_equal(xf,[33.,12.])
-    else: #demo
-        print(find_nearest([10,15,12,20,14,33],[32,12.01]))
+    print(find_nearest([10,15,12,20,14,33],[32,12.01]))
 
-        print(INCORRECTRESULT_using_bisect([10,15,12,20,14,33],[32,12.01]))
+    print(INCORRECTRESULT_using_bisect([10,15,12,20,14,33],[32,12.01]))
