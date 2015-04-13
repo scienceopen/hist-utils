@@ -1,5 +1,6 @@
 [![Health](https://landscape.io/github/scienceopen/hist-utils/master/landscape.png)](https://landscape.io/github/scienceopen/hist-utils/master)
 [![Build Status](https://travis-ci.org/scienceopen/hist-utils.svg)](https://travis-ci.org/scienceopen/hist-utils)
+[![Coverage Status](https://coveralls.io/repos/scienceopen/hist-utils/badge.svg)](https://coveralls.io/r/scienceopen/hist-utils)
 
 hist-utils
 ==========
