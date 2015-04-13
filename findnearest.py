@@ -29,7 +29,7 @@ def find_nearest(x,x0):
 
     return ind.squeeze(), x[ind].squeeze()
 
-def INCORRECTRESULT_using_bisect(x,X0):
+def INCORRECTRESULT_using_bisect(x,X0): #pragma: no cover
     X0 = atleast_1d(X0)
     x.sort()
     ind = [bisect(x,x0) for x0 in X0]
@@ -37,11 +37,8 @@ def INCORRECTRESULT_using_bisect(x,X0):
     x = asanyarray(x)
     return asanyarray(ind),x[ind]
 
-if __name__ == '__main__': #test case
-    from argparse import ArgumentParser
-    p = ArgumentParser(description='find nearest value in array')
-    p = p.parse_args()
+#if __name__ == '__main__': 
 
-    print(find_nearest([10,15,12,20,14,33],[32,12.01]))
+    #print(find_nearest([10,15,12,20,14,33],[32,12.01]))
 
-    print(INCORRECTRESULT_using_bisect([10,15,12,20,14,33],[32,12.01]))
+    #print(INCORRECTRESULT_using_bisect([10,15,12,20,14,33],[32,12.01]))
