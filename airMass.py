@@ -5,6 +5,8 @@
 following http://www.pveducation.org/pvcdrom/properties-of-sunlight/air-mass
 assumes observer at sea level, altitude h \approx 0
 input: theta [deg] solar elevation angle above horizon
+
+Note: use https://github.com/scienceopen/lowtran for far more precise modeling
 """
 from __future__ import division
 from numpy import sin,radians,arange,nan, atleast_1d
@@ -44,10 +46,6 @@ def plotam(Irr,M,theta):
 
 
 if __name__ =='__main__':
-    from argparse import ArgumentParser
-    p = ArgumentParser(description='compute Air Mass and Solar Irradiance at sea level')
-    p = p.parse_args()
-
     theta = arange(90.+1)
     Irr,M = airmass(theta)
     plotam(Irr,M,theta)
