@@ -46,17 +46,9 @@ def plotam(Irr,M,theta):
 if __name__ =='__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='compute Air Mass and Solar Irradiance at sea level')
-    p.add_argument('--selftest',help='for debug use only',action='store_true')
     p = p.parse_args()
 
-    if p.selftest:
-        from numpy.testing import assert_allclose
-        theta=38.
-        Irr,M = airmass(theta)
-        assert_allclose(Irr,824.93586543623621)
-        assert_allclose(M,1.6204571165273085)
-    else:
-        theta = arange(90.+1)
-        Irr,M = airmass(theta)
-        plotam(Irr,M,theta)
-        show()
+    theta = arange(90.+1)
+    Irr,M = airmass(theta)
+    plotam(Irr,M,theta)
+    show()

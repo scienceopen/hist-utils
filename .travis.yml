@@ -10,6 +10,7 @@ before_install:
   - wget $url -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH=$HOME/miniconda/bin:$PATH
+  - conda update --yes conda
   - python --version #just checking
 
 install:
@@ -19,11 +20,13 @@ install:
  - conda install --yes python=$TRAVIS_PYTHON_VERSION --file requirements.txt
 
 script:  
- - python airMass.py --selftest
- - python findnearest.py --selftest
- - python plotSolarElev.py --selftest
- - python rawDMCreader.py --selftest
-
+  - if [[ -z $pyv ]]; then
+        echo "running coverage";
+        coverage run test.py;
+    else
+        python test.py;
+    fi
+    
 after_success:
   - if [[ -z $pyv ]]; then
      coveralls;
