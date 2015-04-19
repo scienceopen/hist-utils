@@ -1,3 +1,5 @@
+git:
+  depth: 1
 language: python
 python:
   - "3.4"
@@ -20,12 +22,12 @@ install:
  - conda install --yes --file requirements.txt
 
 script:  
-  - if [[ -z $pyv ]]; then
-        echo "running coverage";
-        coverage run test.py;
-    else
-        python test.py;
-    fi
+#  - if [[ -z $pyv ]]; then
+#        echo "running coverage";
+#        coverage run test.py;
+#    else
+   -     python test.py;
+#    fi
     
 after_success:
   - if [[ -z $pyv ]]; then
