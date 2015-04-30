@@ -87,19 +87,18 @@ def doy2monthday(doy):
 
 def plotam(Irr,M,I0,theta):
     ax=figure().gca()
-    #ax.plot(theta[None,:],Irr,label=list(map(str,Irr.columns)))
     ax.plot(theta,Irr.T)
-    ax.set_title('Solar Irradiance at sea level vs. Solar Elevation Angle')
-    ax.set_xlabel('Solar Elevation Angle  [deg.]')
-    ax.set_ylabel('Solar Irradiance at sea level [W m$^2$]')
+    ax.set_title('Solar Irradiance at sea level vs. Solar Elevation Angle',fontsize='x-large')
+    ax.set_xlabel('Solar Elevation Angle  [deg.]',fontsize='large')
+    ax.set_ylabel('Solar Irradiance at sea level [W m$^2$]',fontsize='large')
     #ax.legend(loc='best')
     ax.grid(True)
 
     ax=figure().gca()
     ax.plot(theta,M)
-    ax.set_xlabel('Solar Elevation Angle  [deg.]')
-    ax.set_ylabel('Air Mass relative to zenith')
-    ax.set_title('Relative Air Mass vs. elevation angle')
+    ax.set_xlabel('Solar Elevation Angle  [deg.]',fontsize='large')
+    ax.set_ylabel('Air Mass relative to zenith',fontsize='large')
+    ax.set_title('Relative Air Mass vs. elevation angle',fontsize='large')
     ax.grid(True)
 
 
