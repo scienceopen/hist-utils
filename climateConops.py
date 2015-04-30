@@ -12,76 +12,68 @@ from __future__ import division
 from numpy import sin,radians
 
 def worstHeat(Aair,R,Qequip):
+    sel=0
     # assume sun is below horizon 24 hours a day
-    Qsolar = 0 #[W]
     """http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
      25th percentile -35C, 10th percentile -40C
     """
-    Tout = -40 #[C]
-    Tin = -10 #[C]
+    Q = {'sun':0,'equip':Qequip} #[W]
+    T={'out':-40,'in':-10} #[C]]
+    Q = calcQ(Q,A,sel,T)
 
-    Qext = Qsolar*0
-    Qxfer =  Aair/R*(Tout-Tin)
-
-    Qcooler = Qext + Qxfer + Qequip #[W]
-
-    print('10th percentile worst-case HEATing needs {:0.1f}'.format(-Qcooler) + ' watts / {:0.1f}'.format(-Qcooler*3.412) + ' BTU/hr.' )
-    print('Contributions:')
-    print('Qext [Watts]: {:0.1f}'.format(Qext))
-    print('Qxfer [Watts]: {:0.1f}'.format(Qxfer))
-    print('Qequip [Watts]: {:0.1f}'.format(Qequip))
+    print('10th percentile worst-case HEATing needs {:0.1f} watts / {:0.1f} BTU/hr.'.format(-Q['cooler'],-Q['cooler']*3.412) )
+    printQ(Q)
 
 
 def worstCool(Albedo,Aair,A,R,Qequip):
-    """assume sun is at 45 degree elev, neglect cabinet albedo"""
-    Qsun = 850 #[W]
+    sel = 35
+    """
+    assume sun is at 35 degree elev
+    neglects ground radation
+    """
     """http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
      25th percentile 18C, 10th percentile 21C
     """
-    Tout = 20 #[C]
-    Tin =  30 #[C]
+    Q = {'sun':850,'equip':Qequip} #[W]
+    T={'out':20,'in':30} #[C]]
+    Q = calcQ(Q,A,sel,T)
 
-    Qtop  = A['top']  * Qsun * sin(radians(35)) #max sun elev ~ 45 deg.
-    Qside = A['side'] * Qsun * sin(radians(35)) #worst case(?)
-    Qend  = 0 #A['end']  * Qsun * sin(radians(45)) #consistent with angle used for top,side
-    Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
-
-    Qext = Qsolar*(1-Albedo)
-    Qxfer =  Aair/R*(Tout-Tin)
-
-    Qcooler = Qext + Qxfer + Qequip #[W]
-
-    print('90th percentile worst-case COOLing needs {:0.1f}'.format(Qcooler) + ' watts / {:0.1f}'.format(Qcooler*3.412) + ' BTU/hr.' )
-    print('Contributions:')
-    print('Qext [Watts]: {:0.1f}'.format(Qext))
-    print('Qxfer [Watts]: {:0.1f}'.format(Qxfer))
-    print('Qequip [Watts]: {:0.1f}'.format(Qequip))
+    print('90th percentile worst-case COOLing needs {:0.1f} watts / {:0.1f} BTU/hr.'.format(Q['cooler'],Q['cooler']*3.412) )
+    printQ(Q)
 
 def SummerCool(Albedo,Aair,A,R,Qequip):
+    sel = 45
     #assume sun is at 45 degree elev, neglect cabinet albedo
-    Qsun = 850 #[W]
     """http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
      25th percentile 18C, 10th percentile 21C
     """
-    Tout = 35 #[C]
-    Tin =  40 #[C]
+    Q = {'sun':850,'equip':Qequip} #[W]
+    T={'out':35,'in':40} #[C]
+    Q = calcQ(Q,A,sel,T)
 
-    Qtop  = A['top']  * Qsun * sin(radians(45)) #max sun elev ~ 45 deg.
-    Qside = A['side'] * Qsun * sin(radians(45)) #worst case(?)
-    Qend  = 0 #A['end']  * Qsun * sin(radians(45)) #consistent with angle used for top,side
-    Qsolar = Qtop + Qside + Qend #figure only 1 side, 1 end lit up
+    print('90th perc. Summer storage COOLing needs {:0.1f} watts / {:0.1f} BTU/hr.'.format(Q['cooler'],Q['cooler']*3.412) )
+    printQ(Q)
+
+def calcQ(Q,A,sel,T):
+    # invoke Lambert's Cosine Law
+    Q['top']  = A['top']  * Q['sun'] * sin(radians(sel)) #max sun elev ~ 45 deg. mid summer
+    Q['side'] = A['side'] * Q['sun'] * sin(radians(sel)) #worst case(?)
+    Q['end']  = 0 #A['end']  * Qsun * sin(radians(45)) #consistent with angle used for top,side
+    Q['solar'] = Q['top'] +Q['side'] + Q['end'] #figure only 1 side, 1 end lit up
 
 
-    Qext = Qsolar*(1-Albedo)
-    Qxfer =  Aair/R*(Tout-Tin)
+    Q['ext'] = Q['solar']*(1-Albedo)
+    Q['xfer'] =  A['air']/R*(T['out']-T['in'])
 
-    Qcooler = Qext + Qxfer + Qequip #[W]
+    Q['cooler'] = Q['ext'] +  Q['xfer'] + Q['equip'] #[W]
 
-    print('90th percentile Summer storage COOLing needs {:0.1f}'.format(Qcooler) + ' watts / {:0.1f}'.format(Qcooler*3.412) + ' BTU/hr.' )
+    return Q
+
+def printQ(Q):
     print('Contributions:')
-    print('Qext [Watts]: {:0.1f}'.format(Qext))
-    print('Qxfer [Watts]: {:0.1f}'.format(Qxfer))
-    print('Qequip [Watts]: {:0.1f}'.format(Qequip))
+    print('Qext [Watts]: {:0.1f}'.format(Q['ext']))
+    print('Qxfer [Watts]: {:0.1f}'.format(Q['xfer']))
+    print('Qequip [Watts]: {:0.1f}'.format(Q['equip']))
 
 #------------------
 if __name__ == '__main__':
@@ -90,22 +82,22 @@ if __name__ == '__main__':
              {'side':0.51, 'end':0.5,'top':0.41,'model':'OD-30DXC'}]
 
     for A in Areas:
-        print('analysis of ' + A['model'])
-        Aair = 1*A['top'] + 2*A['side'] + 2*A['end'] #[m^2] roughly #neglect bottom side
-        Asun = A['top'] + A['side'] + A['end'] #[m^2] roughly
+        print('\nanalysis of ' + A['model'])
+        A['air'] = 1*A['top'] + 2*A['side'] + 2*A['end'] #[m^2] roughly #neglect bottom side
+        A['sun'] = A['top'] + A['side'] + A['end'] #[m^2] roughly
 
-        print('enclosure area exposed to air is {:0.2f}'.format(Aair) +' m^2')
-        print('enclosure area exposed to sun is {:0.2f}'.format(Asun) +' m^2')
+        print('enclosure area exposed to air is {:0.2f}'.format(A['air']) +' m^2')
+        print('enclosure area exposed to sun is {:0.2f}'.format(A['sun']) +' m^2')
         R = 0.18 #[m^2 C/W]
         Qequip = { 'rest': 125, 'record': 175, 'compress': 250, 'off':5 } #[W]
         Albedo = 0.7
-        print('Assuming albedo: {0:0.1f}'.format(Albedo))
+        print('Assuming albedo: {:0.1f}'.format(Albedo))
         #http://books.google.com/books?id=PePq7o6mAbwC&lpg=PA282&ots=gOYd86tmHh&dq=house%20paint%20albedo&pg=PA283#v=onepage&q=house%20paint%20albedo&f=false
         print('Sign convention: negative watts is outgoing heat flux')
         print('-------------------------------------------')
-        worstHeat(Aair,R,Qequip['rest'])
+        worstHeat(A['air'],R,Qequip['rest'])
         print('-------------------------------------------')
-        worstCool(Albedo,Aair,A,R,Qequip['rest'])
+        worstCool(Albedo,A['air'],A,R,Qequip['rest'])
         print('-------------------------------------------')
-        SummerCool(Albedo,Aair,A,R,Qequip['off'])
+        SummerCool(Albedo,A['air'],A,R,Qequip['off'])
 
