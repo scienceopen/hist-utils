@@ -90,7 +90,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plots solar elevation angle')
     pg = p.add_mutually_exclusive_group(required=True)
-    pg.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str)
+    pg.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str,default='')
     pg.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float)
     p.add_argument('year',help='year to plot',type=int)
     p.add_argument('--pph',help='plot steps per hour (default 1)',type=int,default=1)
