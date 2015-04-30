@@ -2,19 +2,23 @@
 """
 Computes solar irradiance and hence solar elevation angle for a year.
 Updated to use AstroPy 1.0+, vectorized computation instead of PyEphem
-tested in Python 3.4 and Python 2.7
+
+If you'd like to incorporate a better spectral model like Lowtran or Hitran let me know.
+
 Michael Hirsch
  Aug 2012 -- updated to Astropy Feb 2015
 """
 import astropy.units as u
-from astropy.time import Time, TimeDelta
 from astropy.coordinates import get_sun, EarthLocation, AltAz
+from astropy.time import Time,TimeDelta
 from matplotlib.pyplot import figure,show
-from datetime import datetime
-#
 from airMass import airmass
+from datetime import datetime
 
 def compsolar(site,coord,year,plotperhour,doplot):
+    if isinstance(year,datetime):
+        year=year.year
+#%%
     site = site.lower()
     if len(site) == 0 and coord[0] is not None:
         obs = EarthLocation(lat=coord[0]*u.deg, lon=coord[1]*u.deg, height=coord[2]*u.m)
@@ -32,7 +36,8 @@ def compsolar(site,coord,year,plotperhour,doplot):
 
     plotperday = 24*plotperhour
     dt = TimeDelta(3600/plotperhour, format='sec')
-    times = Time(year+'-01-01T00:00:00',format='isot',scale='utc') + dt * range(365*plotperday)
+    #don't fool around with Pandas or Numpy, since Numpy datetime64 doesn't work with Matplotlib
+    times = Time(str(year)+'-01-01T00:00:00',format='isot',scale='utc') + dt * range(365*plotperday)
     dates = times[::plotperday].datetime
     hoursofday = times[:plotperday].datetime
 
@@ -40,7 +45,7 @@ def compsolar(site,coord,year,plotperhour,doplot):
     sun = get_sun(times).transform_to(AltAz(obstime=times,location=obs))
     sunel = sun.alt.degree.reshape((plotperday,-1),order='F')
 
-    Irr = airmass(sunel)[0]
+    Irr = airmass(sunel,times)[0]
 
     if doplot:
         plotIrr(dates,hoursofday,Irr,site,obs)
@@ -51,7 +56,7 @@ def compsolar(site,coord,year,plotperhour,doplot):
     return Irr,sunel
 
 def plotyear(dates,hoursofday,sunel,site,obs):
-    fg = figure(figsize=(12,7),dpi=110)
+    fg = figure(figsize=(12,7),dpi=100)
     ax = fg.gca()
     V = (-18,-12,-6,-3,0,10,20,30,40,50,60,70,80,90)
     CS = ax.contour(dates,hoursofday,sunel,V)
@@ -63,7 +68,7 @@ def plotyear(dates,hoursofday,sunel,site,obs):
     fg.autofmt_xdate()
 
 def plotIrr(dates,hoursofday,sunel,site,obs):
-    fg = figure(figsize=(12,7),dpi=110)
+    fg = figure(figsize=(12,7),dpi=100)
     ax = fg.gca()
     CS = ax.contour(dates,hoursofday,sunel)
     ax.clabel(CS, inline=1, fontsize=10,fmt='%0.0f')#, manual=manual_locations)
@@ -72,7 +77,6 @@ def plotIrr(dates,hoursofday,sunel,site,obs):
                           str(obs.latitude),', ',str(obs.longitude))))
     ax.grid(True)
     fg.autofmt_xdate()
-    show()
 
 def plotday(t,sunalt,site):
     ax = figure().gca()
@@ -85,9 +89,10 @@ def plotday(t,sunalt,site):
 if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plots solar elevation angle')
-    p.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str,default='')
-    p.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float,default=(None, None, None))
-    p.add_argument('-y','--year',help='year to plot',type=str,default=datetime.now().strftime('%Y'))
+    pg = p.add_mutually_exclusive_group(required=True)
+    pg.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str)
+    pg.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float)
+    p.add_argument('year',help='year to plot',type=int)
     p.add_argument('--pph',help='plot steps per hour (default 1)',type=int,default=1)
     p.add_argument('--noplot',help='disable plotting',action='store_false')
     p = p.parse_args()
