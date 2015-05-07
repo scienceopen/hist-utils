@@ -1,6 +1,6 @@
-[![Health](https://landscape.io/github/scienceopen/hist-utils/master/landscape.png)](https://landscape.io/github/scienceopen/hist-utils/master)
-[![Build Status](https://travis-ci.org/scienceopen/hist-utils.svg)](https://travis-ci.org/scienceopen/hist-utils)
-[![Coverage Status](https://coveralls.io/repos/scienceopen/hist-utils/badge.svg?branch=master)](https://coveralls.io/r/scienceopen/hist-utils?branch=master)
+[![Health](https://landscape.io/github/scienceopen/histutils/master/landscape.png)](https://landscape.io/github/scienceopen/histutils/master)
+[![Build Status](https://travis-ci.org/scienceopen/histutils.svg)](https://travis-ci.org/scienceopen/histutils)
+[![Coverage Status](https://coveralls.io/repos/scienceopen/histutils/badge.svg?branch=master)](https://coveralls.io/r/scienceopen/histutils?branch=master)
 
 hist-utils
 ==========
