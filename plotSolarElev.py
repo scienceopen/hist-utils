@@ -11,6 +11,7 @@ Michael Hirsch
 import astropy.units as u
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from astropy.time import Time,TimeDelta
+from matplotlib.dates import MonthLocator,DateFormatter
 from matplotlib.pyplot import figure,show
 from airMass import airmass
 from datetime import datetime
@@ -48,14 +49,16 @@ def compsolar(site,coord,year,plotperhour,doplot):
     Irr = airmass(sunel,times)[0]
 
     if doplot:
-        plotIrr(dates,hoursofday,Irr,site,obs)
-        plotyear(dates,hoursofday,sunel,site,obs)
+        lbl=MonthLocator(range(1,13),bymonthday=15,interval=1)
+        fmt=DateFormatter("%b")
+        plotIrr(dates,hoursofday,Irr,site,obs,lbl,fmt)
+        plotyear(dates,hoursofday,sunel,site,obs,lbl,fmt)
 
         show()
 
     return Irr,sunel
 
-def plotyear(dates,hoursofday,sunel,site,obs):
+def plotyear(dates,hoursofday,sunel,site,obs,lbl,fmt):
     fg = figure(figsize=(12,7),dpi=100)
     ax = fg.gca()
     V = (-18,-12,-6,-3,0,10,20,30,40,50,60,70,80,90)
@@ -65,9 +68,11 @@ def plotyear(dates,hoursofday,sunel,site,obs):
     ax.set_title(''.join(('Solar elevation angle (deg.)  ',site,': ',
                           str(obs.latitude),', ',str(obs.longitude))))
     ax.grid(True)
-    fg.autofmt_xdate()
+#    fg.autofmt_xdate()
+    ax.xaxis.set_major_locator(lbl)
+    ax.xaxis.set_major_formatter(fmt)
 
-def plotIrr(dates,hoursofday,sunel,site,obs):
+def plotIrr(dates,hoursofday,sunel,site,obs,lbl,fmt):
     fg = figure(figsize=(12,7),dpi=100)
     ax = fg.gca()
     CS = ax.contour(dates,hoursofday,sunel)
@@ -76,7 +81,9 @@ def plotIrr(dates,hoursofday,sunel,site,obs):
     ax.set_title(''.join(('Sea level solar irradiance [W/m$^2$] at ',site,': ',
                           str(obs.latitude),', ',str(obs.longitude))))
     ax.grid(True)
-    fg.autofmt_xdate()
+#    fg.autofmt_xdate()
+    ax.xaxis.set_major_locator(lbl)
+    ax.xaxis.set_major_formatter(fmt)
 
 def plotday(t,sunalt,site):
     ax = figure().gca()
@@ -92,9 +99,8 @@ if __name__ == '__main__':
     pg = p.add_mutually_exclusive_group(required=True)
     pg.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str,default='')
     pg.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float)
-    p.add_argument('year',help='year to plot',type=int)
     p.add_argument('--pph',help='plot steps per hour (default 1)',type=int,default=1)
     p.add_argument('--noplot',help='disable plotting',action='store_false')
     p = p.parse_args()
 
-    Irr, sunel = compsolar(p.site, p.coord, p.year, p.pph, p.noplot)
+    Irr, sunel = compsolar(p.site, p.coord, 2014, p.pph, p.noplot)
