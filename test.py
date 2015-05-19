@@ -29,5 +29,5 @@ assert (testframe[-5:,-1] == array([2086, 1795, 2272, 1929, 1914])).all()
 from plotSolarElev import compsolar
 Irr,sunel = compsolar('pfisr',(None,None,None),
                       datetime(2015,7,1,0,0,0), 1, False)
-assert_allclose(Irr[[6,14,6],[2,125,174]], [nan,  216.59600031,  405.51953114])
-assert_allclose(sunel[[6,14,6],[2,125,174]], [-33.70002094,4.44227179,9.0549755440225681])
+assert_allclose(Irr[[6,14,6],[2,125,174]], [nan,  216.59600031,  405.51953114],rtol=1e-1)
+assert_allclose(sunel[[6,14,6],[2,125,174]], [-33.70002094,4.44227179,9.0549755440225681],rtol=1e-2)

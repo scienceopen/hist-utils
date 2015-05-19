@@ -16,7 +16,7 @@ import argparse
 ### local imports
 try:
     from . import getRawInd as gri #using from another package as submodule
-except SystemError:
+except (ValueError,SystemError):
     import getRawInd as gri #using locally
 
 bpp = 16
