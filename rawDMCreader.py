@@ -14,7 +14,10 @@ from os.path import getsize, expanduser, splitext, isfile
 import numpy as np
 import argparse
 ### local imports
-import getRawInd as gri
+try:
+    from . import getRawInd as gri #using from another package as submodule
+except SystemError:
+    import getRawInd as gri #using locally
 
 bpp = 16
 nHeadBytes = 4
