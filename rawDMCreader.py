@@ -9,12 +9,12 @@ reads .DMCdata files and displays them
 NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
     --- we can't use long, because that's only for Python 2.7
  """
-from __future__ import division, print_function
+from __future__ import division, print_function, absolute_import
 from os.path import getsize, expanduser, splitext, isfile
 import numpy as np
 import argparse
 ### local imports
-import getRawInd as gri
+import .getRawInd as gri
 
 bpp = 16
 nHeadBytes = 4
