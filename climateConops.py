@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-""" Michael Hirsch
+"""
+Michael Hirsch
 Thanks to Amber Baurley and Sam Chen for climate research
  crude thermal budget for outdoor enclosure
  we consider arbitrarily two worst case dates:
  Dec 21 worst-case heating need -- 10th percentile
  Sept 1 worst-case cooling need
- This should be done using classes...
 """
 from __future__ import division
 from numpy import sin,radians
+#
+#Qequip = { 'rest': 125, 'record': 175, 'compress': 250, 'off':5 } #[W]
+#
+"""
+user input: plug in the area of your enclosure faces in Areas
+"""
+#[m^2] area of the panel
+Areas = [{'side':0.45, 'end':0.35,'top':0.45,'model':'Zarges'},
+         {'side':0.51, 'end':0.5,'top':0.41,'model':'OD-30DXC'}]
 
-def worstHeat(Aair,R,Qequip):
+def worstHeat(Albedo,Aair,R,Qequip):
     sel=0
     # assume sun is below horizon 24 hours a day
     """http://weatherspark.com/averages/32940/1/Fairbanks-Alaska-United-States
@@ -19,7 +28,7 @@ def worstHeat(Aair,R,Qequip):
     """
     Q = {'sun':0,'equip':Qequip} #[W]
     T={'out':-40,'in':-10} #[C]]
-    Q = calcQ(Q,A,sel,T)
+    Q = calcQ(Q,A,sel,T,Albedo,R)
 
     print('10th percentile worst-case HEATing needs {:0.1f} watts / {:0.1f} BTU/hr.'.format(-Q['cooler'],-Q['cooler']*3.412) )
     printQ(Q)
@@ -36,7 +45,7 @@ def worstCool(Albedo,Aair,A,R,Qequip):
     """
     Q = {'sun':850,'equip':Qequip} #[W]
     T={'out':20,'in':30} #[C]]
-    Q = calcQ(Q,A,sel,T)
+    Q = calcQ(Q,A,sel,T,Albedo,R)
 
     print('90th percentile worst-case COOLing needs {:0.1f} watts / {:0.1f} BTU/hr.'.format(Q['cooler'],Q['cooler']*3.412) )
     printQ(Q)
@@ -49,12 +58,12 @@ def SummerCool(Albedo,Aair,A,R,Qequip):
     """
     Q = {'sun':850,'equip':Qequip} #[W]
     T={'out':35,'in':40} #[C]
-    Q = calcQ(Q,A,sel,T)
+    Q = calcQ(Q,A,sel,T,Albedo,R)
 
     print('90th perc. Summer storage COOLing needs {:0.1f} watts / {:0.1f} BTU/hr.'.format(Q['cooler'],Q['cooler']*3.412) )
     printQ(Q)
 
-def calcQ(Q,A,sel,T):
+def calcQ(Q,A,sel,T,Albedo,R):
     # invoke Lambert's Cosine Law
     Q['top']  = A['top']  * Q['sun'] * sin(radians(sel)) #max sun elev ~ 45 deg. mid summer
     Q['side'] = A['side'] * Q['sun'] * sin(radians(sel)) #worst case(?)
@@ -77,9 +86,14 @@ def printQ(Q):
 
 #------------------
 if __name__ == '__main__':
-    #[m^2] area of the panel
-    Areas = [{'side':0.45, 'end':0.35,'top':0.45,'model':'Zarges'},
-             {'side':0.51, 'end':0.5,'top':0.41,'model':'OD-30DXC'}]
+    from argparse import ArgumentParser
+    p = ArgumentParser(description='very simple steady state thermodynamic enclosure analysis')
+    p.add_argument('-R',help='R-value constant [m^2 C/W]',type=float,default=0.18)
+    p.add_argument('-a','--albedo',help='Cabinet albedo (is it bare metal, gray, white?)',type=float,default=0.7)
+    p.add_argument('-Q','--Qonoff',help='Power consumption of all equipment when ON and OFF [watts]',type=float,nargs=2,default=[225,5])
+    p=p.parse_args()
+
+    Qon = p.Qonoff[0]; Qoff = p.Qonoff[1]
 
     for A in Areas:
         print('\nanalysis of ' + A['model'])
@@ -88,16 +102,13 @@ if __name__ == '__main__':
 
         print('enclosure area exposed to air is {:0.2f}'.format(A['air']) +' m^2')
         print('enclosure area exposed to sun is {:0.2f}'.format(A['sun']) +' m^2')
-        R = 0.18 #[m^2 C/W]
-        Qequip = { 'rest': 125, 'record': 175, 'compress': 250, 'off':5 } #[W]
-        Albedo = 0.7
-        print('Assuming albedo: {:0.1f}'.format(Albedo))
+        print('Assuming albedo: {:0.1f}'.format(p.albedo))
         #http://books.google.com/books?id=PePq7o6mAbwC&lpg=PA282&ots=gOYd86tmHh&dq=house%20paint%20albedo&pg=PA283#v=onepage&q=house%20paint%20albedo&f=false
         print('Sign convention: negative watts is outgoing heat flux')
         print('-------------------------------------------')
-        worstHeat(A['air'],R,Qequip['rest'])
+        worstHeat(p.albedo,A['air'],p.R,Qon)
         print('-------------------------------------------')
-        worstCool(Albedo,A['air'],A,R,Qequip['rest'])
+        worstCool(p.albedo,A['air'],A,p.R,Qon)
         print('-------------------------------------------')
-        SummerCool(Albedo,A['air'],A,R,Qequip['off'])
+        SummerCool(p.albedo,A['air'],A,p.R,Qoff)
 

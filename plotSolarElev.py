@@ -103,4 +103,4 @@ if __name__ == '__main__':
     p.add_argument('--noplot',help='disable plotting',action='store_false')
     p = p.parse_args()
 
-    Irr, sunel = compsolar(p.site, p.coord, 2014, p.pph, p.noplot)
+    Irr, sunel = compsolar(p.site, p.coord, 2013, p.pph, p.noplot)
