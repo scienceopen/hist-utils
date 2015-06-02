@@ -10,11 +10,6 @@ theta=[-1.,38.]
 Irr,M,I0 = airmass(theta,datetime(2015,7,1,0,0,0))
 assert_allclose(Irr,[nan, 805.13538427])
 assert_allclose(M,[nan,  1.62045712])
-#%% findnearest
-from findnearest import find_nearest
-indf,xf = find_nearest([10,15,12,20,14,33],[32,12.01])
-assert_almost_equal(indf,[5,2])
-assert_almost_equal(xf,[33.,12.])
 #%% rawDMCreader
 from rawDMCreader import getDMCparam,getDMCframe
 bigfn='testframes.DMCdata'
