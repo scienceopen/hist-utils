@@ -13,6 +13,7 @@ from __future__ import division, print_function, absolute_import
 from os.path import getsize, expanduser, splitext, isfile
 import numpy as np
 import argparse
+from re import search
 ### local imports
 try:
     from . import getRawInd as gri #using from another package as submodule
@@ -61,6 +62,17 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,
 
     return data
 ########## END OF MAIN #######################
+
+def getserialnum(flist):
+    """
+    This function assumes the serial number of the camera is in a particular place in the filename.
+    Yes, this is a little lame, but it's how the original 2011 image-writing program worked, and I've
+    carried over the scheme rather than appending bits to dozens of TB of files.
+    """
+    sn = []
+    for f in flist:
+        sn.append(int(search(r'(?<=CamSer)\d{3,6}',f).group()))
+    return sn
 
 def animate(i,data,himg,ht):
     #himg = plt.imshow(data[:,:,i]) #slow, use set_data instead
