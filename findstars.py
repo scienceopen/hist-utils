@@ -6,6 +6,7 @@ from skimage.draw import circle
 from matplotlib.pyplot import figure, show
 from matplotlib.colors import LogNorm
 from os.path import expanduser
+from warnings import warn
 '''
 Michael Hirsch 2014
 Finds stars in FITS images (just ask and I'll add other formats)
@@ -24,9 +25,9 @@ def getfitsimg(fn,clim=None):
                 img = hdul[0].data
                 print('loaded',img.dtype,'image data.')
             else:
-                print('did not find image data in ' + fn + ' this may be a bug.')
+                warn('did not find image data in ' + fn + ' this may be a bug.')
     except OSError:
-        print('could not find ' + fn)
+        warn('could not find ' + fn)
         return None
 
     return img
