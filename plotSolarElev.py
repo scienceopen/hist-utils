@@ -10,10 +10,13 @@ Michael Hirsch
 """
 import astropy.units as u
 from astropy.coordinates import get_sun, EarthLocation, AltAz
-from astropy.time import Time,TimeDelta
+from astropy.time import Time
 from matplotlib.pyplot import figure,show
-from airMass import airmass
 from datetime import datetime
+from warnings import warn
+from dateutil.rrule import HOURLY,rrule
+#
+from airMass import airmass
 
 def compsolar(site,coord,year,plotperhour,doplot):
     if isinstance(year,datetime):
@@ -31,18 +34,20 @@ def compsolar(site,coord,year,plotperhour,doplot):
     elif site=="svalbard":
         obs = EarthLocation(lat=78.23*u.deg, lon=15.4*u.deg, height=450*u.m)
     else:
-        print('*** you must specify a site or coordinates')
+        warn('you must specify a site or coordinates')
         return None, None
 
     plotperday = 24*plotperhour
-    dt = TimeDelta(3600/plotperhour, format='sec')
     #don't fool around with Pandas or Numpy, since Numpy datetime64 doesn't work with Matplotlib
-    times = Time(str(year)+'-01-01T00:00:00',format='isot',scale='utc') + dt * range(365*plotperday)
-    dates = times[::plotperday].datetime
-    hoursofday = times[:plotperday].datetime
+    times = list(rrule(HOURLY,
+                       dtstart=datetime(year,1,1,0,0,0),
+                       until=datetime(year,12,31,23,59,59)))
+
+    dates = times[::plotperday]
+    hoursofday = times[:plotperday]
 
     #yes, we need to feed times to observer and sun!
-    sun = get_sun(times).transform_to(AltAz(obstime=times,location=obs))
+    sun = get_sun(Time(times)).transform_to(AltAz(obstime=times,location=obs))
     sunel = sun.alt.degree.reshape((plotperday,-1),order='F')
 
     Irr = airmass(sunel,times)[0]
