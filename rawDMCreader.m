@@ -20,8 +20,8 @@
 % startUTC: {'auto'} get from NMEA file (recommended) or manually specify as  "datenum"
 %
 % OUTPUTS:
-% data: 16-bit data, sorted into frames (view with imagesc)
-% rawFrameInd: camera index since acquisition start (used to obtain UTC time of
+% data: uint16 16-bit data, sorted into frames (view with imagesc)
+% rawFrameInd: int64 camera index since acquisition start (used to obtain UTC time of
 % frame based on GPS)
 % tUTC: estimated UTC time of frame -- unverified
 %
@@ -43,7 +43,6 @@
 function [data, rawFrameInd, tUTC] =...
        rawDMCreader(BigFN,xPix,yPix,xBin,yBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose)
 
-if nargin<1, error('you must specify a file to read'), end
 if nargin<2, xPix = 512, yPix = 512, end %#ok<NOPRT> %pixels
 if nargin<4, xBin = 1, yBin = 1, end %#ok<NOPRT>
 if nargin<6, FrameInd = 'all'; end
@@ -129,9 +128,9 @@ data = zeros(SuperX,SuperY,nFrameExtract,'uint16');
 % I created a custom header, but I needed 32-bit numbers. So I stick two
 % 16-bit numbers together when writing the data--Matlab needs to unstick
 % and restick this number into a 32-bit integer again.
-% then I store as double in case we want to do numerical operations --
+% then I store as int64 in case we want to do numerical operations --
 % uint's can lead to unexpected results!
-rawFrameInd = zeros(nFrameExtract,1,'double');
+rawFrameInd = zeros(nFrameExtract,1,'int64');
 if ~isempty(rawFrameRate)
     tUTC = nan(nFrameExtract,1,'double'); 
 else
@@ -160,7 +159,7 @@ for iFrame = FrameInd
     
     %stick two 16-bit numbers together again to make the actual 32-bit raw
     %frame index
-    rawFrameInd(jFrm) = double( typecast( [metadata(2), metadata(1)] ,'uint32') );
+    rawFrameInd(jFrm) = int64( typecast( [metadata(2), metadata(1)] ,'uint32') );
     if ~isempty(rawFrameRate)
         tUTC(jFrm) = startUTC + ( rawFrameInd(jFrm) - 1 )/rawFrameRate /86400; 
     end
