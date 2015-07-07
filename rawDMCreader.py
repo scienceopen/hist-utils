@@ -14,7 +14,9 @@ from os.path import getsize, expanduser, splitext, isfile
 import numpy as np
 import argparse
 from re import search
-### local imports
+from warnings import warn
+from six import integer_types
+#
 try:
     from . import getRawInd as gri #using from another package as submodule
 except (ValueError,SystemError):
@@ -30,6 +32,7 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,
 
     # setup data parameters
     finf = getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose)
+    if finf is None: return None, None
 
 # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
     data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),
@@ -60,7 +63,7 @@ def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,
 #        anim.FuncAnimation(hf,animate,range(nFrameExtract),fargs=(data,himg,ht), interval=playMovie, blit=False, repeat_delay=1000)
 #        plt.show()
 
-    return data
+    return data, rawFrameInd
 ########## END OF MAIN #######################
 
 def getserialnum(flist):
@@ -88,7 +91,7 @@ def animate(i,data,himg,ht):
 def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
     bigfn = expanduser(bigfn)
     if not isfile(bigfn): #leave this here, getsize() doesn't fail on directory
-        print('*** getDMCparam: {:s} is not a file!'.format(bigfn))
+        warn('{} is not a file!'.format(bigfn))
         return None
 
     #np.int64() in case we are fed a float of int
@@ -104,14 +107,12 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
     fileSizeBytes = getsize(bigfn)
 
     if fileSizeBytes < BytesPerImage:
-        print('*** getDMCparam: File size {:d} is smaller than a single image frame!'.format(
-               fileSizeBytes))
+        warn('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
         return None
 
 
     if fileSizeBytes % BytesPerFrame:
-        print("** getDMCparam: Looks like I am not reading this file correctly, with BPF: {:d}".format(
-              BytesPerFrame))
+        warn("Looks like I am not reading this file correctly, with BPF: {:d}".format(BytesPerFrame))
 
     nFrame = fileSizeBytes // BytesPerFrame
 
@@ -129,26 +130,29 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
         FrameInd = np.arange(nFrame,dtype=np.int64) # has to be numpy.arange for > comparison
         if verbose>0:
             print('automatically selected all frames in file')
-    elif isinstance(FrameIndReq,int): #the user is specifying a step size
+    elif isinstance(FrameIndReq,integer_types): #the user is specifying a step size
         FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=np.int64)
     elif len(FrameIndReq) == 3:
         FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=np.int64)
     else:
-        exit('*** getDMCparam: I dont understand your frame request')
+        warn('I dont understand your frame request')
+        return None
 
     badReqInd = FrameInd>nFrame
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
-        exit('*** You have requested Frames ' + str(FrameInd[badReqInd]) +
-                 ', which exceeds the length of {:s}'.format(bigfn))
+        warn('You have requested Frames ' + str(FrameInd[badReqInd]) +
+                 ', which exceeds the length of {}'.format(bigfn))
+        return None
+
     nFrameExtract = FrameInd.size #to preallocate properly
 
     nBytesExtract = nFrameExtract * BytesPerFrame
     if verbose > 0:
-        print('Extracted {:d} frames from {:s} totaling {:d} bytes.'.format(
+        print('Extracted {} frames from {} totaling {} bytes.'.format(
                    nFrameExtract,bigfn,nBytesExtract))
     if nBytesExtract > 4e9:
-        print('** This will require {:0.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
+        warn('This will require {:0.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
 
     return {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata,
             'bytesperframe':BytesPerFrame, 'pixelsperimage':PixelsPerImage,
@@ -165,7 +169,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     try:
         f.seek(currByte,0) #no return value
     except IOError as e:
-        print('*** getDMCframe: I couldnt seek to byte {:d}'.format(currByte))
+        warn('I couldnt seek to byte {:d}'.format(currByte))
         print('try using a 64-bit integer for iFrm')
         print('is ' + str(f.name) +' a valid .DMCdata file?')
         print(str(e))
@@ -176,8 +180,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
                             finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),
                             order='C')
     except ValueError as e:
-        print('*** we may have read past end of file?')
-        print(str(e))
+        warn('we may have read past end of file?  {}'.format(e))
         return None,None
 
     rawFrameInd = gri.meta2rawInd(f,finf['nmetadata'])
@@ -246,11 +249,11 @@ if __name__ == "__main__":
     Clim = a.clim
     rawFrameRate = a.rate
     if rawFrameRate:
-        print('raw frame rate timing not yet implemented')
+        warn('raw frame rate timing not yet implemented')
 
     startUTC = a.startutc
     if startUTC:
-        print('frame UTC timing not yet implemented')
+        warn('frame UTC timing not yet implemented')
 
     writeFITS = a.fits
     saveMat = a.mat

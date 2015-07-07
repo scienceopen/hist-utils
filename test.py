@@ -2,16 +2,16 @@
 import matplotlib
 matplotlib.use('Agg') #so Travis doesn't try to plot
 from numpy import array,nan
-from numpy.testing import assert_allclose, assert_almost_equal
+from numpy.testing import assert_allclose
 from datetime import datetime
 #
 try:
     from .airMass import airmass
-    from .rawDMCreader import getDMCparam,getDMCframe
+    from .rawDMCreader import goRead
     from .plotSolarElev import compsolar
 except:
     from airMass import airmass
-    from rawDMCreader import getDMCparam,getDMCframe
+    from rawDMCreader import goRead
     from plotSolarElev import compsolar
 
 def test_airmass():
@@ -22,13 +22,19 @@ def test_airmass():
 
 def test_rawread():
     bigfn='testframes.DMCdata'
-    finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
-    with open(bigfn,'rb') as f:
-        testframe,testind = getDMCframe(f,iFrm=1,finf=finf,verbose=2)
-    assert testind == 710731
+    framestoplay=(1,2,1)  #this is (start,stop,step) so (1,2,1) means read only the second frame in the file
+
+    testframe, testind = goRead(bigfn,(512,512),(1,1),framestoplay)
+
+    #these are both tested by goRead
+    #finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
+    #with open(bigfn,'rb') as f:
+    #    testframe,testind = getDMCframe(f,iFrm=1,finf=finf,verbose=2)
+    #assert testind == 710731
     #test a handful of pixels
-    assert (testframe[:5,0] == array([642, 1321,  935,  980, 1114])).all()
-    assert (testframe[-5:,-1] == array([2086, 1795, 2272, 1929, 1914])).all()
+
+    assert (testframe[0,:5,0] == array([642, 1321,  935,  980, 1114])).all()
+    assert (testframe[0,-5:,-1] == array([2086, 1795, 2272, 1929, 1914])).all()
 
 def test_plotsolar():
     Irr,sunel = compsolar('pfisr',(None,None,None),
