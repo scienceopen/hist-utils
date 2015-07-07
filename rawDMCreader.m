@@ -43,8 +43,8 @@
 function [data, rawFrameInd, tUTC] =...
        rawDMCreader(BigFN,xPix,yPix,xBin,yBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose)
 
-if nargin<2, xPix = 512, yPix = 512, end %#ok<NOPRT> %pixels
-if nargin<4, xBin = 1, yBin = 1, end %#ok<NOPRT>
+if nargin<2, xPix = 512; yPix = 512; end  %pixels
+if nargin<4, xBin = 1; yBin = 1; end 
 if nargin<6, FrameInd = 'all'; end
 if nargin<7, playMovie = 0; end
 if nargin<8, Clim = []; end 
