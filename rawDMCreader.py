@@ -260,7 +260,7 @@ if __name__ == "__main__":
     meanImg = a.avg
 
 
-    rawImgData = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=0)
+    rawImgData,rawInd = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=0)
     outStem = splitext(BigFN)[0]
 
     if a.hist:
