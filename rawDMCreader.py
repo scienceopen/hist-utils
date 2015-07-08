@@ -27,8 +27,7 @@ nHeadBytes = 4
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
-def goRead(bigfn,xyPix,xyBin,FrameIndReq=None,playMovie=None,Clim=None,
-                                    rawFrameRate=None,startUTC=None,verbose=0):
+def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, rawFrameRate=None,startUTC=None,verbose=0):
 
     bigfn = expanduser(bigfn)
 #%% check
@@ -49,27 +48,8 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None,playMovie=None,Clim=None,
         for j,i in enumerate(finf['frameind']): #j and i are NOT the same in general when not starting from beginning of file!
             data[j,:,:], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
 
-#%% #more reliable if slower playback
-    doPlayMovie(data,finf,playMovie,Clim,rawFrameInd)
-
-# on some systems, just freezes at first frame
-#    if playMovie:
-#        print('attempting animation')
-#        hf = plt.figure(1)
-#        ax = plt.axes()
-#        himg = ax.imshow(data[:,:,0],cmap='gray')
-#        ht = ax.set_title('')
-#        plt.colorbar(himg)
-#        ax.set_xlabel('x')
-#        ax.set_ylabel('y')
-#
-#        #blit=False so that Title updates!
-#        anim.FuncAnimation(hf,animate,range(nFrameExtract),fargs=(data,himg,ht), interval=playMovie, blit=False, repeat_delay=1000)
-#        plt.show()
-
-    return data, rawFrameInd
-########## END OF MAIN #######################
-
+    return data, rawFrameInd,finf
+#%% workers
 def getserialnum(flist):
     """
     This function assumes the serial number of the camera is in a particular place in the filename.
@@ -213,6 +193,21 @@ def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
             hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[j],i) )
             draw(); pause(playMovie)
 
+def doanimate(data,nFrameExtract,playMovie):
+    # on some systems, just freezes at first frame
+    print('attempting animation')
+    fg = figure()
+    ax = fg.gca()
+    himg = ax.imshow(data[:,:,0],cmap='gray')
+    ht = ax.set_title('')
+    fg.colorbar(himg)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    #blit=False so that Title updates!
+    anim.FuncAnimation(fg,animate,range(nFrameExtract),fargs=(data,himg,ht),
+                       interval=playMovie, blit=False, repeat_delay=1000)
+
 def doplotsave(bigfn,data,rawind,clim,dohist,meanImg,writeFITS,saveMat):
     outStem = splitext(expanduser(bigfn))[0]
 
@@ -286,8 +281,9 @@ if __name__ == "__main__":
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
     a = p.parse_args()
 
-    rawImgData,rawInd = goRead(a.infile, a.pix, a.bin,a.frames,a.movie, a.clim,
-                               a.rate,a.startutc,a.verbose)
+    rawImgData,rawInd,finf = goRead(a.infile, a.pix, a.bin,a.frames, a.rate,a.startutc,a.verbose)
 #%% plots and save
+    doPlayMovie(rawImgData,finf,a.movie, a.clim,rawInd)
+
     doplotsave(a.infile,rawImgData,rawInd,a.clim,a.hist,a.avg,a.fits,a.mat)
     show()
