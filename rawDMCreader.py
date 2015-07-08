@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 reads .DMCdata files and displays them
- Primarily tested with Python 3.4 on Linux, but should also work for Python 2.7 on any operating system.
- requires astropy if you want to write FITS
  Michael Hirsch
  GPL v3+ license
 
-NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to default to int32 instead of int64 like everyone else!
+NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
+   default to int32 instead of int64 like everyone else!
     --- we can't use long, because that's only for Python 2.7
  """
 from __future__ import division, print_function, absolute_import
@@ -24,8 +23,6 @@ except (ValueError,SystemError):
 
 bpp = 16
 nHeadBytes = 4
-# Examples:
-# python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
 def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, rawFrameRate=None,startUTC=None,verbose=0):
 
