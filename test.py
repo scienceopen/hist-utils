@@ -7,7 +7,8 @@ try:
     from .airMass import airmass
     from .rawDMCreader import goRead
     from .plotSolarElev import compsolar
-except:
+except Exception as e:
+    print(e)
     from airMass import airmass
     from rawDMCreader import goRead
     from plotSolarElev import compsolar
