@@ -11,8 +11,6 @@ Michael Hirsch
 import astropy.units as u
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from astropy.time import Time
-from matplotlib.dates import MonthLocator,DateFormatter
-from matplotlib.pyplot import figure,show
 from datetime import datetime
 from warnings import warn
 from dateutil.rrule import HOURLY,rrule
@@ -99,6 +97,9 @@ def plotday(t,sunalt,site):
     ax.set_title(site + ' ' + t[0].strftime('%Y-%m-%d'))
 
 if __name__ == '__main__':
+    from matplotlib.dates import MonthLocator,DateFormatter
+    from matplotlib.pyplot import figure,show
+
     from argparse import ArgumentParser
     p = ArgumentParser(description='plots solar elevation angle')
     pg = p.add_mutually_exclusive_group(required=True)

@@ -13,7 +13,6 @@ Note: use https://github.com/scienceopen/lowtran for far more precise modeling
 """
 from __future__ import division
 from numpy import sin,radians,arange,copy,nan,cos,atleast_1d,asarray,empty_like
-from matplotlib.pyplot import figure,show
 from datetime import datetime
 
 def airmass(thetadeg,dtime):
@@ -103,6 +102,7 @@ def plotam(Irr,M,I0,theta):
 
 
 if __name__ =='__main__':
+    from matplotlib.pyplot import figure,show
     from argparse import ArgumentParser
     p = ArgumentParser(description='trivial model of solar irradiance at sea level. Use Lowtran or Hitran for more detailed modeling')
     p.add_argument('-a','--theta',help='angle(s) [deg] to compute sea level solar irradiance',nargs='?',type=float,default=arange(0.,90+1,1))
