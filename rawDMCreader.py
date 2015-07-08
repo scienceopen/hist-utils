@@ -109,18 +109,14 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
     #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
-    if FrameIndReq is None or not np.isfinite(FrameIndReq):
+    if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
+        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=np.int64)
+    elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
+        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=np.int64)
+    else: #catch all
         FrameInd = np.arange(nFrame,dtype=np.int64) # has to be numpy.arange for > comparison
         if verbose>0:
             print('automatically selected all frames in file')
-    elif isinstance(FrameIndReq,integer_types): #the user is specifying a step size
-        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=np.int64)
-    elif len(FrameIndReq) == 3:
-        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=np.int64)
-    else:
-        warn('I dont understand your frame request')
-        return None
-
     badReqInd = (FrameInd>nFrame) | (FrameInd<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
