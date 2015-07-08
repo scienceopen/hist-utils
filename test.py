@@ -24,7 +24,7 @@ def test_rawread():
     bigfn='test/testframes.DMCdata'
     framestoplay=(1,2,1)  #this is (start,stop,step) so (1,2,1) means read only the second frame in the file
 
-    testframe, testind = goRead(bigfn,(512,512),(1,1),framestoplay)
+    testframe, testind = goRead(bigfn,(512,512),(1,1),framestoplay,verbose=1)
 
     #these are both tested by goRead
     #finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
