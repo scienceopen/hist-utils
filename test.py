@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import matplotlib
-matplotlib.use('Agg') #so Travis doesn't try to plot
 from numpy import array,nan,uint16,int64
 from numpy.testing import assert_allclose
 from datetime import datetime
