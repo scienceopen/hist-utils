@@ -27,25 +27,29 @@ nHeadBytes = 4
 # Examples:
 # python3 rawDMCreader.py '~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata' 512 512 1 1 'all' 0.01 100 4000
 
-def goRead(BigFN,xyPix,xyBin,FrameIndReq,playMovie=None,Clim=None,
+def goRead(bigfn,xyPix,xyBin,FrameIndReq=None,playMovie=None,Clim=None,
                                     rawFrameRate=None,startUTC=None,verbose=0):
 
-    # setup data parameters
-    finf = getDMCparam(BigFN,xyPix,xyBin,FrameIndReq,verbose)
+    bigfn = expanduser(bigfn)
+#%% check
+    if startUTC:
+        raise NotImplementedError('frame UTC timing not yet implemented')
+    if rawFrameRate:
+        raise NotImplementedError('raw frame rate timing not yet implemented')
+#%% setup data parameters
+    finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,verbose)
     if finf is None: return None, None
 
-# preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
+#%% preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
     data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=np.uint16, order='C')
     rawFrameInd = np.zeros(finf['nframeextract'], dtype=np.int64)
 
-    with open(BigFN, 'rb') as fid:
-        jFrm=0
-        for iFrm in finf['frameind']:
-            data[jFrm,:,:], rawFrameInd[jFrm] = getDMCframe(fid,iFrm,finf,verbose)
-            jFrm += 1
+    with open(bigfn, 'rb') as fid:
+        for j,i in enumerate(finf['frameind']): #j and i are NOT the same in general when not starting from beginning of file!
+            data[j,:,:], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
 
-    #more reliable if slower playback
+#%% #more reliable if slower playback
     doPlayMovie(data,finf,playMovie,Clim,rawFrameInd)
 
 # on some systems, just freezes at first frame
@@ -94,7 +98,7 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
         warn('{} is not a file!'.format(bigfn))
         return None
 
-    #np.int64() in case we are fed a float of int
+    #np.int64() in case we are fed a float or int
     SuperX = np.int64(xyPix[0]) // np.int64(xyBin[0]) # "//" keeps as integer
     SuperY = np.int64(xyPix[1]) // np.int64(xyBin[1])
 
@@ -118,15 +122,14 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
 
     (firstRawInd,lastRawInd) = gri.getRawInd(bigfn,BytesPerImage,nHeadBytes,Nmetadata)
     if verbose > 0:
-        print('{:d} frames in file {:s}'.format(nFrame,bigfn))
-        print('   file size in Bytes: {:d}'.format(fileSizeBytes))
-        print("first / last raw frame #'s: {:d}  / {:d} ".format(firstRawInd,lastRawInd))
+        print('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes,bigfn))
+        print("first / last raw frame #'s: {}  / {} ".format(firstRawInd,lastRawInd))
 
 # setup frame indices
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
     #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
-    if FrameIndReq is None:
+    if FrameIndReq is None or not np.isfinite(FrameIndReq):
         FrameInd = np.arange(nFrame,dtype=np.int64) # has to be numpy.arange for > comparison
         if verbose>0:
             print('automatically selected all frames in file')
@@ -138,7 +141,7 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
         warn('I dont understand your frame request')
         return None
 
-    badReqInd = FrameInd>nFrame
+    badReqInd = (FrameInd>nFrame) | (FrameInd<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
         warn('You have requested Frames ' + str(FrameInd[badReqInd]) +
@@ -152,7 +155,7 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
         print('Extracted {} frames from {} totaling {} bytes.'.format(
                    nFrameExtract,bigfn,nBytesExtract))
     if nBytesExtract > 4e9:
-        warn('This will require {:0.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
+        warn('This will require {:.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
 
     return {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata,
             'bytesperframe':BytesPerFrame, 'pixelsperimage':PixelsPerImage,
@@ -187,106 +190,57 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     return currFrame,rawFrameInd
 
 def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
-  if playMovie is not None:
-    sfmt = ScalarFormatter(useMathText=True)
-    print('attemping movie playback')
-    hf1 = figure(1)
-    hAx = hf1.gca()
-    if Clim is None:
-        hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower',norm=LogNorm() )
-    else:
-        hIm = hAx.imshow(data[0,:,:],
-                        vmin=Clim[0],vmax=Clim[1],
-                        cmap = 'gray', origin='lower', norm=LogNorm())
-    hT = hAx.text(0.5,1.005,'', transform=hAx.transAxes)
-    hc = hf1.colorbar(hIm,format=sfmt)
-    hc.set_label('data numbers ' + str(data.dtype))
-    hAx.set_xlabel('x-pixels')
-    hAx.set_ylabel('y-pixels')
+    if playMovie:
+        sfmt = ScalarFormatter(useMathText=True)
+        hf1 = figure(1)
+        hAx = hf1.gca()
+        if Clim is None:
+            hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower',norm=LogNorm() )
+        else:
+            hIm = hAx.imshow(data[0,:,:],
+                            vmin=Clim[0],vmax=Clim[1],
+                            cmap = 'gray', origin='lower', norm=LogNorm())
+        hT = hAx.text(0.5,1.005,'', ha='center',transform=hAx.transAxes)
+        hc = hf1.colorbar(hIm,format=sfmt)
+        hc.set_label('data numbers ' + str(data.dtype))
+        hAx.set_xlabel('x-pixels')
+        hAx.set_ylabel('y-pixels')
 
-    jFrm = 0
-    for iFrm in FrameInd:
-        #print(str(iFrm) + ' ' + str(jFrm))
-        #hAx.imshow(data[:,:,jFrm]) #slower
-        hIm.set_data(data[jFrm,:,:])  # faster
-        hT.set_text('RawFrame#: ' + str(rawFrameInd[jFrm]) +
-                'RelFrame#' + str(iFrm) )
-        draw()
-        pause(playMovie)
-        jFrm += 1  #yes, at end of for loop
-    close()
-  else:
-    print('skipped movie playback')
+        for j,i in enumerate(rawFrameInd):
+            #print('raw {}  rel {} '.format(i,j))
+            #hAx.imshow(data[j,...]) #slower
+            hIm.set_data(data[j,...])  # faster
+            hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[j],i) )
+            draw(); pause(playMovie)
 
+def doplotsave(bigfn,data,rawind,clim,dohist,meanImg,writeFITS,saveMat):
+    outStem = splitext(expanduser(bigfn))[0]
 
-
-if __name__ == "__main__":
-    from matplotlib.pyplot import figure,show, hist, draw, pause, close
-    from matplotlib.colors import LogNorm
-    from matplotlib.ticker import ScalarFormatter
-    #import matplotlib.animation as anim
-    p = argparse.ArgumentParser(description='Raw .DMCdata file reader')
-    p.add_argument('infile',help='.DMCdata file name and path',type=str,nargs='?',default='')
-    p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
-    p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
-    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'),default=None, type=np.int64) #don't use string
-    p.add_argument('-m','--movie',help='seconds per frame. ',default=None,type=float)
-    p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,default=None,type=float)
-    p.add_argument('-r','--rate',help='raw frame rate of camera',default=None,type=float)
-    p.add_argument('-s','--startutc',help='utc time of nights recording',default=None)
-    p.add_argument('--fits',help='write a .FITS file of the data you extract',action='store_true')
-    p.add_argument('--mat',help="write a .mat MATLAB data file of the extracted data",action='store_true')
-    p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
-    p.add_argument('--png',help='writes a .png of the data you extract (currently only for --avg))',action='store_true')
-    p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
-    a = p.parse_args()
-
-    BigFN = expanduser(a.infile)
-    xyPix = a.pix
-    xyBin = a.bin
-    FrameInd = a.frames
-    playMovie = a.movie
-    Clim = a.clim
-    rawFrameRate = a.rate
-    if rawFrameRate:
-        warn('raw frame rate timing not yet implemented')
-
-    startUTC = a.startutc
-    if startUTC:
-        warn('frame UTC timing not yet implemented')
-
-    writeFITS = a.fits
-    saveMat = a.mat
-    meanImg = a.avg
-
-
-    rawImgData,rawInd = goRead(BigFN,xyPix,xyBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose=0)
-    outStem = splitext(BigFN)[0]
-
-    if a.hist:
-        hist(rawImgData.ravel(), bins=256)
-        show()
+    if dohist:
+        ax=figure().gca()
+        hist(data.ravel(), bins=256,log=True)
+        ax.set_title('histogram of {}'.format(bigfn))
+        ax.set_ylabel('frequency of occurence')
+        ax.set_xlabel('data value')
 
     if meanImg:
-        meanStack = np.mean(rawImgData,axis=0).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
-        #if playMovie is not None:
+        meanStack = data.mean(axis=0).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
         fg = figure(32)
         ax = fg.gca()
-        if Clim is None:
-            ax.imshow(meanStack,cmap='gray',origin='lower',norm=LogNorm())
+        if clim:
+            hi=ax.imshow(meanStack,cmap='gray',origin='lower', vmin=clim[0], vmax=clim[1],norm=LogNorm())
         else:
-            ax.imshow(meanStack,cmap='gray',origin='lower', vmin=Clim[0], vmax=Clim[1],norm=LogNorm())
+            hi=ax.imshow(meanStack,cmap='gray',origin='lower',norm=LogNorm())
+
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_title('mean of image frames')
-        #plt.colorbar()
-        if a.png:
-            pngfn = outStem + '.png'
-            print('writing mean PNG ' + pngfn)
-            fg.savefig(pngfn,dpi=150,bbox_inches='tight')
-        show()
+        fg.colorbar(hi)
 
-
+        pngfn = outStem + '_mean.png'
+        print('writing mean PNG ' + pngfn)
+        fg.savefig(pngfn,dpi=150,bbox_inches='tight')
+#%% saving
     if writeFITS:
         from astropy.io import fits
         #TODO timestamp frames
@@ -309,3 +263,31 @@ if __name__ == "__main__":
         print('writing raw image data as ' + matFN)
         matdata = {'rawimgdata':rawImgData}
         savemat(matFN,matdata,oned_as='column')
+
+
+if __name__ == "__main__":
+    from matplotlib.pyplot import figure,show, hist, draw, pause
+    from matplotlib.colors import LogNorm
+    from matplotlib.ticker import ScalarFormatter
+    #import matplotlib.animation as anim
+    p = argparse.ArgumentParser(description='Raw .DMCdata file reader')
+    p.add_argument('infile',help='.DMCdata file name and path',type=str,nargs='?',default='')
+    p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
+    p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
+    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'), type=np.int64) #don't use string
+    p.add_argument('-m','--movie',help='seconds per frame. ',type=float)
+    p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,type=float)
+    p.add_argument('-r','--rate',help='raw frame rate of camera',type=float)
+    p.add_argument('-s','--startutc',help='utc time of nights recording')
+    p.add_argument('--fits',help='write a .FITS file of the data you extract',action='store_true')
+    p.add_argument('--mat',help="write a .mat MATLAB data file of the extracted data",action='store_true')
+    p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
+    p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
+    p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
+    a = p.parse_args()
+
+    rawImgData,rawInd = goRead(a.infile, a.pix, a.bin,a.frames,a.movie, a.clim,
+                               a.rate,a.startutc,a.verbose)
+#%% plots and save
+    doplotsave(a.infile,rawImgData,rawInd,a.clim,a.hist,a.avg,a.fits,a.mat)
+    show()
