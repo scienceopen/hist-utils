@@ -189,11 +189,7 @@ function doPlayMovie(data,nRow,nCol,nFrameExtract,playMovie,Clim,rawFrameInd,tUT
     set(h.ax,'ydir','normal') 
     % just some labels
     h.t = title(h.ax,'');
-    try
-        colormap(h.ax,'gray') %matlab, octave 3.8
-    catch
-        colormap('gray') %octave 3.6
-    end
+    colormap(h.ax,'gray') %octave 3.8+
     h.cb = colorbar('peer',h.ax);
     ylabel(h.cb,'Data Numbers')
     xlabel(h.ax,'x-pixels')
@@ -204,8 +200,8 @@ function doPlayMovie(data,nRow,nCol,nFrameExtract,playMovie,Clim,rawFrameInd,tUT
 try
     for iFrame = 1:nFrameExtract
      set(h.im,'cdata',single(data(:,:,iFrame))) %convert to single just as displaying
-     titlestring = ['Raw Frame # ',int2str(rawFrameInd(iFrame)),...
-           '  Relative Frame # ',int2str(iFrame)];
+     titlestring = ['Raw # ',int2str(rawFrameInd(iFrame)),...
+           '  Relative # ',int2str(iFrame)];
      if ~isempty(tUTC)
          titlestring = [titlestring,'  time: ',datestr(tUTC(iFrame),'yyyy-mm-ddTHH:MM:SS.FFF'),' UTC']; %#ok<AGROW>
      end
