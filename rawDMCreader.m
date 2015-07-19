@@ -1,7 +1,7 @@
-% [data, rawFrameInd,tUTC] = rawDMCreader(BigFN,xPix,yPix,xBin,yBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC)
+% [data, rawFrameInd,tUTC] = rawDMCreader()
 % 
 % reads uint16 raw data files from DMC
-% Tested with Octave 3.6, 3.8 & Matlab R2014a
+% Tested with Octave 4.0 & Matlab R2014a
 % Michael Hirsch Dec 2011 / Mar 2012 / Mar 2014
 %
 % requires: getRawInd.m (custom written script)
@@ -10,14 +10,13 @@
 % BigFN: huge .DMCdata filename to read
 % xPix: # of x-pixels in sensor {512}
 % yPix: # of y-pixels in sensor {512}
-% xBin: horizontal binning factor of CCD {1}
-% yBin: vertical binning factor of CCD {1}
-% FrameInd: Frame numbers to extract from file -- this is NOT raw frame numbers,
+% rcbin: row,col binning factor of CCD [1,1]
+% frameind: Frame numbers to extract from file -- this is NOT raw frame numbers,
 % but rather 1-indexed from start of file
-% playMovie: if ~= 0, play with pause moviePlay seconds
+% playmovie: if ~= 0, play with pause moviePlay seconds
 % clim: for imagesc, sets the upper and lower contrast. E.g. [1000, 1200]
-% rawFrameRate: {'auto'} get from XML file (recommended) or manually specify 
-% startUTC: {'auto'} get from NMEA file (recommended) or manually specify as  "datenum"
+% rawframerate: {'auto'} get from XML file (recommended) or manually specify 
+% startutc: {'auto'} get from NMEA file (recommended) or manually specify as  "datenum"
 %
 % OUTPUTS:
 % data: uint16 16-bit data, sorted into frames (view with imagesc)
@@ -26,37 +25,36 @@
 % tUTC: estimated UTC time of frame -- unverified
 %
 % Examples:
-% [data,~,tUT] = rawDMCreader('~/HSTdata/DataField/2013-04-14/HST1/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata',512,512,1,1,1:100,0.01,[100,4000],'auto','auto');
 %
 % meteor example  (playing first 100 frames of video):
-% [data,~,tUT] = rawDMCreader('/cygdrive/d/2014-03-30/2014-03-30T10-46-CamSer7196.DMCdata',512,512,1,1,1:100,0.01,[100,2000],'auto','auto');
+% [data,~,tUT] = rawDMCreader('/cygdrive/d/2014-03-30/2014-03-30T10-46-CamSer7196.DMCdata','framereq',1:100,'clim',[1000,2000],'rawframerate','auto','startutc','auto');
 %
 % meteor example (extracting first 1000 frames of video, then saving to .mat):
-% [data,~,tUT] = rawDMCreader('/cygdrive/d/2014-03-30/2014-03-30T10-46-CamSer7196.DMCdata',512,512,1,1,1:1000,0,[],'auto','auto');
-% save('first100.mat','-V7')
-% of course one could use fitswrite, h5write, etc. for whatever format one wants.
+% [data,~,tUT] = rawDMCreader('/cygdrive/d/2014-03-30/2014-03-30T10-46-CamSer7196.DMCdata','framereq',1:1000,'rawframerate','auto','startutc','auto');
 %
 %------------
 % flintmax('double') is 2^53 (biggest integer value we can hold in a
 % double float variable in Matlab on a 64-bit Operating System)
 
-function [data, rawFrameInd, tUTC] =...
-       rawDMCreader(BigFN,xPix,yPix,xBin,yBin,FrameInd,playMovie,Clim,rawFrameRate,startUTC,verbose)
+function [data, rawFrameInd, tUTC]=rawDMCreader(bigfn,varargin)
 
-if nargin<2, xPix = 512; yPix = 512; end  %pixels
-if nargin<4, xBin = 1; yBin = 1; end 
-if nargin<6, FrameInd = 'all'; end
-if nargin<7, playMovie = 0; end
-if nargin<8, Clim = []; end 
-if nargin<9, rawFrameRate=[]; end
-if nargin<10 || isempty(rawFrameRate), startUTC=[]; end
-if nargin<11, verbose = false; end
+p = inputParser;
+addParamValue(p,'rowcol',[512,512])
+addParamValue(p,'rcbin',[1,1])
+addParamValue(p,'framereq',[])
+addParamValue(p,'playmovie',[])
+addParamValue(p,'clim',[])
+addParamValue(p,'rawframerate',[])
+addParamValue(p,'startutc',[])
+addParamValue(p,'verbose',false) %#ok<*NVREPL> % need this for Octave 4.0 which doesn't have addParameter
+parse(p,varargin{:})
+U = p.Results;
 %%
-[rawFrameRate,startUTC] = DMCtimeparams(BigFN,rawFrameRate,startUTC);
+[rawFrameRate,startUTC] = DMCtimeparams(bigfn,U.rawframerate,U.startutc);
 %% setup data parameters
 % based on settings from .xml file (these stay pretty constant)
-SuperX = xPix/xBin;
-SuperY = yPix/yBin;
+SuperX = U.rowcol(2)/U.rcbin(2);
+SuperY = U.rowcol(1)/U.rcbin(1);
 bpp = 16; %bits per pixel
 nHeadBytes = 4; %bytes per header frame (32 bits for CCD .DMCdata)
 nHeader = nHeadBytes/2; % one 16-bit word = 2 bytes
@@ -66,8 +64,8 @@ BytesPerImage = PixelsPerImage*bpp/8;
 BytesPerFrame = BytesPerImage + nHeadBytes;
 
 % get file size
-fileInfo= dir(BigFN); 
-if isempty(fileInfo), error(['file does not exist: ',BigFN]), end
+fileInfo= dir(bigfn); 
+if isempty(fileInfo), error(['file does not exist: ',bigfn]), end
 fileSizeBytes = fileInfo.bytes;
 
 if fileSizeBytes < BytesPerImage
@@ -85,17 +83,19 @@ end
 % this raw frame is critical to knowing what time an image was taken, which
 % is critical for the usability of this data in light of other sensors
 % (radar, optical)
-[firstRawInd, lastRawInd] = getRawInd(BigFN,BytesPerImage,nHeadBytes);
-if verbose
-    display([int2str(nFrame),' frames in file ',BigFN])
+[firstRawInd, lastRawInd] = getRawInd(bigfn,BytesPerImage,nHeadBytes);
+if U.verbose
+    display([int2str(nFrame),' frames in file ', bigfn])
     display(['   file size in Bytes: ',sprintf('%ld',fileSizeBytes)])
     display(['first / last raw frame # ',int2str(firstRawInd),' / ',...
              int2str(lastRawInd)])
 end
 % if no requested frames were specified, read all frames. Otherwise, just
 % return the requested frames
-if strcmpi(FrameInd,'all')
-    FrameInd = 1:nFrame;
+if isempty(U.framereq)
+  FrameInd = 1:nFrame;
+else
+  FrameInd = U.framereq;
 end
 badReqInd = FrameInd > nFrame;
 
@@ -109,7 +109,7 @@ FrameInd(badReqInd) = [];
 % more parameters
 nFrameExtract = length(FrameInd); %to preallocate properly
 nBytesExtract = nFrameExtract*BytesPerFrame;
-if verbose
+if U.verbose
     display(['Extracting ',sprintf('%ld',nBytesExtract),' bytes.'])
 end
 if nBytesExtract > 2e9
@@ -124,7 +124,7 @@ end
 % or single float as we stream the data through an algorithm.  
 % That's because many Matlab functions will crash or give unexpected
 % results with integers (or single float!)
-data = zeros(SuperX,SuperY,nFrameExtract,'uint16'); 
+data = zeros(SuperY,SuperX,nFrameExtract,'uint16'); 
 % I created a custom header, but I needed 32-bit numbers. So I stick two
 % 16-bit numbers together when writing the data--Matlab needs to unstick
 % and restick this number into a 32-bit integer again.
@@ -137,8 +137,8 @@ else
     tUTC = [];
 end
 %% read data
-fid = fopen(BigFN,'r');
-if fid<1, error(['error opening ',BigFN]), end
+fid = fopen(bigfn,'r');
+if fid<1, error(['error opening ',bigfn]), end
 jFrm = 0;
 for iFrame = FrameInd  
     
@@ -154,30 +154,27 @@ for iFrame = FrameInd
     
     %read data
     %we transpose because Labview writes ROW MAJOR and Matlab is COLUMN MAJOR
-    data(:,:,jFrm) = transpose(fread(fid,[SuperX,SuperY],dFormat,0,'l')); %first read the image
+    data(:,:,jFrm) = transpose(fread(fid,[SuperY,SuperX],dFormat,0,'l')); %first read the image
     metadata = fread(fid,nHeader,dFormat,0,'l'); % we have to typecast this
     
     %stick two 16-bit numbers together again to make the actual 32-bit raw
     %frame index
     rawFrameInd(jFrm) = int64( typecast( [metadata(2), metadata(1)] ,'uint32') );
     if ~isempty(rawFrameRate)
-        tUTC(jFrm) = startUTC + ( rawFrameInd(jFrm) - 1 )/rawFrameRate /86400; 
+        tUTC(jFrm) = U.startutc + ( rawFrameInd(jFrm) - 1 )/rawFrameRate /86400; 
     end
-end
+end %for
 
 fclose(fid);
 %% play movie, if user chooses
-if playMovie   % ~= 0
-  doPlayMovie(data,SuperX,SuperY,nFrameExtract,playMovie,Clim,rawFrameInd,tUTC)
-end %for
+doPlayMovie(data,SuperY,SuperX,nFrameExtract,U.playmovie,U.clim,rawFrameInd,tUTC)
 %% cleanup
 if ~nargout, clear, end
 end %function
 
 function doPlayMovie(data,nRow,nCol,nFrameExtract,playMovie,Clim,rawFrameInd,tUTC)
+if isempty(playMovie), return, end
 %% setup plot
-% note: this will plot slowly in Octave 3.6, but Octave 3.8 with FLTK will
-% plot this about as fast as Matlab
     h.f = figure(1); clf(1)
     h.ax = axes('parent',h.f);
     switch isempty(Clim)
@@ -189,7 +186,7 @@ function doPlayMovie(data,nRow,nCol,nFrameExtract,playMovie,Clim,rawFrameInd,tUT
     set(h.ax,'ydir','normal') 
     % just some labels
     h.t = title(h.ax,'');
-    colormap(h.ax,'gray') %octave 3.8+
+    colormap(h.ax,'gray') 
     h.cb = colorbar('peer',h.ax);
     ylabel(h.cb,'Data Numbers')
     xlabel(h.ax,'x-pixels')
