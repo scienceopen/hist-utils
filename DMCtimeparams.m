@@ -48,8 +48,6 @@ if ~isempty(rawFrameRate)
     fprintf('using frame rate %s Hz   ',num2str(rawFrameRate))
    end
    fclose(fidxml);
-else
-   %do nothing
 end %if isemptyFrameRate
 %% use nmea file or user specification to determine start time 
 if ~isempty(startUTC)
