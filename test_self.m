@@ -4,7 +4,7 @@
 %!function [testframe, testind] = test_rawread()
 %!  bigfn='test/testframes.DMCdata';
 %!  framestoplay=2;  %this is (start,stop,step) so (1,2,1) means read only the second frame in the file
-%!  [testframe, testind, ~] = rawDMCreader(bigfn,512,512,1,1,framestoplay);
+%!  [testframe, testind, ~] = rawDMCreader(bigfn,'framereq',framestoplay);
 %!endfunction
 %!
 %!test
