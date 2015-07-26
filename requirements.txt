@@ -4,3 +4,4 @@ astropy>=1.0
 matplotlib
 six
 nose
+dateutil

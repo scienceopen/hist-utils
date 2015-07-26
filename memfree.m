@@ -1,12 +1,12 @@
-%% find free physical RAM on Windows, Mac, and Linux systems
+%% find free physical RAM on Windows (with or without Cygwin) and Linux systems
 % currently Matlab doesn't support memory() on Linux/Mac systems
-% This function is meant to give free memory on any system that will run Matlab or Octave
+% This function is meant to give free memory using Matlab or Octave
 %
 % This function works on:
 % Windows: Matlab, Octave with or without Cygwin
-% Mac:     Matlab, Octave
 % Linux:   Matlab, Octave
 % Android: untested
+% Mac: untested
 %
 % Output:
 % --------
@@ -16,9 +16,11 @@
 
 function freebytes = memfree()
 
-if ~isunix  % for Cygwin, isunix=true
+if ispc  % for Cygwin, isunix=true, ispc=false
     freebytes = memorywindows();
-else
+elseif ismac
+    freebytes = []; % we did not handle Macs yet (request if you want)
+else %isunix && ~ismac
     freebytes = memoryunix();
 end
 
