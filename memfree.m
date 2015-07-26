@@ -30,7 +30,7 @@ if ~nargout,clear,end
 end %function
 
 function freebytes = memoryunix()
-[~,msg] = unix('free -mb | grep Mem:');
+[~,msg] = unix('free -mb | awk "NR==2"');
 
 mems = cell2mat(textscan(msg,'%*s %f %f %f %f %f %f','delimiter',' ','collectoutput',true,'multipleDelimsAsOne',true));
 freebytes = mems(1,3)+mems(1,5)+mems(1,6);
