@@ -18,8 +18,8 @@ function freebytes = memfree()
 
 if ispc  % for Cygwin, isunix=true, ispc=false
     freebytes = memorywindows();
-elseif ismac
-    freebytes = []; % we did not handle Macs yet (request if you want)
+elseif ismac % BSD
+    freebytes = memorymac(); % we did not handle Macs yet (request if you want)
 else %isunix && ~ismac
     freebytes = memoryunix();
 end
@@ -34,6 +34,12 @@ function freebytes = memoryunix()
 
 mems = cell2mat(textscan(msg,'%*s %f %f %f %f %f %f','delimiter',' ','collectoutput',true,'multipleDelimsAsOne',true));
 freebytes = mems(1,3)+mems(1,5)+mems(1,6);
+
+end %function
+
+function freebytes = memorymac()
+% looks like we could awk vm_stat to get it
+freebytes=[];
 
 end %function
 
