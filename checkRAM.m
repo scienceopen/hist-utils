@@ -3,6 +3,10 @@ function [OK,newSizeBytes,freebytes] = checkRAM(newSize,varargin)
 % simply checks that your requested memory for the new array won't exceed AVAILABLE RAM
 % with Matlab or Octave
 %
+% Matlab R2015a+ attempt to do this automatically, however this function lets you check
+% before simply erroring (before R2015a, you could use tons of swap memory and terribly
+% slow down your computer with large arrays unintentionally).
+%
 % note, I expect this script is optimistic, that Matlab won't always be able to
 % create an array using ALL available RAM, but at least you know when you
 % certainly CAN'T create an array without digging deep into swap or worse.
