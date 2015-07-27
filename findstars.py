@@ -17,18 +17,17 @@ http://stackoverflow.com/questions/3684484/peak-detection-in-a-2d-array
 http://scikit-image.org/docs/dev/auto_examples/plot_peak_local_max.html?highlight=local%20maxima
 '''
 
-def getfitsimg(fn,clim=None):
+def getfitsimg(fn):
     fn = expanduser(fn)
     try:
-        with fits.open(fn,mode='readonly') as hdul:
-            if hdul[0].header['NAXIS']==2: #gray image
-                img = hdul[0].data
-                print('loaded',img.dtype,'image data.')
+        with fits.open(fn,mode='readonly') as f:
+            if f[0].header['NAXIS']==2: #gray image
+                img = f[0].data
             else:
-                warn('did not find image data in ' + fn + ' this may be a bug.')
+                warn('data shape {} but I expected only 2-dim array in {}'.format(img.shape,fn))
     except OSError:
         warn('could not find ' + fn)
-        return None
+        img=None
 
     return img
 
