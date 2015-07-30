@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
 Reads DASC allsky cameras images in FITS formats into GeoData. Can also run standalone.
-to download DASC images using Octave, Matlab, or Python checkout:
+To download DASC images using Octave, Matlab, or Python checkout:
 https://github.com/jswoboda/ISR_Toolbox/blob/master/Allsky/dlFITS.m
 """
 from astropy.io import fits
-import matplotlib.pyplot as plt
 import numpy as np
 from dateutil.parser import parse
 from datetime import datetime
@@ -33,7 +32,7 @@ def readFITS(flist,azfn,elfn):
         img = h[0].data
     dataloc = np.empty((len(flist),3))  
     times =   np.empty((len(flist),2))
-    img =     np.empty((len(flist),img.shape[0],img.shape[1]),img.dtype)
+    img =     np.zeros((len(flist),img.shape[0],img.shape[1]),img.dtype) #zeros in case a few images fail to load
     epoch = datetime(1970,1,1,0,0,0)
 #%% iterate over image files    
     for i,fn in enumerate(flist):
@@ -49,8 +48,10 @@ def readFITS(flist,azfn,elfn):
         
     coordnames="spherical"
     try:
-        az = fits.open(azfn,mode='readonly')[0].data
-        el = fits.open(elfn,mode='readonly')[0].data
+        with fits.open(azfn,mode='readonly') as h:
+            az = h[0].data
+        with fits.open(elfn,mode='readonly') as h:
+            el = h[0].data
         dataloc[:,0] = 135 #NOTE in km, this is an assumtion, john take note
         dataloc[:,1] = az.ravel()
         dataloc[:,2] = el.ravel()
@@ -63,6 +64,8 @@ def readFITS(flist,azfn,elfn):
     return data,coordnames,dataloc,sensorloc,times
     
 if __name__ == '__main__':
+    import cv2 # easy way to show fast movie
+    
     from argparse import ArgumentParser
     p = ArgumentParser(description='for Poker Flat DASC all sky camera, read az/el mapping and images')
     p.add_argument('indir',help='directory of .fits or specific .fits file')
@@ -72,4 +75,8 @@ if __name__ == '__main__':
 
 
     img = readCalFITS(p.indir,p.azfn,p.elfn)
+#%% play movie   
+    for I in img:
+        cv2.imshow('DASC',I)
+        cv2.pause(0.01)
     
