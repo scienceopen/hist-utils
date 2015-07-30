@@ -22,7 +22,9 @@ def walktree(root,pat):
         r = expanduser(r)
         if isdir(r):
             for top,dirs,files in walk(r):
-                for f in filter((ff.lower() for ff in files),pat.lower()):
+                # using .lower makes output lower too. Maybe need to explicitly iterate
+                #for f in filter((ff.lower() for ff in files),pat.lower()):
+                for f in filter(files,pat):
                     found.append(join(top,f))
 
             if len(found)==0:
