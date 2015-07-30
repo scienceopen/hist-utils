@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
+"""
+Reads DASC allsky cameras images in FITS formats into GeoData. Can also run standalone.
+to download DASC images using Octave, Matlab, or Python checkout:
+https://github.com/jswoboda/ISR_Toolbox/blob/master/Allsky/dlFITS.m
+"""
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np
+from dateutil.parser import parse
 from datetime import datetime
 from warnings import warn
 #
@@ -10,33 +16,33 @@ from walktree import walktree
 def readCalFITS(indir,azfn,elfn):
     flist = walktree(indir,"*.fits")
     data,coordnames,dataloc,sensorloc,times = readFITS(flist,azfn,elfn)
-
-    return data['image']  
+    try:
+        return data['image']  
+    except:
+        return None     
 
 def readFITS(flist,azfn,elfn):
     """
     reads FITS images and spatial az/el calibration for allsky camera
     """
-    
-    header = fits.open(flist[0],mode='readonly')
-    img = header[0].data
-    #data = np.empty((img.size,len(flist)))
-    dataloc = np.empty((img.size,3))  
+    if not flist:
+        warn('no data files found')
+        return (None,)*5
+#%% preallocate, assuming all images the same size        
+    with fits.open(flist[0],mode='readonly') as h:
+        img = h[0].data
+    dataloc = np.empty((len(flist),3))  
     times =   np.empty((len(flist),2))
-    for i in range(len(flist)):
+    img =     np.empty((len(flist),img.shape[0],img.shape[1]),img.dtype)
+    epoch = datetime(1970,1,1,0,0,0)
+#%% iterate over image files    
+    for i,fn in enumerate(flist):
         try:
-            fn = flist[i]
-            fund = fn.find('PKR')
-            date = (datetime(int(fn[fund+14:fund+18]),
-                             int(fn[fund+18:fund+20]),
-                             int(fn[fund+20:fund+22]),
-                             int(fn[fund+23:fund+25]),
-                             int(fn[fund+25:fund+27]),
-                             int(fn[fund+27:fund+29]))-datetime(1970,1,1,0,0,0)).total_seconds()
-            times[i] = [date,date+1]
-            header = fits.open(fn)
-            img = header[0].data
-            #data[:,i] = img.flatten() #
+            with fits.open(fn,mode='readonly') as h:
+                expstart_dt = parse(h[0].header['OBSDATE'] + ' ' + h[0].header['OBSSTART'])
+                expstart_unix = (expstart_dt - epoch).total_seconds()
+                times[i,:] = [expstart_unix,expstart_unix + h[0].header['EXPTIME']]
+                img[i,...] = h[0].data             
         except Exception as e:
             print(fn+ 'has error {}'.format(e))
     data = {'image':img}    
