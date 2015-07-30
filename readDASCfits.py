@@ -13,7 +13,7 @@ from warnings import warn
 from walktree import walktree
 
 def readCalFITS(indir,azfn,elfn):
-    flist = walktree(indir,"*.fits")
+    flist = walktree(indir,"PKR_DASC_*.fits")
     data,coordnames,dataloc,sensorloc,times = readFITS(flist,azfn,elfn)
     try:
         return data['image']  
