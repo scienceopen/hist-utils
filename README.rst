@@ -52,4 +52,5 @@ sixteen2eight  converts a 16-bit image to 8-bit image
 
 plotSolarElev  Computes solar elevation angle and solar irradience vs. time/date for a given location on Earth
 h5lister       recursively list paths and variables in HDF5 file
+readDASCfits   reads FITS image data from Univ. Alaska Digital All Sky Cameras and plays movie
 =============  ===========
