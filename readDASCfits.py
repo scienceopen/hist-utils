@@ -30,7 +30,7 @@ def readFITS(flist,azfn,elfn):
 #%% preallocate, assuming all images the same size        
     with fits.open(flist[0],mode='readonly') as h:
         img = h[0].data
-    dataloc = np.empty((len(flist),3))  
+    dataloc = np.empty((img.size,3))  
     times =   np.empty((len(flist),2))
     img =     np.zeros((len(flist),img.shape[0],img.shape[1]),img.dtype) #zeros in case a few images fail to load
     epoch = datetime(1970,1,1,0,0,0)
@@ -78,5 +78,5 @@ if __name__ == '__main__':
 #%% play movie   
     for I in img:
         cv2.imshow('DASC',I)
-        cv2.pause(0.01)
-    
+        cv2.waitKey(1)
+    cv2.destroyAllWindows()
