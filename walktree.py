@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Recursively loops for pattern-matching files, like GNU find
-this function is case-insensitive (see line 59)
 Michael Hirsch
 Dec 2014
 """
