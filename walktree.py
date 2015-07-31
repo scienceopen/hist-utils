@@ -27,7 +27,7 @@ def walktree(root,pat):
                 for f in filter(files,pat):
                     found.append(join(top,f))
 
-            if len(found)==0:
+            if not found:
                 found=None
         elif isfile(r):
             found.append(r)
