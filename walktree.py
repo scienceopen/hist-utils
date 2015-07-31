@@ -26,13 +26,11 @@ def walktree(root,pat):
                 #for f in filter((ff.lower() for ff in files),pat.lower()):
                 for f in filter(files,pat):
                     found.append(join(top,f))
-
-            if not found:
-                found=None
         elif isfile(r):
             found.append(r)
         else:
             warn("is {} a file or directory?".format(r))
+
 
     return found
 
