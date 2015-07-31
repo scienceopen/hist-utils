@@ -8,6 +8,7 @@ If you'd like to incorporate a better spectral model like Lowtran or Hitran let 
 Michael Hirsch
  Aug 2012 -- updated to Astropy Feb 2015
 """
+from __future__ import absolute_import
 import astropy.units as u
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from astropy.time import Time
@@ -15,7 +16,11 @@ from datetime import datetime
 from warnings import warn
 from dateutil.rrule import HOURLY,rrule
 #
-from airMass import airmass
+try:
+    from .airMass import airmass
+except:
+    from airMass import airmass
+        
 
 def compsolar(site,coord,year,plotperhour,doplot):
     if isinstance(year,datetime):
