@@ -1,4 +1,6 @@
 from __future__ import division
+#
+from normframe import normframe
 """
 Note: consider using scipy.misc.bytescale instead of this file.
 
@@ -10,10 +12,6 @@ Michael Hirsch
 """
 
 def sixteen2eight(I,Clim):
-
-    Vmin = Clim[0]; Vmax = Clim[1]
-
-     #clip high end, boost low end (copy not needed)
-    Q = (I.clip(Vmin, Vmax) - Vmin) / (Vmax - Vmin) #stretch to [0,1] (float)
-    Q *= 255. # stretch to [0,255] as a float
+    Q = normframe(I,Clim)
+    Q *= 255 # stretch to [0,255] as a float
     return Q.round().astype('uint8') # convert to uint8
