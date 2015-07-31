@@ -14,11 +14,7 @@ from walktree import walktree
 
 def readCalFITS(indir,azfn,elfn):
     flist = walktree(indir,"PKR_DASC_*.fits")
-    data,coordnames,dataloc,sensorloc,times = readFITS(flist,azfn,elfn)
-    try:
-        return data['image']  
-    except:
-        return None     
+    return readFITS(flist,azfn,elfn)    
 
 def readFITS(flist,azfn,elfn):
     """
@@ -65,6 +61,7 @@ def readFITS(flist,azfn,elfn):
     
 if __name__ == '__main__':
     import cv2 # easy way to show fast movie
+    from sixteen2eight import sixteen2eight
     
     from argparse import ArgumentParser
     p = ArgumentParser(description='for Poker Flat DASC all sky camera, read az/el mapping and images')
@@ -74,9 +71,14 @@ if __name__ == '__main__':
     p=p.parse_args()
 
 
-    img = readCalFITS(p.indir,p.azfn,p.elfn)
+    data,coordnames,dataloc,sensorloc,times  = readCalFITS(p.indir,p.azfn,p.elfn)
+    img = data['image']
+    az = dataloc[:,1].reshape(img.shape[1:])
+    el = dataloc[:,2].reshape(img.shape[1:])
+    
+    img8 = sixteen2eight(img,(0,1000))
 #%% play movie   
-    for I in img:
+    for I in img8:
         cv2.imshow('DASC',I)
-        cv2.waitKey(1)
+        cv2.waitKey(50)
     cv2.destroyAllWindows()
