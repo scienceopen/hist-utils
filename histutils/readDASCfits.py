@@ -76,8 +76,8 @@ if __name__ == '__main__':
     img = data['image']
 	
     try:
-		az = dataloc[:,1].reshape(img.shape[1:])
-		el = dataloc[:,2].reshape(img.shape[1:])
+        az = dataloc[:,1].reshape(img.shape[1:])
+        el = dataloc[:,2].reshape(img.shape[1:])
     except:
         pass
     
