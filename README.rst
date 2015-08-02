@@ -62,4 +62,4 @@ Read .DMCdata file
 .. code-block:: python
 	
 	from histutils import rawDMCreader
-	data = rawDMCreader.goRead('myfile.DMCdata',(512,512),(1,1))
+	data = rawDMCreader.goRead('myfile.DMCdata',(512,512),(1,1))[0]
