@@ -28,6 +28,7 @@ From Terminal::
 
   git clone --depth 1 https://github.com/scienceopen/histutils
   conda install --file requirements.txt
+  python setup.py develop
 
 Utilities
 ---------
@@ -52,3 +53,13 @@ sixteen2eight converts a 16-bit image to 8-bit image
 plotSolarElev Computes solar elevation angle and solar irradience vs. time/date for a given location on Earth
 h5lister      recursively list paths and variables in HDF5 file
 ========      ===========
+
+Examples
+--------
+
+Read .DMCdata file
+~~~~~~~~~~~~~~~~~~
+.. code-block:: python
+	
+	from histutils import rawDMCreader
+	data = rawDMCreader.goRead('myfile.DMCdata',(512,512),(1,1))
