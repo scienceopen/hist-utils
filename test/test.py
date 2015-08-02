@@ -45,4 +45,4 @@ if __name__ == '__main__':
     test_airmass()
     test_rawread()
     test_plotsolar()
-    test_diric(0)
+    test_diric()
