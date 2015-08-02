@@ -9,7 +9,6 @@
 .. image:: http://coveralls.io/repos/scienceopen/histutils/badge.svg?branch=master&service=github
    :target: http://coveralls.io/github/scienceopen/histutils?branch=master
 
-.. default-domain:: matlab
 
 
 HiSTutils
