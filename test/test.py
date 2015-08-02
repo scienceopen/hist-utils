@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 from numpy import array,nan,uint16,int64
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose,assert_almost_equal
 from datetime import datetime
 #
 from histutils.airMass import airmass
 from histutils.rawDMCreader import goRead
 from histutils.plotSolarElev import compsolar
 from histutils.diric import diric
+from histutils.findnearest import find_nearest
+
+def test_findnearest():
+    indf,xf = find_nearest([10,15,12,20,14,33],[32,12.01])
+    assert_almost_equal(indf,[5,2])
+    assert_almost_equal(xf,[33.,12.])
 
 def test_airmass():
     theta=[-1.,38.]
@@ -42,6 +48,7 @@ def test_diric():
     assert_allclose(diric(3.,2),0.0707372)
     
 if __name__ == '__main__':
+    test_findnearest()
     test_airmass()
     test_rawread()
     test_plotsolar()
