@@ -6,6 +6,7 @@ from datetime import datetime
 from histutils.airMass import airmass
 from histutils.rawDMCreader import goRead
 from histutils.plotSolarElev import compsolar
+from histutils.diric import diric
 
 def test_airmass():
     theta=[-1.,38.]
@@ -37,8 +38,11 @@ def test_plotsolar():
     assert_allclose(Irr[[6,14,6],[2,125,174]], [nan,  216.436431,  405.966392])
     assert_allclose(sunel[[6,14,6],[2,125,174]], [-33.736906, 4.438728, 9.068415])
 
-
+def test_diric():
+    assert_allclose(diric(3.,2),0.0707372)
+    
 if __name__ == '__main__':
     test_airmass()
     test_rawread()
     test_plotsolar()
+    test_diric(0)
