@@ -4,13 +4,14 @@ Reads DASC allsky cameras images in FITS formats into GeoData. Can also run stan
 To download DASC images using Octave, Matlab, or Python checkout:
 https://github.com/jswoboda/ISR_Toolbox/blob/master/Allsky/dlFITS.m
 """
+from __future__ import absolute_import
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
 from datetime import datetime
 from warnings import warn
 #
-from walktree import walktree
+from .walktree import walktree
 
 def readCalFITS(indir,azfn,elfn):
     flist = walktree(indir,"PKR_DASC_*.fits")
@@ -73,8 +74,12 @@ if __name__ == '__main__':
 
     data,coordnames,dataloc,sensorloc,times  = readCalFITS(p.indir,p.azfn,p.elfn)
     img = data['image']
-    az = dataloc[:,1].reshape(img.shape[1:])
-    el = dataloc[:,2].reshape(img.shape[1:])
+	
+    try:
+		az = dataloc[:,1].reshape(img.shape[1:])
+		el = dataloc[:,2].reshape(img.shape[1:])
+    except:
+        pass
     
     img8 = sixteen2eight(img,(0,1000))
 #%% play movie   
