@@ -1,6 +1,6 @@
-from __future__ import division
+from __future__ import division,absolute_import
 #
-from normframe import normframe
+from .normframe import normframe
 """
 Note: consider using scipy.misc.bytescale instead of this file.
 
