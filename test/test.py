@@ -3,15 +3,9 @@ from numpy import array,nan,uint16,int64
 from numpy.testing import assert_allclose
 from datetime import datetime
 #
-try:
-    from .airMass import airmass
-    from .rawDMCreader import goRead
-    from .plotSolarElev import compsolar
-except Exception as e:
-    print(e)
-    from airMass import airmass
-    from rawDMCreader import goRead
-    from plotSolarElev import compsolar
+from histutils.airMass import airmass
+from histutils.rawDMCreader import goRead
+from histutils.plotSolarElev import compsolar
 
 def test_airmass():
     theta=[-1.,38.]

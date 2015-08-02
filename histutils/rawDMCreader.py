@@ -18,7 +18,7 @@ from six import integer_types
 #
 try:
     from . import getRawInd as gri #using from another package as submodule
-except (ValueError,SystemError):
+except:
     import getRawInd as gri #using locally
 
 bpp = 16

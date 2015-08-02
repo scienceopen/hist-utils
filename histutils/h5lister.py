@@ -6,7 +6,6 @@
 # BSD license
 
 import h5py
-import sys
 
 def h5lister(h5fn):
 
@@ -21,5 +20,6 @@ def h5lister(h5fn):
                 for gkey,gval in dict(dval).iteritems():
                     print(gval)
     
-
-h5lister(sys.argv[1])
+if __name__ == '__main__':
+	import sys
+	h5lister(sys.argv[1])
