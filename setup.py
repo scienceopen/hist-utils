@@ -12,7 +12,7 @@ setup(name='histutils',
 	  author='Michael Hirsch',
 	  author_email='hirsch617@gmail.com',
 	  url='https://github.com/scienceopen/histutils',
-	  install_requires=['scipy','scikit-image','astropy','matplotlib','six','nose'],
+	  install_requires=['scipy','scikit-image','h5py','astropy','matplotlib','six','nose'],
       packages=['histutils'],
 	  )
 
