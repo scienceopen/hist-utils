@@ -33,9 +33,9 @@ From Terminal::
 Utilities
 ---------
 
-========      ===========
+============= ===========
 Function      Description
-========      ===========
+============= ===========
 memfree       Estimates available RAM for Matlab/Octave under Windows, Mac, Linux
 checkRAM      check if a proposed N-D array with fit in available RAM (w/o swap)
 isoctave      detect if ``.m`` code is being run under GNU Octave (vs. Matlab)
@@ -52,7 +52,7 @@ sixteen2eight converts a 16-bit image to 8-bit image
 
 plotSolarElev Computes solar elevation angle and solar irradience vs. time/date for a given location on Earth
 h5lister      recursively list paths and variables in HDF5 file
-========      ===========
+============= ===========
 
 Examples
 --------
