@@ -22,16 +22,7 @@ from tempfile import gettempdir
 from os.path import join
 from numpy import random, uint8
 from time import time
-try:
-    from skimage.io._plugins import freeimage_plugin as freeimg
-    from skimage.io import imread as skimread
-except Exception as e:
-    print(e)
-    
-try:
-    import tifffile
-except Exception as e:
-    print(e)
+import tifffile
 
 def tiffdemo(modules):
 #%% test parameters
@@ -99,12 +90,16 @@ def read_multipage_tiff(ofn):
         return y
     except Exception as e:
         print('tifffile had a reading problem with {}   {} '.format(ofn,e))
+        
 #%% demo writing TIFF using scikit-image and free image
 def write_multipage_freeimage(x,ofn):
     """
     uses LZW compression for TIFF, but is far slower (20x) than tifffile
     writes bad/corrupt/weird multipage GIF
     """
+    from skimage.io._plugins import freeimage_plugin as freeimg
+    from skimage.io import imread as skimread
+
     try:
         print('freeimage write {}   shape {}'.format(ofn,x.shape))
         #write demo (no tags)
