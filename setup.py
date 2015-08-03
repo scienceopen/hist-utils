@@ -16,5 +16,3 @@ setup(name='histutils',
       packages=['histutils'],
 	  )
 
-#dependency_links = ['https://github.com/scienceopen/gaussfitter/master#egg=gaussfitter']
-	  	  
