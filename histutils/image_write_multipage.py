@@ -23,6 +23,11 @@ from os.path import join
 from numpy import random, uint8
 from time import time
 import tifffile
+#try:
+#    from skimage.io._plugins import freeimage_plugin as freeimg
+#    from skimage.io import imread as skimread
+#except:
+#    pass #many people don't have Freeimage installed, and tifffile works better
 
 def tiffdemo(modules):
 #%% test parameters
@@ -97,9 +102,6 @@ def write_multipage_freeimage(x,ofn):
     uses LZW compression for TIFF, but is far slower (20x) than tifffile
     writes bad/corrupt/weird multipage GIF
     """
-    from skimage.io._plugins import freeimage_plugin as freeimg
-    from skimage.io import imread as skimread
-
     try:
         print('freeimage write {}   shape {}'.format(ofn,x.shape))
         #write demo (no tags)
