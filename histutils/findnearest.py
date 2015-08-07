@@ -6,7 +6,7 @@ x: array (float, int, datetime) within which to search for x0
 x0: singleton or array of values to search for in x
 
 outputs:
-idx: index of x nearest to x0
+idx: index of flattened x nearest to x0
 xidx: x[idx]
 
 Observe how bisect.bisect() gives the incorrect result!
