@@ -112,12 +112,8 @@ if __name__ == '__main__':
     pg.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float)
     p.add_argument('--pph', help='plot steps per hour (default 1)',type=int,default=1)
     p.add_argument('--noplot',help='disable plotting',action='store_false')
-    p.add_argument('--txt', help='filename to dump yearly schedule to')
     p = p.parse_args()
 
-    if p.txt:
-        doplot = False
-    else:
-        doplot = p.noplot
+    doplot = p.noplot
 
     Irr, sunel = compsolar(p.site, p.coord, 2013, p.pph, doplot)
