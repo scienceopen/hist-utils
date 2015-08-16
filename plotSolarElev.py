@@ -8,7 +8,7 @@ If you'd like to incorporate a better spectral model like Lowtran or Hitran let 
 Michael Hirsch
  Aug 2012 -- updated to Astropy Feb 2015
 """
-from __future__ import absolute_import
+from __future__ import absolute_import,division
 import astropy.units as u
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from astropy.time import Time
@@ -20,7 +20,7 @@ try:
     from .airMass import airmass
 except:
     from airMass import airmass
-        
+
 
 def compsolar(site,coord,year,plotperhour,doplot):
     if isinstance(year,datetime):
@@ -110,8 +110,14 @@ if __name__ == '__main__':
     pg = p.add_mutually_exclusive_group(required=True)
     pg.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str,default='')
     pg.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float)
-    p.add_argument('--pph',help='plot steps per hour (default 1)',type=int,default=1)
+    p.add_argument('--pph', help='plot steps per hour (default 1)',type=int,default=1)
     p.add_argument('--noplot',help='disable plotting',action='store_false')
+    p.add_argument('--txt', help='filename to dump yearly schedule to')
     p = p.parse_args()
 
-    Irr, sunel = compsolar(p.site, p.coord, 2013, p.pph, p.noplot)
+    if p.txt:
+        doplot = False
+    else:
+        doplot = p.noplot
+
+    Irr, sunel = compsolar(p.site, p.coord, 2013, p.pph, doplot)
