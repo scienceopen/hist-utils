@@ -33,9 +33,9 @@ From Terminal::
 Utilities
 ---------
 
-========                ===========
+=====================   ===========
 Function                Description
-========                ===========
+=====================   ===========
 memfree                 Estimates available RAM for Matlab/Octave under Windows, Mac, Linux
 checkRAM                check if a proposed N-D array with fit in available RAM (w/o swap)
 isoctave                detect if ``.m`` code is being run under GNU Octave (vs. Matlab)
@@ -57,15 +57,20 @@ diric                   Computes Dirichlet function
 
 imageconv               convert directory of images to multi-page TIFF
 image_write_multipage   write/read multi-page TIFF
-========                ===========
+=====================   ===========
 
 
-Examples
---------
+Examples using rawDMCreader.py
+------------------------------
 
 Read .DMCdata file
 ~~~~~~~~~~~~~~~~~~
 .. code-block:: python
-	
+
 	from histutils import rawDMCreader
-	data = rawDMCreader.goRead('myfile.DMCdata',(512,512),(1,1))[0]
+	data = rawDMCreader.goRead('myfile.DMCdata')[0]
+
+Using rawDMCreader.py from the command line
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-m      play movie (pause time per frame in seconds)
+-o      convert raw data to desired format (fits,mat,h5)

@@ -8,9 +8,9 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
    default to int32 instead of int64 like everyone else!
     --- we can't use long, because that's only for Python 2.7
  """
-from __future__ import division, print_function, absolute_import
+from __future__ import division, absolute_import
 from os.path import getsize, expanduser, splitext, isfile
-import numpy as np
+from numpy import int64,uint16,zeros,arange,fromfile
 import argparse
 from re import search
 from warnings import warn
@@ -37,9 +37,9 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, rawFrameRate=None,startUTC=None,v
     if finf is None: return None, None
 
 #%% preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
-    data = np.zeros((finf['nframeextract'],finf['supery'],finf['superx']),
-                    dtype=np.uint16, order='C')
-    rawFrameInd = np.zeros(finf['nframeextract'], dtype=np.int64)
+    data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
+                    dtype=uint16, order='C')
+    rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
 
     with open(bigfn, 'rb') as fid:
         for j,i in enumerate(finf['frameind']): #j and i are NOT the same in general when not starting from beginning of file!
@@ -76,8 +76,8 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
         return None
 
     #np.int64() in case we are fed a float or int
-    SuperX = np.int64(xyPix[0]) // np.int64(xyBin[0]) # "//" keeps as integer
-    SuperY = np.int64(xyPix[1]) // np.int64(xyBin[1])
+    SuperX = int64(xyPix[0]) // int64(xyBin[0]) # "//" keeps as integer
+    SuperY = int64(xyPix[1]) // int64(xyBin[1])
 
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
     PixelsPerImage= SuperX * SuperY
@@ -107,11 +107,11 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
 # return the requested frames
     #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
-        FrameInd =np.arange(0,nFrame,FrameIndReq,dtype=np.int64)
+        FrameInd =arange(0,nFrame,FrameIndReq,dtype=int64)
     elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
-        FrameInd =np.arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=np.int64)
+        FrameInd =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)
     else: #catch all
-        FrameInd = np.arange(nFrame,dtype=np.int64) # has to be numpy.arange for > comparison
+        FrameInd = arange(nFrame,dtype=int64) # has to be numpy.arange for > comparison
         if verbose>0:
             print('automatically selected all frames in file')
     badReqInd = (FrameInd>nFrame) | (FrameInd<0)
@@ -141,7 +141,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     if verbose>0:
         print('seeking to byte ' + str(currByte))
 
-    assert currByte.dtype == np.int64
+    assert currByte.dtype == int64
     try:
         f.seek(currByte,0) #no return value
     except IOError as e:
@@ -152,7 +152,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
         return None, None
 #%% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
-        currFrame = np.fromfile(f, np.uint16,
+        currFrame = fromfile(f, uint16,
                             finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),
                             order='C')
     except ValueError as e:
@@ -163,28 +163,30 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     return currFrame,rawFrameInd
 
 def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
-    if playMovie:
-        sfmt = ScalarFormatter(useMathText=True)
-        hf1 = figure(1)
-        hAx = hf1.gca()
-        if Clim is None:
-            hIm = hAx.imshow(data[0,:,:], cmap = 'gray', origin='lower',norm=LogNorm() )
-        else:
-            hIm = hAx.imshow(data[0,:,:],
-                            vmin=Clim[0],vmax=Clim[1],
-                            cmap = 'gray', origin='lower', norm=LogNorm())
-        hT = hAx.text(0.5,1.005,'', ha='center',transform=hAx.transAxes)
-        hc = hf1.colorbar(hIm,format=sfmt)
-        hc.set_label('data numbers ' + str(data.dtype))
-        hAx.set_xlabel('x-pixels')
-        hAx.set_ylabel('y-pixels')
+    if not playMovie:
+        return
+#%%
+    sfmt = ScalarFormatter(useMathText=True)
+    hf1 = figure(1)
+    hAx = hf1.gca()
+    if Clim is None:
+        hIm = hAx.imshow(data[0,...], cmap = 'gray', origin='lower',norm=LogNorm() )
+    else:
+        hIm = hAx.imshow(data[0,...],
+                        vmin=Clim[0],vmax=Clim[1],
+                        cmap = 'gray', origin='lower', norm=LogNorm())
+    hT = hAx.text(0.5,1.005,'', ha='center',transform=hAx.transAxes)
+    hc = hf1.colorbar(hIm,format=sfmt)
+    hc.set_label('data numbers ' + str(data.dtype))
+    hAx.set_xlabel('x-pixels')
+    hAx.set_ylabel('y-pixels')
 
-        for j,i in enumerate(rawFrameInd):
-            #print('raw {}  rel {} '.format(i,j))
-            #hAx.imshow(data[j,...]) #slower
-            hIm.set_data(data[j,...])  # faster
-            hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[j],i) )
-            draw(); pause(playMovie)
+    for j,i in enumerate(rawFrameInd):
+        #print('raw {}  rel {} '.format(i,j))
+        #hAx.imshow(data[j,...]) #slower
+        hIm.set_data(data[j,...])  # faster
+        hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[j],i) )
+        draw(); pause(playMovie)
 
 def doanimate(data,nFrameExtract,playMovie):
     # on some systems, just freezes at first frame
@@ -201,7 +203,7 @@ def doanimate(data,nFrameExtract,playMovie):
     anim.FuncAnimation(fg,animate,range(nFrameExtract),fargs=(data,himg,ht),
                        interval=playMovie, blit=False, repeat_delay=1000)
 
-def doplotsave(bigfn,data,rawind,clim,dohist,meanImg,writeFITS,saveMat):
+def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
     outStem = splitext(expanduser(bigfn))[0]
 
     if dohist:
@@ -212,7 +214,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg,writeFITS,saveMat):
         ax.set_xlabel('data value')
 
     if meanImg:
-        meanStack = data.mean(axis=0).astype(np.uint16) #DO NOT use dtype= here, it messes up internal calculation!
+        meanStack = data.mean(axis=0).astype(uint16) #DO NOT use dtype= here, it messes up internal calculation!
         fg = figure(32)
         ax = fg.gca()
         if clim:
@@ -228,30 +230,32 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg,writeFITS,saveMat):
         pngfn = outStem + '_mean.png'
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
-#%% saving
-    if writeFITS:
+
+def dmcconvert(finf,bigfn,data,output):
+    #TODO timestamp frames
+    if not output:
+        return
+    output=output.lower()
+
+    stem,ext = splitext(expanduser(bigfn))
+    #%% saving
+    if 'fits' in output:
         from astropy.io import fits
-        #TODO timestamp frames
-        if meanImg:
-            fitsFN = outStem + '_mean_frames.fits'
-            fitsData = meanStack
-            print('writing MEAN image data as ' + fitsFN)
-        else:
-            fitsFN = outStem + '_frames.fits'
-            fitsData = rawImgData
-            print('writing ' + str(fitsData.dtype) + ' raw image data as ' + fitsFN)
-        hdu = fits.PrimaryHDU(fitsData)
-        hdu.writeto(fitsFN,clobber=True)
-        print('the orientation of this FITS in NASA FV program and the preview image shown in Python should/must have the same orientation and pixel indexing')
+        fitsFN = stem + '.fits'
+        fitsData = rawImgData
+        print('writing ' + str(fitsData.dtype) + ' raw image data as ' + fitsFN)
+        with fits.PrimaryHDU(fitsData) as f:
+            f.writeto(fitsFN,clobber=False)
+        print('Note: the orientation of this FITS in NASA FV program and the preview '
+        'image shown in Python should/must have the same orientation and pixel indexing')
 
 
-    if saveMat:
+    if 'mat' in output:
         from scipy.io import savemat
-        matFN = outStem + '_frames.mat'
+        matFN = stem + '.mat'
         print('writing raw image data as ' + matFN)
         matdata = {'rawimgdata':rawImgData}
         savemat(matFN,matdata,oned_as='column')
-
 
 if __name__ == "__main__":
     from matplotlib.pyplot import figure,show, hist, draw, pause
@@ -262,21 +266,22 @@ if __name__ == "__main__":
     p.add_argument('infile',help='.DMCdata file name and path',type=str,nargs='?',default='')
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
-    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'), type=np.int64) #don't use string
+    p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'), type=int64) #don't use string
     p.add_argument('-m','--movie',help='seconds per frame. ',type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,type=float)
     p.add_argument('-r','--rate',help='raw frame rate of camera',type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording')
-    p.add_argument('--fits',help='write a .FITS file of the data you extract',action='store_true')
-    p.add_argument('--mat',help="write a .mat MATLAB data file of the extracted data",action='store_true')
+    p.add_argument('-o','--output',help='extract raw data into this type of file [h5,fits,mat]',nargs='+')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
-    a = p.parse_args()
+    p = p.parse_args()
 
-    rawImgData,rawInd,finf = goRead(a.infile, a.pix, a.bin,a.frames, a.rate,a.startutc,a.verbose)
+    rawImgData,rawInd,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.rate,p.startutc,p.verbose)
 #%% plots and save
-    doPlayMovie(rawImgData,finf,a.movie, a.clim,rawInd)
+    doPlayMovie(rawImgData,finf,p.movie, p.clim,rawInd)
 
-    doplotsave(a.infile,rawImgData,rawInd,a.clim,a.hist,a.avg,a.fits,a.mat)
+    doplotsave(p.infile,rawImgData,rawInd,p.clim,p.hist,p.avg)
+
+    dmcconvert(finf,p.infile,rawImgData,p.output)
     show()
