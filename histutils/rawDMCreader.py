@@ -256,7 +256,7 @@ def dmcconvert(finf,bigfn,data,output):
         from scipy.io import savemat
         matFN = stem + '.mat'
         print('writing raw image data as ' + matFN)
-        matdata = {'rawimgdata':rawImgData}
+        matdata = {'rawimgdata':rawImgData.transpose(1,2,0)} #matlab is fortran order
         savemat(matFN,matdata,oned_as='column')
 
 if __name__ == "__main__":
