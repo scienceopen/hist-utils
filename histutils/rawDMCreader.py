@@ -16,6 +16,14 @@ from warnings import warn
 from six import integer_types
 #
 try:
+    from matplotlib.pyplot import figure,show, hist, draw, pause
+    from matplotlib.colors import LogNorm
+    from matplotlib.ticker import ScalarFormatter
+    #import matplotlib.animation as anim
+except:
+    pass
+#
+try:
     from . import getRawInd as gri #using from another package as submodule
 except:
     import getRawInd as gri #using locally
@@ -161,30 +169,35 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     rawFrameInd = gri.meta2rawInd(f,finf['nmetadata'])
     return currFrame,rawFrameInd
 
-def doPlayMovie(data,finf,playMovie,Clim,rawFrameInd):
+def doPlayMovie(data,playMovie,rawFrameInd=None,Clim=None):
     if not playMovie:
         return
 #%%
     sfmt = ScalarFormatter(useMathText=True)
     hf1 = figure(1)
     hAx = hf1.gca()
-    if Clim is None:
-        hIm = hAx.imshow(data[0,...], cmap = 'gray', origin='lower',norm=LogNorm() )
-    else:
+
+    try:
         hIm = hAx.imshow(data[0,...],
-                        vmin=Clim[0],vmax=Clim[1],
-                        cmap = 'gray', origin='lower', norm=LogNorm())
+                vmin=Clim[0],vmax=Clim[1],
+                cmap = 'gray', origin='lower', norm=LogNorm())
+    except: #clim wasn't specified properly
+        print('setting image viewing limits based on first frame')
+        hIm = hAx.imshow(data[0,...], cmap = 'gray', origin='lower',norm=LogNorm() )
+
     hT = hAx.text(0.5,1.005,'', ha='center',transform=hAx.transAxes)
     hc = hf1.colorbar(hIm,format=sfmt)
     hc.set_label('data numbers ' + str(data.dtype))
     hAx.set_xlabel('x-pixels')
     hAx.set_ylabel('y-pixels')
 
-    for j,i in enumerate(rawFrameInd):
-        #print('raw {}  rel {} '.format(i,j))
-        #hAx.imshow(data[j,...]) #slower
-        hIm.set_data(data[j,...])  # faster
-        hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[j],i) )
+    for i,d in enumerate(data):
+        hIm.set_data(d)
+        try:
+            hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[i],i) )
+        except:
+            hT.set_text('RelFrame# {}'.format(i) )
+
         draw(); pause(playMovie)
 
 def doanimate(data,nFrameExtract,playMovie):
@@ -238,14 +251,21 @@ def dmcconvert(finf,bigfn,data,output):
 
     stem,ext = splitext(expanduser(bigfn))
     #%% saving
+    if 'h5' in output:
+        import h5py
+        h5fn = stem + '.h5'
+        print('writing {} raw image data as {}'.format(data.dtype,h5fn))
+        with h5py.File(h5fn,'w',libver='latest') as f:
+            f.create_dataset('/imgdata',data=data, #not transposed for easy reload into Python ()
+                             compression='gzip',track_times=True)
+
     if 'fits' in output:
         from astropy.io import fits
         fitsFN = stem + '.fits'
-        fitsData = rawImgData
-        print('writing {} raw image data as {}'.format(fitsData.dtype,fitsFN))
+        print('writing {} raw image data as {}'.format(data.dtype,fitsFN))
 
         #NOTE the with... syntax does NOT yet work with astropy.io.fits
-        hdu = fits.PrimaryHDU(fitsData)
+        hdu = fits.PrimaryHDU(data)
         hdu.writeto(fitsFN,clobber=False)
         """
         Note: the orientation of this FITS in NASA FV program and the preview
@@ -255,8 +275,8 @@ def dmcconvert(finf,bigfn,data,output):
     if 'mat' in output:
         from scipy.io import savemat
         matFN = stem + '.mat'
-        print('writing raw image data as ' + matFN)
-        matdata = {'rawimgdata':rawImgData.transpose(1,2,0)} #matlab is fortran order
+        print('writing {} raw image data as {}'.format(data.dtype,matFN))
+        matdata = {'imgdata':data.transpose(1,2,0)} #matlab is fortran order
         savemat(matFN,matdata,oned_as='column')
 
 if __name__ == "__main__":
@@ -281,11 +301,7 @@ if __name__ == "__main__":
     dmcconvert(finf,p.infile,rawImgData,p.output)
 #%% plots and save
     try:
-        from matplotlib.pyplot import figure,show, hist, draw, pause
-        from matplotlib.colors import LogNorm
-        from matplotlib.ticker import ScalarFormatter
-        #import matplotlib.animation as anim
-        doPlayMovie(rawImgData,finf,p.movie, p.clim,rawInd)
+        doPlayMovie(rawImgData,p.movie, p.clim,rawInd)
         doplotsave(p.infile,rawImgData,rawInd,p.clim,p.hist,p.avg)
         show()
     except Exception as e:
