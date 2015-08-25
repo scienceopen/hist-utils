@@ -288,7 +288,12 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,output):
             fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
-                f['/ut1_unix'] = ut1
+                fut1 = f.create_dataset('/ut1_unix',data=ut1)
+                fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
+
+            if rawind is not None:
+                fri = f.create_dataset('/rawind',data=rawind)
+                fri.attrs['units'] = 'one-based index since camera program started this session'
 
 
     if 'fits' in output:
