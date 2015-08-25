@@ -14,7 +14,13 @@ from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_
 from re import search
 from warnings import warn
 from six import integer_types
-from time import time
+from datetime import datetime
+from pytz import UTC
+try:
+    from .timedmc import fallback
+except:
+    from timedmc import fallback
+
 #
 try:
     from matplotlib.pyplot import figure,show, hist, draw, pause
@@ -35,11 +41,7 @@ nHeadBytes = 4
 def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, rawFrameRate=None,startUTC=None,verbose=0):
 
     bigfn = expanduser(bigfn)
-#%% check
-    if startUTC:
-        raise NotImplementedError('frame UTC timing not yet implemented')
-    if rawFrameRate:
-        raise NotImplementedError('raw frame rate timing not yet implemented')
+
 #%% setup data parameters
     finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,verbose)
     if finf is None: return None, None
@@ -53,7 +55,10 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, rawFrameRate=None,startUTC=None,v
         for j,i in enumerate(finf['frameind']): #j and i are NOT the same in general when not starting from beginning of file!
             data[j,:,:], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
 
-    return data, rawFrameInd,finf
+#%% absolute time estimate
+    ut1_unix = fallback(startUTC,rawFrameRate,rawFrameInd)
+
+    return data, rawFrameInd,finf,ut1_unix
 #%% workers
 def getserialnum(flist):
     """
@@ -170,7 +175,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     rawFrameInd = gri.meta2rawInd(f,finf['nmetadata'])
     return currFrame,rawFrameInd
 
-def doPlayMovie(data,playMovie,rawFrameInd=None,Clim=None):
+def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
     if not playMovie:
         return
 #%%
@@ -180,7 +185,7 @@ def doPlayMovie(data,playMovie,rawFrameInd=None,Clim=None):
 
     try:
         hIm = hAx.imshow(data[0,...],
-                vmin=Clim[0],vmax=Clim[1],
+                vmin=clim[0],vmax=clim[1],
                 cmap = 'gray', origin='lower', norm=LogNorm())
     except: #clim wasn't specified properly
         print('setting image viewing limits based on first frame')
@@ -192,10 +197,18 @@ def doPlayMovie(data,playMovie,rawFrameInd=None,Clim=None):
     hAx.set_xlabel('x-pixels')
     hAx.set_ylabel('y-pixels')
 
+    if ut1_unix is not None:
+        titleut=True
+    else:
+        titleut=False
+
     for i,d in enumerate(data):
         hIm.set_data(d)
         try:
-            hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[i],i) )
+            if titleut:
+                hT.set_text('UT1 estimate: {}  RelFrame#: {}'.format(datetime.fromtimestamp(ut1_unix[i],tz=UTC),i))
+            else:
+                hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[i],i) )
         except:
             hT.set_text('RelFrame# {}'.format(i) )
 
@@ -244,7 +257,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(finf,bigfn,data,ut1,output):
+def dmcconvert(finf,bigfn,data,ut1,rawind,output):
     #TODO timestamp frames
     if not output:
         return
@@ -264,7 +277,7 @@ def dmcconvert(finf,bigfn,data,ut1,output):
         h5fn = stem + '.h5'
         print('writing {} raw image data as {}'.format(data.dtype,h5fn))
         with h5py.File(h5fn,'w',libver='latest') as f:
-            fimg = f.create_dataset('/raw',data=data,
+            fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
                              compression_opts=4,
                              track_times=True)
@@ -274,8 +287,8 @@ def dmcconvert(finf,bigfn,data,ut1,output):
             fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
             fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
-            if ut1:
-                f['/ut1'] = ut1
+            if ut1 is not None: #needs is not None
+                f['/ut1_unix'] = ut1
 
 
     if 'fits' in output:
@@ -307,7 +320,7 @@ if __name__ == "__main__":
     p.add_argument('-f','--frames',help='frame indices of file (not raw)',nargs=3,metavar=('start','stop','stride'), type=int64) #don't use string
     p.add_argument('-m','--movie',help='seconds per frame. ',type=float)
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,type=float)
-    p.add_argument('-r','--rate',help='raw frame rate of camera',type=float)
+    p.add_argument('-r','--fps',help='raw frame rate of camera',type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording')
     p.add_argument('-o','--output',help='extract raw data into this type of file [h5,fits,mat]',nargs='+')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
@@ -315,12 +328,12 @@ if __name__ == "__main__":
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
     p = p.parse_args()
 
-    rawImgData,rawInd,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.rate,p.startutc,p.verbose)
+    rawImgData,rawInd,finf,ut1_unix = goRead(p.infile, p.pix,p.bin,p.frames,p.fps,p.startutc,p.verbose)
 #%% convert
-    dmcconvert(finf,p.infile,rawImgData,ut1,p.output)
+    dmcconvert(finf,p.infile,rawImgData,ut1_unix,rawInd,p.output)
 #%% plots and save
     try:
-        doPlayMovie(rawImgData,p.movie, p.clim,rawInd)
+        doPlayMovie(rawImgData,p.movie, ut1_unix=ut1_unix,clim=p.clim)
         doplotsave(p.infile,rawImgData,rawInd,p.clim,p.hist,p.avg)
         show()
     except Exception as e:

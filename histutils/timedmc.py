@@ -37,6 +37,7 @@ def fallback(tstart,fps,rawind):
         pass
     else:
         warn('I do not know how to handle your tstart of type {}'.format(type(tstart)))
+        return None
 
     #total_seconds is required for Python 2 compatibility
     # this variable is in units of seconds since Jan 1, 1970, midnight

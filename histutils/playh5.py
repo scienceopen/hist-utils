@@ -12,8 +12,12 @@ except:
 def playh5movie(h5fn):
 
     with h5py.File(h5fn,'r',libver='latest') as f:
-        data = f['/imgdata']
-        doPlayMovie(data,1)
+        data = f['/rawimg']
+        try:
+            ut1_unix = f['/ut1_unix']
+        except:
+            ut1_unix = None
+        doPlayMovie(data,1,ut1_unix=ut1_unix)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
