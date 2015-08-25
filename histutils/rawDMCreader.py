@@ -252,17 +252,24 @@ def dmcconvert(finf,bigfn,data,output):
     stem,ext = splitext(expanduser(bigfn))
     #%% saving
     if 'h5' in output:
+        """
+        Reference: https://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html
+        Thanks to Eric Piel of Delmic for pointing out this spec
+        * the HDF5 attributess set are necessary to put HDFView into image mode and enables
+        other conforming readers to easily play images stacks as video.
+        * the string_() calls are necessary to make fixed length strings per HDF5 spec
+        """
         import h5py
         h5fn = stem + '.h5'
         print('writing {} raw image data as {}'.format(data.dtype,h5fn))
         with h5py.File(h5fn,'w',libver='latest') as f:
             fimg = f.create_dataset('/imgdata',data=data, #not transposed for easy reload into Python ()
                              compression='gzip',track_times=True)
+            fimg.attrs["IMAGE_VERSION"] = string_("1.2")
             fimg.attrs["CLASS"] = string_("IMAGE")
             fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
             fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
             fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
-            fimg.attrs['INTERLACE_MODE'] = string_("INTERLACE_PLANE") # page x height x width
 
 
     if 'fits' in output:
