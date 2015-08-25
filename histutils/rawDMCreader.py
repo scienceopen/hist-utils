@@ -10,7 +10,7 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
  """
 from __future__ import division, absolute_import
 from os.path import getsize, expanduser, splitext, isfile
-from numpy import int64,uint16,zeros,arange,fromfile
+from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_
 from re import search
 from warnings import warn
 from six import integer_types
@@ -256,8 +256,14 @@ def dmcconvert(finf,bigfn,data,output):
         h5fn = stem + '.h5'
         print('writing {} raw image data as {}'.format(data.dtype,h5fn))
         with h5py.File(h5fn,'w',libver='latest') as f:
-            f.create_dataset('/imgdata',data=data, #not transposed for easy reload into Python ()
+            fimg = f.create_dataset('/imgdata',data=data, #not transposed for easy reload into Python ()
                              compression='gzip',track_times=True)
+            fimg.attrs["CLASS"] = string_("IMAGE")
+            fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
+            fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
+            fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
+            fimg.attrs['INTERLACE_MODE'] = string_("INTERLACE_PLANE") # page x height x width
+
 
     if 'fits' in output:
         from astropy.io import fits
