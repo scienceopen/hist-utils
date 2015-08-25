@@ -14,6 +14,7 @@ from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_
 from re import search
 from warnings import warn
 from six import integer_types
+from time import time
 #
 try:
     from matplotlib.pyplot import figure,show, hist, draw, pause
@@ -243,7 +244,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(finf,bigfn,data,output):
+def dmcconvert(finf,bigfn,data,ut1,output):
     #TODO timestamp frames
     if not output:
         return
@@ -263,13 +264,18 @@ def dmcconvert(finf,bigfn,data,output):
         h5fn = stem + '.h5'
         print('writing {} raw image data as {}'.format(data.dtype,h5fn))
         with h5py.File(h5fn,'w',libver='latest') as f:
-            fimg = f.create_dataset('/imgdata',data=data, #not transposed for easy reload into Python ()
-                             compression='gzip',track_times=True)
-            fimg.attrs["IMAGE_VERSION"] = string_("1.2")
+            fimg = f.create_dataset('/raw',data=data,
+                             compression='gzip',
+                             compression_opts=4,
+                             track_times=True)
             fimg.attrs["CLASS"] = string_("IMAGE")
+            fimg.attrs["IMAGE_VERSION"] = string_("1.2")
             fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
             fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
             fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
+
+            if ut1:
+                f['/ut1'] = ut1
 
 
     if 'fits' in output:
@@ -311,7 +317,7 @@ if __name__ == "__main__":
 
     rawImgData,rawInd,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.rate,p.startutc,p.verbose)
 #%% convert
-    dmcconvert(finf,p.infile,rawImgData,p.output)
+    dmcconvert(finf,p.infile,rawImgData,ut1,p.output)
 #%% plots and save
     try:
         doPlayMovie(rawImgData,p.movie, p.clim,rawInd)
