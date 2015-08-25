@@ -11,7 +11,6 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
 from __future__ import division, absolute_import
 from os.path import getsize, expanduser, splitext, isfile
 from numpy import int64,uint16,zeros,arange,fromfile
-import argparse
 from re import search
 from warnings import warn
 from six import integer_types
@@ -235,7 +234,7 @@ def dmcconvert(finf,bigfn,data,output):
     #TODO timestamp frames
     if not output:
         return
-    output=output.lower()
+    output=map(str.lower,output)
 
     stem,ext = splitext(expanduser(bigfn))
     #%% saving
@@ -243,12 +242,15 @@ def dmcconvert(finf,bigfn,data,output):
         from astropy.io import fits
         fitsFN = stem + '.fits'
         fitsData = rawImgData
-        print('writing ' + str(fitsData.dtype) + ' raw image data as ' + fitsFN)
-        with fits.PrimaryHDU(fitsData) as f:
-            f.writeto(fitsFN,clobber=False)
-        print('Note: the orientation of this FITS in NASA FV program and the preview '
-        'image shown in Python should/must have the same orientation and pixel indexing')
+        print('writing {} raw image data as {}'.format(fitsData.dtype,fitsFN))
 
+        #NOTE the with... syntax does NOT yet work with astropy.io.fits
+        hdu = fits.PrimaryHDU(fitsData)
+        hdu.writeto(fitsFN,clobber=False)
+        """
+        Note: the orientation of this FITS in NASA FV program and the preview
+        image shown in Python should/must have the same orientation and pixel indexing')
+        """
 
     if 'mat' in output:
         from scipy.io import savemat
@@ -258,11 +260,8 @@ def dmcconvert(finf,bigfn,data,output):
         savemat(matFN,matdata,oned_as='column')
 
 if __name__ == "__main__":
-    from matplotlib.pyplot import figure,show, hist, draw, pause
-    from matplotlib.colors import LogNorm
-    from matplotlib.ticker import ScalarFormatter
-    #import matplotlib.animation as anim
-    p = argparse.ArgumentParser(description='Raw .DMCdata file reader')
+    from argparse import ArgumentParser
+    p = ArgumentParser(description='Raw .DMCdata file reader, plotter, converter')
     p.add_argument('infile',help='.DMCdata file name and path',type=str,nargs='?',default='')
     p.add_argument('-p','--pix',help='nx ny  number of x and y pixels respectively',nargs=2,default=(512,512),type=int)
     p.add_argument('-b','--bin',help='nx ny  number of x and y binning respectively',nargs=2,default=(1,1),type=int)
@@ -278,10 +277,18 @@ if __name__ == "__main__":
     p = p.parse_args()
 
     rawImgData,rawInd,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.rate,p.startutc,p.verbose)
-#%% plots and save
-    doPlayMovie(rawImgData,finf,p.movie, p.clim,rawInd)
-
-    doplotsave(p.infile,rawImgData,rawInd,p.clim,p.hist,p.avg)
-
+#%% convert
     dmcconvert(finf,p.infile,rawImgData,p.output)
-    show()
+#%% plots and save
+    try:
+        from matplotlib.pyplot import figure,show, hist, draw, pause
+        from matplotlib.colors import LogNorm
+        from matplotlib.ticker import ScalarFormatter
+        #import matplotlib.animation as anim
+        doPlayMovie(rawImgData,finf,p.movie, p.clim,rawInd)
+        doplotsave(p.infile,rawImgData,rawInd,p.clim,p.hist,p.avg)
+        show()
+    except Exception as e:
+        print('skipped plotting  {}'.format(e))
+
+
