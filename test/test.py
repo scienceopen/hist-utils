@@ -24,7 +24,7 @@ def test_rawread():
     bigfn='test/testframes.DMCdata'
     framestoplay=(1,2,1)  #this is (start,stop,step) so (1,2,1) means read only the second frame in the file
 
-    testframe, testind,finf = goRead(bigfn,(512,512),(1,1),framestoplay,verbose=1)
+    testframe, testind,finf,ut1_unix = goRead(bigfn,(512,512),(1,1),framestoplay,verbose=1)
 
     #these are both tested by goRead
     #finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
@@ -46,7 +46,7 @@ def test_plotsolar():
 
 def test_diric():
     assert_allclose(diric(3.,2),0.0707372)
-    
+
 if __name__ == '__main__':
     test_findnearest()
     test_airmass()

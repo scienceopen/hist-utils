@@ -40,7 +40,6 @@ def frame2ut1(tstart,fps,rawind):
     elif isinstance(tstart,datetime):
         pass
     else:
-        warn('I do not know how to handle your tstart of type {}'.format(type(tstart)))
         return None
 
     #total_seconds is required for Python 2 compatibility
