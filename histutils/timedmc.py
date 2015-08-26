@@ -19,7 +19,8 @@ from warnings import warn
 from numpy import atleast_1d,int64
 from pytz import UTC
 from scipy.interpolate import interp1d
-
+#
+from gridaurora.fortrandates import forceutc
 #
 tepoch = datetime(1970,1,1,0,0,0,tzinfo=UTC)
 
@@ -45,7 +46,7 @@ def frame2ut1(tstart,fps,rawind):
     #total_seconds is required for Python 2 compatibility
     # this variable is in units of seconds since Jan 1, 1970, midnight
     # rawind-1 because camera is one-based indexing
-    return (tstart-tepoch).total_seconds() + (rawind-1)/fps
+    return (forceutc(tstart)-tepoch).total_seconds() + (rawind-1)/fps
 
 def ut12frame(treq,ind,ut1_unix):
     """
@@ -60,7 +61,7 @@ def ut12frame(treq,ind,ut1_unix):
     if treq.size == 1:
         if isinstance(treq[0],string_types):
             treq = parse(treq[0]) #datetime
-            treq = [(treq-tepoch).total_seconds()] #ut1 seconds since unix epoch, need [] for error case
+            treq = [(forceutc(treq)-tepoch).total_seconds()] #ut1 seconds since unix epoch, need [] for error case
 #%% handle time range case
     elif treq.size == 2:
         return ut1_unix[(ut1_unix>treq[0]) & (ut1_unix<treq[1])]

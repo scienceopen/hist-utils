@@ -22,8 +22,6 @@ try:
 except:
     from timedmc import frame2ut1,ut12frame
 #
-from gridaurora.fortrandates import forceutc
-#
 try:
     from matplotlib.pyplot import figure,show, hist, draw, pause
     from matplotlib.colors import LogNorm
@@ -46,7 +44,8 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,rawFrameRate=None,sta
 
 #%% setup data parameters
     finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,ut1Req,rawFrameRate,startUTC,verbose)
-    if finf is None: return None, None
+    if finf is None:
+        return (None,)*4
 
 #%% preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
     data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
