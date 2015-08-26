@@ -16,11 +16,13 @@ from warnings import warn
 from six import integer_types
 from datetime import datetime
 from pytz import UTC
+#
 try:
     from .timedmc import frame2ut1,ut12frame
 except:
     from timedmc import frame2ut1,ut12frame
-
+#
+from gridaurora.fortrandates import forceutc
 #
 try:
     from matplotlib.pyplot import figure,show, hist, draw, pause
@@ -80,6 +82,7 @@ def animate(i,data,himg,ht):
     #plt.pause(0.01)
     #plt.show(False) #breaks (won't play)
     return himg,ht
+
 
 def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None,startUTC=None,verbose=0):
     bigfn = expanduser(bigfn)
@@ -335,7 +338,7 @@ if __name__ == "__main__":
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,type=float)
     p.add_argument('-r','--fps',help='raw frame rate of camera',type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording')
-    p.add_argument('-t','--ut1',help='UT1 times (seconds since Jan 1 1970) to request',type=float,nargs='+')
+    p.add_argument('-t','--ut1',help='UT1 times (seconds since Jan 1 1970) to request (parseable string, int, or float)',nargs='+')
     p.add_argument('-o','--output',help='extract raw data into this type of file [h5,fits,mat]',nargs='+')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')

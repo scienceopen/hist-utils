@@ -21,7 +21,7 @@ from pytz import UTC
 from scipy.interpolate import interp1d
 
 #
-tepoch = datetime(1970,1,1,0,0,0)
+tepoch = datetime(1970,1,1,0,0,0,tzinfo=UTC)
 
 def frame2ut1(tstart,fps,rawind):
     """ if you don't have GPS & fire data, you use this function for a software-only
@@ -56,8 +56,13 @@ def ut12frame(treq,ind,ut1_unix):
         return None
 
     treq = atleast_1d(treq)
+#%% handle human specified string scalar case
+    if treq.size == 1:
+        if isinstance(treq[0],string_types):
+            treq = parse(treq[0]) #datetime
+            treq = [(treq-tepoch).total_seconds()] #ut1 seconds since unix epoch, need [] for error case
 #%% handle time range case
-    if treq.size == 2:
+    elif treq.size == 2:
         return ut1_unix[(ut1_unix>treq[0]) & (ut1_unix<treq[1])]
 #%% get indices
     """

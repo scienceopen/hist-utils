@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from setuptools import setup 
+from setuptools import setup
 
 with open('README.rst') as f:
 	long_description = f.read()
-	
+
 setup(name='histutils',
       version='0.1',
 	  description='utilities for the HiST auroral tomography system',
@@ -12,7 +12,9 @@ setup(name='histutils',
 	  author='Michael Hirsch',
 	  author_email='hirsch617@gmail.com',
 	  url='https://github.com/scienceopen/histutils',
-	  install_requires=['tifffile','scipy','scikit-image','h5py','astropy','six','nose'],
+      dependency_links = ['https://github.com/scienceopen/gridaurora/tarball/master#egg=gridaurora']
+	  install_requires=['gridaurora',
+                        'tifffile','scipy','scikit-image','h5py','astropy','six','nose'],
       packages=['histutils'],
 	  )
 
