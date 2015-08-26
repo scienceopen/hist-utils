@@ -11,15 +11,19 @@ Outputs:
 
 Michael Hirsch
 """
-from __future__ import division #always important, and critically important for this function!
+from __future__ import division,absolute_import
 from six import string_types
 from datetime import datetime
 from dateutil.parser import parse
 from warnings import warn
+from numpy import atleast_1d,int64
+from pytz import UTC
+from scipy.interpolate import interp1d
+
 #
 tepoch = datetime(1970,1,1,0,0,0)
 
-def fallback(tstart,fps,rawind):
+def frame2ut1(tstart,fps,rawind):
     """ if you don't have GPS & fire data, you use this function for a software-only
     estimate of time. This estimate may be off by more than a minute, so think of it
     as a relative indication only. You can try verifying your absolute time with satellite
@@ -32,7 +36,7 @@ def fallback(tstart,fps,rawind):
     elif isinstance(tstart,(list,tuple)):
         tstart = tstart[0]
         warn('using first value {} as tstart.'.format(tstart))
-        return fallback(tstart,fps,rawind)
+        return frame2ut1(tstart,fps,rawind)
     elif isinstance(tstart,datetime):
         pass
     else:
@@ -41,7 +45,29 @@ def fallback(tstart,fps,rawind):
 
     #total_seconds is required for Python 2 compatibility
     # this variable is in units of seconds since Jan 1, 1970, midnight
+    # rawind-1 because camera is one-based indexing
     return (tstart-tepoch).total_seconds() + (rawind-1)/fps
+
+def ut12frame(treq,ind,ut1_unix):
+    """
+    Given treq, output index(ces) to extract via rawDMCreader
+    treq scalar or vector of ut1_unix time (seconds since Jan 1, 1970)
+    """
+    treq = atleast_1d(treq)
+
+    if not (1e9 < treq[0] < 3e9):
+        warn('is your requested date {} valid?'.format(datetime.fromtimestamp(treq[0],tz=UTC)))
+
+#%% get indices
+    """
+    We use nearest neighbor interpolation to pick a frame index for each requested time
+    """
+    f = interp1d(ut1_unix,ind,kind='nearest')
+    try:
+        return f(treq).astype(int64)
+    except ValueError:
+        warn('a time was requested {} outside the range of times in the data file'.format(datetime.fromtimestamp(treq[0],tz=UTC)))
+        return None
 
 
 def firetime(tstart,Tfire):

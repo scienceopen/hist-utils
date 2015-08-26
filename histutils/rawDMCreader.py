@@ -17,9 +17,9 @@ from six import integer_types
 from datetime import datetime
 from pytz import UTC
 try:
-    from .timedmc import fallback
+    from .timedmc import frame2ut1,ut12frame
 except:
-    from timedmc import fallback
+    from timedmc import frame2ut1,ut12frame
 
 #
 try:
@@ -38,12 +38,12 @@ except:
 bpp = 16
 nHeadBytes = 4
 
-def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, rawFrameRate=None,startUTC=None,verbose=0):
+def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,rawFrameRate=None,startUTC=None,verbose=0):
 
     bigfn = expanduser(bigfn)
 
 #%% setup data parameters
-    finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,verbose)
+    finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,ut1Req,rawFrameRate,startUTC,verbose)
     if finf is None: return None, None
 
 #%% preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
@@ -53,10 +53,9 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, rawFrameRate=None,startUTC=None,v
 
     with open(bigfn, 'rb') as fid:
         for j,i in enumerate(finf['frameind']): #j and i are NOT the same in general when not starting from beginning of file!
-            data[j,:,:], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
-
+            data[j,...], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
 #%% absolute time estimate
-    ut1_unix = fallback(startUTC,rawFrameRate,rawFrameInd)
+    ut1_unix = frame2ut1(startUTC,rawFrameRate,rawFrameInd)
 
     return data, rawFrameInd,finf,ut1_unix
 #%% workers
@@ -82,7 +81,7 @@ def animate(i,data,himg,ht):
     #plt.show(False) #breaks (won't play)
     return himg,ht
 
-def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
+def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None,startUTC=None,verbose=0):
     bigfn = expanduser(bigfn)
     if not isfile(bigfn): #leave this here, getsize() doesn't fail on directory
         warn('{} is not a file!'.format(bigfn))
@@ -97,7 +96,7 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
     BytesPerImage = PixelsPerImage*bpp//8
     BytesPerFrame = BytesPerImage + nHeadBytes
 
-# get file size
+#%% get file size
     fileSizeBytes = getsize(bigfn)
 
     if fileSizeBytes < BytesPerImage:
@@ -114,32 +113,40 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,verbose=0):
     if verbose > 0:
         print('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes,bigfn))
         print("first / last raw frame #'s: {}  / {} ".format(firstRawInd,lastRawInd))
-
-# setup frame indices
+#%% absolute time estimate
+    allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
+    nFrameRaw = (lastRawInd-firstRawInd+1)
+    if nFrameRaw != nFrame:
+        warn('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
+    ut1_unix_all = frame2ut1(startUTC,rawFrameRate,allrawframe)
+#%% setup frame indices
 # if no requested frames were specified, read all frames. Otherwise, just
 # return the requested frames
     #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
-    if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
-        FrameInd =arange(0,nFrame,FrameIndReq,dtype=int64)
-    elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
-        FrameInd =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)
-    else: #catch all
-        FrameInd = arange(nFrame,dtype=int64) # has to be numpy.arange for > comparison
-        if verbose>0:
-            print('automatically selected all frames in file')
+    FrameInd = None
+    if ut1req is not None:
+        FrameInd = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
+
+    if FrameInd is None: #no ut1req or problems with ut1req, canNOT use else
+        if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
+            FrameInd = arange(0,nFrame,FrameIndReq,dtype=int64)
+        elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
+            FrameInd =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)
+        else: #catch all
+            FrameInd = arange(nFrame,dtype=int64) # has to be numpy.arange for > comparison
+            if verbose>0:
+                print('automatically selected all frames in file')
     badReqInd = (FrameInd>nFrame) | (FrameInd<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
-        warn('You have requested Frames ' + str(FrameInd[badReqInd]) +
-                 ', which exceeds the length of {}'.format(bigfn))
+        warn('You have requested frames outside the times covered in {}'.format(bigfn)) #don't include frames in case of None
         return None
 
     nFrameExtract = FrameInd.size #to preallocate properly
 
     nBytesExtract = nFrameExtract * BytesPerFrame
     if verbose > 0:
-        print('Extracted {} frames from {} totaling {} bytes.'.format(
-                   nFrameExtract,bigfn,nBytesExtract))
+        print('Extracted {} frames from {} totaling {} bytes.'.format(nFrameExtract,bigfn,nBytesExtract))
     if nBytesExtract > 4e9:
         warn('This will require {:.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
 
@@ -288,6 +295,7 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,output):
             fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
+                print('writing {} frames from {} to {}'.format(data.shape[0],datetime.fromtimestamp(ut1[0]),datetime.fromtimestamp(ut1[-1])))
                 fut1 = f.create_dataset('/ut1_unix',data=ut1)
                 fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
 
@@ -327,19 +335,20 @@ if __name__ == "__main__":
     p.add_argument('-c','--clim',help='min max   values of intensity expected (for contrast scaling)',nargs=2,type=float)
     p.add_argument('-r','--fps',help='raw frame rate of camera',type=float)
     p.add_argument('-s','--startutc',help='utc time of nights recording')
+    p.add_argument('-t','--ut1',help='UT1 times (seconds since Jan 1 1970) to request',type=float,nargs='+')
     p.add_argument('-o','--output',help='extract raw data into this type of file [h5,fits,mat]',nargs='+')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
     p = p.parse_args()
 
-    rawImgData,rawInd,finf,ut1_unix = goRead(p.infile, p.pix,p.bin,p.frames,p.fps,p.startutc,p.verbose)
+    rawImgData,rawind,finf,ut1_unix = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.fps,p.startutc,p.verbose)
 #%% convert
-    dmcconvert(finf,p.infile,rawImgData,ut1_unix,rawInd,p.output)
+    dmcconvert(finf,p.infile,rawImgData,ut1_unix,rawind,p.output)
 #%% plots and save
     try:
         doPlayMovie(rawImgData,p.movie, ut1_unix=ut1_unix,clim=p.clim)
-        doplotsave(p.infile,rawImgData,rawInd,p.clim,p.hist,p.avg)
+        doplotsave(p.infile,rawImgData,rawind,p.clim,p.hist,p.avg)
         show()
     except Exception as e:
         print('skipped plotting  {}'.format(e))

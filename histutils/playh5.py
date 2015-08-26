@@ -2,7 +2,7 @@
 """
 Plays video contained in HDF5 file, especially from rawDMCreader program.
 """
-
+from __future__ import division,absolute_import
 import h5py
 try:
     from .rawDMCreader import doPlayMovie
