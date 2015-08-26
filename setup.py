@@ -12,7 +12,7 @@ setup(name='histutils',
 	  author='Michael Hirsch',
 	  author_email='hirsch617@gmail.com',
 	  url='https://github.com/scienceopen/histutils',
-      dependency_links = ['https://github.com/scienceopen/gridaurora/tarball/master#egg=gridaurora']
+      dependency_links = ['https://github.com/scienceopen/gridaurora/tarball/master#egg=gridaurora'],
 	  install_requires=['gridaurora',
                         'tifffile','scipy','scikit-image','h5py','astropy','six','nose'],
       packages=['histutils'],
