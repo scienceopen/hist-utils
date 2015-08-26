@@ -52,11 +52,13 @@ def ut12frame(treq,ind,ut1_unix):
     Given treq, output index(ces) to extract via rawDMCreader
     treq scalar or vector of ut1_unix time (seconds since Jan 1, 1970)
     """
+    if treq is None: #have to do this since interp1 will return last index otherwise
+        return None
+
     treq = atleast_1d(treq)
-
-    if not (1e9 < treq[0] < 3e9):
-        warn('is your requested date {} valid?'.format(datetime.fromtimestamp(treq[0],tz=UTC)))
-
+#%% handle time range case
+    if treq.size == 2:
+        return ut1_unix[(ut1_unix>treq[0]) & (ut1_unix<treq[1])]
 #%% get indices
     """
     We use nearest neighbor interpolation to pick a frame index for each requested time

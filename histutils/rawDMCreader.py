@@ -10,7 +10,7 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
  """
 from __future__ import division, absolute_import
 from os.path import getsize, expanduser, splitext, isfile
-from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_
+from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,atleast_1d
 from re import search
 from warnings import warn
 from six import integer_types
@@ -120,14 +120,14 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None
         warn('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
     ut1_unix_all = frame2ut1(startUTC,rawFrameRate,allrawframe)
 #%% setup frame indices
-# if no requested frames were specified, read all frames. Otherwise, just
-# return the requested frames
-    #note these assignments have to be "long", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
-    FrameInd = None
-    if ut1req is not None:
-        FrameInd = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
+    """
+    if no requested frames were specified, read all frames. Otherwise, just
+    return the requested frames
+    note these assignments have to be "int64", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
+    """
+    FrameInd = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
 
-    if FrameInd is None: #no ut1req or problems with ut1req, canNOT use else
+    if FrameInd is None or len(FrameInd)==0: #NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
         if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
             FrameInd = arange(0,nFrame,FrameIndReq,dtype=int64)
         elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
