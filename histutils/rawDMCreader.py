@@ -200,8 +200,8 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
         hIm = hAx.imshow(data[0,...], cmap = 'gray', origin='lower',norm=LogNorm() )
 
     hT = hAx.text(0.5,1.005,'', ha='center',transform=hAx.transAxes)
-    hc = hf1.colorbar(hIm,format=sfmt)
-    hc.set_label('data numbers ' + str(data.dtype))
+    #hc = hf1.colorbar(hIm,format=sfmt)
+    #hc.set_label('data numbers ' + str(data.dtype))
     hAx.set_xlabel('x-pixels')
     hAx.set_ylabel('y-pixels')
 

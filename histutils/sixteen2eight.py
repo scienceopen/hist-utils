@@ -1,4 +1,5 @@
 from __future__ import division,absolute_import
+from numpy import uint8
 #
 from .normframe import normframe
 """
@@ -14,4 +15,4 @@ Michael Hirsch
 def sixteen2eight(I,Clim):
     Q = normframe(I,Clim)
     Q *= 255 # stretch to [0,255] as a float
-    return Q.round().astype('uint8') # convert to uint8
+    return Q.round().astype(uint8) # convert to uint8
