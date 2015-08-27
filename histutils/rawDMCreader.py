@@ -68,7 +68,12 @@ def getserialnum(flist):
     """
     sn = []
     for f in flist:
-        sn.append(int(search(r'(?<=CamSer)\d{3,6}',f).group()))
+        tmp = search(r'(?<=CamSer)\d{3,6}',f)
+        if tmp:
+            ser = int(tmp.group())
+        else:
+            ser = None               
+        sn.append(ser)
     return sn
 
 def animate(i,data,himg,ht):
