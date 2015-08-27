@@ -265,15 +265,14 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(finf,bigfn,data,ut1,rawind,output):
+def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
     #TODO timestamp frames
-    if not output:
+    if not outfn:
         return
-    output=map(str.lower,output)
 
     stem,ext = splitext(expanduser(bigfn))
     #%% saving
-    if 'h5' in output:
+    if outfn.endswith('h5'):
         """
         Reference: https://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html
         Thanks to Eric Piel of Delmic for pointing out this spec
@@ -282,9 +281,8 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,output):
         * the string_() calls are necessary to make fixed length strings per HDF5 spec
         """
         import h5py
-        h5fn = stem + '.h5'
-        print('writing {} raw image data as {}'.format(data.dtype,h5fn))
-        with h5py.File(h5fn,'w',libver='latest') as f:
+        print('writing {} raw image data as {}'.format(data.dtype,outfn))
+        with h5py.File(outfn,'w',libver='latest') as f:
             fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
                              compression_opts=4,
@@ -305,7 +303,7 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,output):
                 fri.attrs['units'] = 'one-based index since camera program started this session'
 
 
-    if 'fits' in output:
+    elif outfn.endswith('fits'):
         from astropy.io import fits
         fitsFN = stem + '.fits'
         print('writing {} raw image data as {}'.format(data.dtype,fitsFN))
@@ -318,7 +316,7 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,output):
         image shown in Python should/must have the same orientation and pixel indexing')
         """
 
-    if 'mat' in output:
+    elif outfn.endswith('mat'):
         from scipy.io import savemat
         matFN = stem + '.mat'
         print('writing {} raw image data as {}'.format(data.dtype,matFN))

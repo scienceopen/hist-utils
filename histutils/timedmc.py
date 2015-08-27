@@ -59,12 +59,12 @@ def ut12frame(treq,ind,ut1_unix):
     treq = atleast_1d(treq)
 #%% handle human specified string scalar case
     if treq.size == 1:
-        if isinstance(treq[0],string_types):
-            treq = parse(treq[0]) #datetime
-            treq = [(forceutc(treq)-tepoch).total_seconds()] #ut1 seconds since unix epoch, need [] for error case
+        treq = datetime2unix(treq[0])
 #%% handle time range case
     elif treq.size == 2:
-        return ut1_unix[(ut1_unix>treq[0]) & (ut1_unix<treq[1])]
+        tstartreq = datetime2unix(treq[0])
+        tendreq = datetime2unix(treq[1])
+        treq = ut1_unix[(ut1_unix>tstartreq) & (ut1_unix<tendreq)]
 #%% get indices
     """
     We use nearest neighbor interpolation to pick a frame index for each requested time
@@ -75,6 +75,20 @@ def ut12frame(treq,ind,ut1_unix):
     except ValueError:
         warn('a time was requested {} outside the range of times in the data file'.format(datetime.fromtimestamp(treq[0],tz=UTC)))
         return None
+
+def datetime2unix(dt):
+    """
+    scalar only for now
+    """
+    if isinstance(dt,string_types):
+        dt = parse(dt) #datetime
+    elif isinstance(dt,datetime):
+        pass
+    else: #assuming float or int
+        pass
+
+    return (forceutc(dt)-tepoch).total_seconds() #ut1 seconds since unix epoch, need [] for error case
+
 
 
 def firetime(tstart,Tfire):
