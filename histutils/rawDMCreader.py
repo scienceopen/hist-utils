@@ -15,40 +15,45 @@ from re import search
 from warnings import warn
 from six import integer_types
 from datetime import datetime
-from pytz import UTC
 #
 from .timedmc import frame2ut1,ut12frame
+from . import getRawInd as gri
 #
 try:
     from matplotlib.pyplot import figure, hist, draw, pause
     from matplotlib.colors import LogNorm
-    from matplotlib.ticker import ScalarFormatter
+    #from matplotlib.ticker import ScalarFormatter
     #import matplotlib.animation as anim
 except:
     pass
 #
-from . import getRawInd as gri
-
+try:
+    import tifffile
+except:
+    warn('unable to read tiff files,   pip install tifffile')
+#
 bpp = 16
-nHeadBytes = 4
 
-def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,rawFrameRate=None,startUTC=None,verbose=0):
+def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,rawFrameRate=None,startUTC=None,cmosinit=None,verbose=0):
 
     bigfn = expanduser(bigfn)
-
+    ext = splitext(bigfn)[1]
 #%% setup data parameters
-    finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,ut1Req,rawFrameRate,startUTC,verbose)
-    if finf is None:
-        return (None,)*4
-
-#%% preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
-    data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
+    if ext == '.DMCdata':
+        # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
+        finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,ut1Req,rawFrameRate,startUTC,verbose)
+        data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=uint16, order='C')
-    rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
+        rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
+        # read
+        with open(bigfn, 'rb') as fid:
+            for j,i in enumerate(finf['frameindrel']): #j and i are NOT the same in general when not starting from beginning of file!
+                data[j,...], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
 
-    with open(bigfn, 'rb') as fid:
-        for j,i in enumerate(finf['frameind']): #j and i are NOT the same in general when not starting from beginning of file!
-            data[j,...], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
+    elif ext[:4] == '.tif':
+        finf,data,rawFrameInd = getTIFparam(bigfn,FrameIndReq,ut1Req,rawFrameRate,startUTC,cmosinit,verbose)
+
+
 #%% absolute time estimate
     ut1_unix = frame2ut1(startUTC,rawFrameRate,rawFrameInd)
 
@@ -83,34 +88,86 @@ def animate(i,data,himg,ht):
 
 
 def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None,startUTC=None,verbose=0):
+    nHeadBytes = 4 #FIXME for 2011-2014 data
+    Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
+
     bigfn = expanduser(bigfn)
     if not isfile(bigfn): #leave this here, getsize() doesn't fail on directory
-        warn('{} is not a file!'.format(bigfn))
-        return None
+        raise ValueError('{} is not a file!'.format(bigfn))
 
     #np.int64() in case we are fed a float or int
     SuperX = int64(xyPix[0]) // int64(xyBin[0]) # "//" keeps as integer
     SuperY = int64(xyPix[1]) // int64(xyBin[1])
 
-    Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
+
+    PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
+
+    (firstRawInd,lastRawInd) = gri.getRawInd(bigfn,BytesPerImage,nHeadBytes,Nmetadata)
+
+    FrameIndRel = whichframes(bigfn,FrameIndReq,rawFrameRate,ut1req,startUTC,firstRawInd,lastRawInd,
+                              BytesPerImage,BytesPerFrame,verbose)
+
+    return {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata,
+            'bytesperframe':BytesPerFrame, 'pixelsperimage':PixelsPerImage,
+            'nframeextract':FrameIndRel.size,
+            'frameindrel':FrameIndRel}
+
+def getTIFparam(bigfn,FrameIndReq,ut1req,rawFrameRate,startUTC,cmosinit,verbose):
+    """ assumption is that this is a Neo sCMOS file, where Solis chooses to break up the recordings
+    into smaller files. Verify if this timing estimate makes sense for your application!
+    I did not want to do regexp on the filename or USERTXT1 as I felt this too prone to error.
+    This function should be rarely enough used that it's worth the user knowing what they're doing.
+
+    inputs:
+    -------
+    cmosinit = {'firstrawind','lastrawind'}
+    """
+    nHeadBytes=0
+
+    with tifffile.TiffFile(bigfn) as tif:
+        data = tif.asarray()
+
+    if data.ndim != 3:
+        warn('Im not sure what sort of tiff {} youre reading, I expect to read a 3-D array page x height x width'.format(bigfn))
+
+    SuperX = data.shape[2]
+    SuperY = data.shape[1]
+
+#%% FrameInd relative to this file
+
+    PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
+
+    FrameIndRel = whichframes(bigfn,FrameIndReq,rawFrameRate,ut1req,startUTC,
+                              cmosinit['firstrawind'],cmosinit['lastrawind'],
+                              BytesPerImage,BytesPerFrame,verbose)
+
+    rawFrameInd = arange(cmosinit['firstrawind'],cmosinit['lastrawind']+1,1,dtype=int64)
+
+    return {'superx':SuperX,
+            'supery':SuperY,
+            'nframeextract':data.shape[0],
+            'frameindrel':FrameIndRel}, data, rawFrameInd
+
+def howbig(SuperX,SuperY,nHeadBytes):
     PixelsPerImage= SuperX * SuperY
     BytesPerImage = PixelsPerImage*bpp//8
     BytesPerFrame = BytesPerImage + nHeadBytes
+    return PixelsPerImage,BytesPerImage,BytesPerFrame
 
+def whichframes(bigfn,FrameIndReq,rawFrameRate,ut1req,startUTC,firstRawInd,lastRawInd,
+                BytesPerImage,BytesPerFrame,verbose):
+    ext = splitext(bigfn)[1]
 #%% get file size
     fileSizeBytes = getsize(bigfn)
 
     if fileSizeBytes < BytesPerImage:
-        warn('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
-        return None
+        raise ValueError('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
 
-
-    if fileSizeBytes % BytesPerFrame:
+    if ext=='.DMCdata' and fileSizeBytes % BytesPerFrame:
         warn("Looks like I am not reading this file correctly, with BPF: {:d}".format(BytesPerFrame))
 
     nFrame = fileSizeBytes // BytesPerFrame
 
-    (firstRawInd,lastRawInd) = gri.getRawInd(bigfn,BytesPerImage,nHeadBytes,Nmetadata)
     if verbose > 0:
         print('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes,bigfn))
         print("first / last raw frame #'s: {}  / {} ".format(firstRawInd,lastRawInd))
@@ -126,34 +183,32 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None
     return the requested frames
     note these assignments have to be "int64", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     """
-    FrameInd = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
+    FrameIndRel = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
 
-    if FrameInd is None or len(FrameInd)==0: #NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
+    if FrameIndRel is None or len(FrameIndRel)==0: #NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
         if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
-            FrameInd = arange(0,nFrame,FrameIndReq,dtype=int64)
+            FrameIndRel = arange(0,nFrame,FrameIndReq,dtype=int64)
         elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
-            FrameInd =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)
+            FrameIndRel =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)
         else: #catch all
-            FrameInd = arange(nFrame,dtype=int64) # has to be numpy.arange for > comparison
+            FrameIndRel = arange(nFrame,dtype=int64) # has to be numpy.arange for > comparison
             if verbose>0:
                 print('automatically selected all frames in file')
-    badReqInd = (FrameInd>nFrame) | (FrameInd<0)
+    badReqInd = (FrameIndRel>nFrame) | (FrameIndRel<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
         warn('You have requested frames outside the times covered in {}'.format(bigfn)) #don't include frames in case of None
         return None
 
-    nFrameExtract = FrameInd.size #to preallocate properly
-
+    nFrameExtract = FrameIndRel.size #to preallocate properly
     nBytesExtract = nFrameExtract * BytesPerFrame
     if verbose > 0:
         print('Extracted {} frames from {} totaling {} bytes.'.format(nFrameExtract,bigfn,nBytesExtract))
     if nBytesExtract > 4e9:
         warn('This will require {:.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
 
-    return {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata,
-            'bytesperframe':BytesPerFrame, 'pixelsperimage':PixelsPerImage,
-            'nframe':nFrame, 'nframeextract':nFrameExtract,'frameind':FrameInd}
+    return FrameIndRel
+
 
 def getDMCframe(f,iFrm,finf,verbose=0):
     # on windows, "int" is int32 and overflows at 2.1GB!  We need np.int64
@@ -187,7 +242,7 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
     if not playMovie:
         return
 #%%
-    sfmt = ScalarFormatter(useMathText=True)
+    #sfmt = ScalarFormatter(useMathText=True)
     hf1 = figure(1)
     hAx = hf1.gca()
 
@@ -214,7 +269,7 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
         hIm.set_data(d)
         try:
             if titleut:
-                hT.set_text('UT1 estimate: {}  RelFrame#: {}'.format(datetime.fromtimestamp(ut1_unix[i],tz=UTC),i))
+                hT.set_text('UT1 estimate: {}  RelFrame#: {}'.format(datetime.utcfromtimestamp(ut1_unix[i]),i))
             else:
                 hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[i],i) )
         except:
@@ -222,20 +277,20 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
 
         draw(); pause(playMovie)
 
-def doanimate(data,nFrameExtract,playMovie):
-    # on some systems, just freezes at first frame
-    print('attempting animation')
-    fg = figure()
-    ax = fg.gca()
-    himg = ax.imshow(data[:,:,0],cmap='gray')
-    ht = ax.set_title('')
-    fg.colorbar(himg)
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-
-    #blit=False so that Title updates!
-    anim.FuncAnimation(fg,animate,range(nFrameExtract),fargs=(data,himg,ht),
-                       interval=playMovie, blit=False, repeat_delay=1000)
+#def doanimate(data,nFrameExtract,playMovie):
+#    # on some systems, just freezes at first frame
+#    print('attempting animation')
+#    fg = figure()
+#    ax = fg.gca()
+#    himg = ax.imshow(data[:,:,0],cmap='gray')
+#    ht = ax.set_title('')
+#    fg.colorbar(himg)
+#    ax.set_xlabel('x')
+#    ax.set_ylabel('y')
+#
+#    #blit=False so that Title updates!
+#    anim.FuncAnimation(fg,animate,range(nFrameExtract),fargs=(data,himg,ht),
+#                       interval=playMovie, blit=False, repeat_delay=1000)
 
 def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
     outStem = splitext(expanduser(bigfn))[0]
@@ -266,11 +321,10 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
 def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
-    #TODO timestamp frames
     if not outfn:
         return
 
-    stem,ext = splitext(expanduser(bigfn))
+    print('user request writing {} raw image data as {}'.format(data.dtype,outfn))
     #%% saving
     if outfn.endswith('h5'):
         """
@@ -281,7 +335,6 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
         * the string_() calls are necessary to make fixed length strings per HDF5 spec
         """
         import h5py
-        print('writing {} raw image data as {}'.format(data.dtype,outfn))
         with h5py.File(outfn,'w',libver='latest') as f:
             fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
@@ -294,7 +347,9 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
             fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
-                print('writing {} frames from {} to {}'.format(data.shape[0],datetime.fromtimestamp(ut1[0]),datetime.fromtimestamp(ut1[-1])))
+                print('writing {} frames from {} to {}'.format(data.shape[0],
+                                                               datetime.utcfromtimestamp(ut1[0]),
+                                                               datetime.utcfromtimestamp(ut1[-1])))
                 fut1 = f.create_dataset('/ut1_unix',data=ut1)
                 fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
 
@@ -305,12 +360,9 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
 
     elif outfn.endswith('fits'):
         from astropy.io import fits
-        fitsFN = stem + '.fits'
-        print('writing {} raw image data as {}'.format(data.dtype,fitsFN))
-
         #NOTE the with... syntax does NOT yet work with astropy.io.fits
         hdu = fits.PrimaryHDU(data)
-        hdu.writeto(fitsFN,clobber=False)
+        hdu.writeto(outfn,clobber=False)
         """
         Note: the orientation of this FITS in NASA FV program and the preview
         image shown in Python should/must have the same orientation and pixel indexing')
@@ -318,7 +370,5 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
 
     elif outfn.endswith('mat'):
         from scipy.io import savemat
-        matFN = stem + '.mat'
-        print('writing {} raw image data as {}'.format(data.dtype,matFN))
         matdata = {'imgdata':data.transpose(1,2,0)} #matlab is fortran order
-        savemat(matFN,matdata,oned_as='column')
+        savemat(outfn,matdata,oned_as='column')

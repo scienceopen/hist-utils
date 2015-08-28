@@ -22,7 +22,9 @@ from tempfile import gettempdir
 from os.path import join
 from numpy import random, uint8
 from time import time
+from warnings import warn
 import tifffile
+
 #try:
 #    from skimage.io._plugins import freeimage_plugin as freeimg
 #    from skimage.io import imread as skimread
@@ -46,12 +48,12 @@ def tiffdemo(modules):
         y = read_multipage_tiff(ofn)
         print('{:.2f} seconds to read/write with tiffile.'.format(time()-tic))
 
-    if 'freeimage' in modules:
-        ofn = join(tdir,'freeimage.tif')
-        tic = time()
-        write_multipage_freeimage(x,ofn)
-        y = skimread(ofn)
-        print('{:.2f} seconds to read/write with freeimage.'.format(time()-tic))
+#    if 'freeimage' in modules:
+#        ofn = join(tdir,'freeimage.tif')
+#        tic = time()
+#        write_multipage_freeimage(x,ofn)
+#        y = skimread(ofn)
+#        print('{:.2f} seconds to read/write with freeimage.'.format(time()-tic))
 
     if 'libtiff' in modules:
         tic = time()
@@ -80,22 +82,24 @@ def write_multipage_tiff(x,ofn,descr=None,tags=(),verbose=0):
                         extratags=tags)
 
     except Exception as e:
-        print('tifffile had a writing problem with {}   {} '.format(ofn,e))
+        warn('tifffile had a writing problem with {}   {} '.format(ofn,e))
 
-def read_multipage_tiff(ofn):
-    #read demo
+def read_multipage_tiff(fn,verbose=False):
     try:
-        with tifffile.TiffFile(ofn) as tif:
+        with tifffile.TiffFile(fn) as tif:
             y = tif.asarray()
-            for page in tif:
-                for tag in page.tags.values():
-                    t = tag.name, tag.value
-                    if tag.name in ('65000','65001','65002'):
-                        print(t)
+            if verbose:
+                loadtifftags(tif)
         return y
     except Exception as e:
-        print('tifffile had a reading problem with {}   {} '.format(ofn,e))
-        
+        warn('tifffile had a reading problem with {}   {} '.format(fn,e))
+
+def loadtifftags(tif):
+    for page in tif:
+        for tag in page.tags.values():
+            t = tag.name, tag.value
+            if tag.name in ('65000','65001','65002'):
+                print(t)
 #%% demo writing TIFF using scikit-image and free image
 def write_multipage_freeimage(x,ofn):
     """

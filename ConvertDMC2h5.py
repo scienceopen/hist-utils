@@ -19,9 +19,12 @@ if __name__ == "__main__":
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
+    p.add_argument('--cmos',help='start stop raw frame of CMOS file',nargs=2,metavar=('firstrawind','lastrawind'),type=int)
     p = p.parse_args()
 
-    rawImgData,rawind,finf,ut1_unix = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.fps,p.startutc,p.verbose)
+    cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}
+
+    rawImgData,rawind,finf,ut1_unix = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.fps,p.startutc,cmosinit,p.verbose)
 #%% convert
     dmcconvert(finf,p.infile,rawImgData,ut1_unix,rawind,p.output)
 #%% plots and save
