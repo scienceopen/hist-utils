@@ -63,14 +63,16 @@ image_write_multipage   write/read multi-page TIFF
 Examples using rawDMCreader.py
 ------------------------------
 
-Read .DMCdata file
-~~~~~~~~~~~~~~~~~~
+Read .DMCdata file from within a Python script
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: python
 
 	from histutils import rawDMCreader
 	data = rawDMCreader.goRead('myfile.DMCdata')[0]
 
-Using rawDMCreader.py from the command line
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--m      play movie (pause time per frame in seconds)
--o      convert raw data to desired format (fits,mat,h5)
+Using rawDMCreader.py from Terminal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: bash
+   
+    $ cd histutils/histutils
+    $ python3 rawDMCreader.py ~/data/
