@@ -22,6 +22,8 @@ That is, from Windows, Mac, or Linux:
 * ``.m`` files should be callable from Matlab, Octave, or Python using Oct2Py.
 * ``.py`` files should be callable from Python 2.7 / 3.4+ or Matlab R2014b+ using the ``py`` module of Matlab
 
+.. contents::
+
 Install
 --------------
 From Terminal::
