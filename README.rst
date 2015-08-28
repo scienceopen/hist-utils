@@ -14,6 +14,8 @@
 HiSTutils
 ==========
 
+.. contents::
+
 HiST project raw video data reading utilities.
 
 These programs are designed to be platform/OS agnostic.
