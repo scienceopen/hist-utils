@@ -2,6 +2,8 @@ sudo: required
 git:
   depth: 1
 language: python
+notifications:
+  email: false
 python:
   - "3.4"
   - "2.7"
