@@ -15,6 +15,7 @@ from re import search
 from warnings import warn
 from six import integer_types
 from datetime import datetime
+from pytz import UTC
 #
 from .timedmc import frame2ut1,ut12frame
 from . import getRawInd as gri
@@ -269,7 +270,7 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
         hIm.set_data(d)
         try:
             if titleut:
-                hT.set_text('UT1 estimate: {}  RelFrame#: {}'.format(datetime.utcfromtimestamp(ut1_unix[i]),i))
+                hT.set_text('UT1 estimate: {}  RelFrame#: {}'.format(datetime.utcfromtimestamp(ut1_unix[i]).replace(tzinfo=UTC),i))
             else:
                 hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[i],i) )
         except:
@@ -348,8 +349,8 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
 
             if ut1 is not None: #needs is not None
                 print('writing {} frames from {} to {}'.format(data.shape[0],
-                                                               datetime.utcfromtimestamp(ut1[0]),
-                                                               datetime.utcfromtimestamp(ut1[-1])))
+                                                               datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
+                                                               datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
                 fut1 = f.create_dataset('/ut1_unix',data=ut1)
                 fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
 
