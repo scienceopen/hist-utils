@@ -19,7 +19,7 @@ if __name__ == "__main__":
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
-    p.add_argument('--cmos',help='start stop raw frame of CMOS file',nargs=2,metavar=('firstrawind','lastrawind'),type=int)
+    p.add_argument('--cmos',help='start stop raw frame of CMOS file',nargs=2,metavar=('firstrawind','lastrawind'),type=int,default=(None,)*2)
     p = p.parse_args()
 
     cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}
