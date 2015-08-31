@@ -20,7 +20,7 @@ from numpy import atleast_1d,int64
 from pytz import UTC
 from scipy.interpolate import interp1d
 #
-from gridaurora.fortrandates import forceutc
+from .fortrandates import forceutc
 #
 tepoch = datetime(1970,1,1,0,0,0,tzinfo=UTC)
 
