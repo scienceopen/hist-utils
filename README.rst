@@ -39,6 +39,7 @@ implement a complete program using the module functions.
 
 RunSimulPlay
 ------------
+Simultaneous video playback of two or more cameras.
 
 -i    input file list (.h5)
 -t    Time range start/stop
@@ -52,7 +53,13 @@ Example
 
 using the `data from January 13, 2013 experiment <http://heaviside.bu.edu/~mhirsch/dmc/2013-01-13/>`_ during active plasma time.
 
+ConvertDMC2h5.py
+----------------
+Typically used by our staff internally to convert our binary .DMCdata files to human- and fast processing- friendly HDF5 files.
 
+WhenEnd.py
+----------
+Just predicts the end of a .DMCdata file "does this file cover the auroral event time?"
 
 
 Module Functions
@@ -107,14 +114,14 @@ These examples are old, now we use HDF5 files. Kept for reference only.
 
 Read .DMCdata file from within a Python script
 ----------------------------------------------
-.. code-block:: python
+.. code:: python
 
 	from histutils import rawDMCreader
 	data = rawDMCreader.goRead('myfile.DMCdata')[0]
 
 Using rawDMCreader.py from Terminal
 -----------------------------------
-.. code-block:: bash
+.. code:: bash
 
     $ cd histutils/histutils
     $ python3 rawDMCreader.py ~/data/
