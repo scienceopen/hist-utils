@@ -7,8 +7,7 @@
 .. image:: http://coveralls.io/repos/scienceopen/histutils/badge.svg?branch=master&service=github
    :target: http://coveralls.io/github/scienceopen/histutils?branch=master
 
-
-
+==========
 HiSTutils
 ==========
 
@@ -26,7 +25,7 @@ That is, from Windows, Mac, or Linux:
 .. contents::
 
 Install
---------------
+=======
 From Terminal::
 
   git clone --depth 1 https://github.com/scienceopen/histutils
@@ -34,19 +33,30 @@ From Terminal::
   python setup.py develop
 
 User Programs/Scripts
----------------------
+=====================
 These functions are primarily made to be used from the Terminal by a human, they
 implement a complete program using the module functions.
 
 RunSimulPlay
-~~~~~~~~~~~~
+------------
 
 -i    input file list (.h5)
 -t    Time range start/stop
 -o    Output directory for plots (optional, slow)
 
+Example
+~~~~~~~
+.. code-block:: bash
+
+  $ python RunSimulFrame.py -i ~/data/cmos2013-01-14T1-15.h5 ~/data/ccd2013-01-14T1-15.h5
+
+using the `data from January 13, 2013 experiment <http://heaviside.bu.edu/~mhirsch/dmc/2013-01-13/>`_ during active plasma time.
+
+
+
+
 Module Functions
-----------------
+================
 These functions are typically targeted for calling from other programs, however, many
 of these can also be used from the Terminal directly.
 
@@ -89,15 +99,6 @@ of these can also be used from the Terminal directly.
 Examples
 ========
 Many more possibilities exist, the ``-h`` option on most functions will give some hints as to what the program can do.
-
-Play two or more camera data simultaneously
--------------------------------------------
-.. code-block:: bash
-
-  $ python RunSimulFrame.py -i ~/data/cmos2013-01-14T1-15.h5 ~/data/ccd2013-01-14T1-15.h5
-
-using the `data from January 13, 2013 experiment <http://heaviside.bu.edu/~mhirsch/dmc/2013-01-13/>`_ during active plasma time.
-
 
 
 Reference Examples
