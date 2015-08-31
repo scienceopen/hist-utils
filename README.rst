@@ -88,6 +88,7 @@ of these can also be used from the Terminal directly.
 
 Examples
 ========
+Many more possibilities exist, the ``-h`` option on most functions will give some hints as to what the program can do.
 
 Play two or more camera data simultaneously
 -------------------------------------------
