@@ -46,7 +46,7 @@ RunSimulPlay
 
 Example
 ~~~~~~~
-.. code-block:: bash
+.. code:: bash
 
   $ python RunSimulFrame.py -i ~/data/cmos2013-01-14T1-15.h5 ~/data/ccd2013-01-14T1-15.h5
 
