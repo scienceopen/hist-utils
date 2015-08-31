@@ -54,6 +54,13 @@ ConvertDMC2h5.py
 ----------------
 Typically used by our staff internally to convert our binary .DMCdata files to human- and fast processing- friendly HDF5 files.
 
+Example
+~~~~~~
+.. code:: bash
+
+ $ python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/U/eng_research_irs/irs_archive2/HSTdata/DataField/2013-04-14/HST0/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z 
+
+
 WhenEnd.py
 ----------
 Just predicts the end of a .DMCdata file "does this file cover the auroral event time?"
