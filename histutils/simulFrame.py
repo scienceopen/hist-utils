@@ -56,7 +56,8 @@ def HSTsync(sim,cam,verbose):
     tall = arange(mutualStart,mutualStop,sim.kineticsec)
 
     print('{} mutual frames available from {} to {}'.format(tall.size,
-                                                          mutualStart,mutualStop))
+                                  datetime.fromtimestamp(mutualStart,tz=UTC),
+                                  datetime.fromtimestamp(mutualStop,tz=UTC)))
 #%% adjust start/stop to user request
     treq = tall[(tall>reqStart) & (tall<reqStop)] #keep greater than start time
 
@@ -81,7 +82,7 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
     try:
         cam = get1Dcut(cam,makeplot,progms,verbose)
     except Exception as e:
-        logging.warn('skipping 1-D cut extraction  {}'.format(e))
+        logging.info('skipping 1-D cut extraction  {}'.format(e))
 #%% use 1D cut coord
     logging.info('frameHandler: Loading and 1-D cutting data...')
     tic = time()
