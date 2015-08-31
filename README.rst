@@ -89,8 +89,8 @@ of these can also be used from the Terminal directly.
 Examples
 ========
 
-Display two or more camera data simultaneously in video playback
-----------------------------------------------------------------
+Play two or more camera data simultaneously
+-------------------------------------------
 .. code-block:: bash
 
   $ python RunSimulFrame.py -i ~/data/cmos2013-01-14T1-15.h5 ~/data/ccd2013-01-14T1-15.h5
