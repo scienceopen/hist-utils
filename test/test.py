@@ -10,6 +10,7 @@ from histutils.rawDMCreader import goRead
 from histutils.plotSolarElev import compsolar
 from histutils.diric import diric
 from histutils.findnearest import find_nearest
+from histutils import fortrandates
 
 def test_findnearest():
     indf,xf = find_nearest([10,15,12,20,14,33],[32,12.01])
@@ -51,7 +52,6 @@ def test_diric():
 #%% dates
 #%% fortrandates
 def test_fortrandates():
-    from gridaurora import fortrandates
     adatetime=datetime(2013,7,2,12,0,0)
     yeardec = fortrandates.datetime2yeardec(adatetime)
     assert_allclose(yeardec,2013.5)
@@ -59,7 +59,6 @@ def test_fortrandates():
     assert fortrandates.yeardec2datetime(yeardec) == adatetime
 
 def test_utc():
-    from gridaurora import fortrandates
     adatetime=datetime(2013,7,2,12,0,0)
     estdt = timezone('EST').localize(adatetime)
     utcdt = fortrandates.forceutc(estdt)
@@ -67,7 +66,6 @@ def test_utc():
     assert utcdt.tzname()=='UTC'
 
 def test_datetimefortran():
-    from gridaurora import fortrandates
     adatetime=datetime(2013,7,2,12,0,0)
     iyd,utsec,stl= fortrandates.datetime2gtd(adatetime,glon=42)
     assert iyd[0]==183
