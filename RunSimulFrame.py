@@ -9,21 +9,23 @@ logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
 from os.path import expanduser
 import h5py
-from numpy import fliplr,flipud,rot90
+from numpy import fliplr,flipud,rot90,percentile
 from matplotlib.pyplot import draw,pause
 #
 from histutils.simulFrame import getSimulData
 from histutils.plotsimul import plotRealImg
 
-def getmulticam(flist,tstartstop,orient,makeplot,outdir):
+climperc = (1,99.9) #for auto-contrast
+
+def getmulticam(flist,tstartstop,cpar,makeplot,outdir):
 #%%
     sim = Sim(tstartstop)
 
     cam = []
-    for i,(f,o) in enumerate(zip(flist,orient)):
-        cam.append(Cam(f,o,i))
+    for i,f in enumerate(flist):
+        cam.append(Cam(f,i))
 
-    sim.kineticsec = min([C.kineticsec for C in cam])
+    sim.kineticsec = min([C.kineticsec for C in cam]) #playback only, arbitrary
 #%% extract data
     cam,rawdata,sim = getSimulData(sim,cam,makeplot)
 #%% plot data
@@ -42,7 +44,7 @@ class Sim:
             pass
 
 class Cam:
-    def __init__(self,fn,orient,name):
+    def __init__(self,fn,name):
         self.name = name
         self.fn = expanduser(fn)
 
@@ -50,17 +52,20 @@ class Cam:
             self.filestartutc = f['/ut1_unix'][0]
             self.filestoputc  = f['/ut1_unix'][-1]
             self.ut1unix      = f['/ut1_unix'].value
-            self.kineticsec   = f['/kineticsec'].value
+
             self.supery,self.superx = f['/rawimg'].shape[1:]
 
-        self.nCutPix = self.supery
+            p = f['/params']
+            self.kineticsec   = p['kineticsec']
+            self.rotccw       = p['rotccw']
+            self.transpose    = p['transpose'] == 1
+            self.flipLR       = p['fliplr'] == 1
+            self.flipUD       = p['flipud'] == 1
 
-        self.rotccw =    orient['rotccw']
-        self.transpose = orient['transpose']
-        self.flipLR =    orient['fliplr']
-        self.flipUD =    orient['fliplr']
+            #auto contrast based on first frame
+            self.clim         = percentile(f['/rawimg'][0,...],climperc)
 
-        self.clim   = orient['clim']
+        self.nCutPix = self.supery #FIXME future
 
     def ingestcamparam(self,sim):
         pass
@@ -90,8 +95,7 @@ if __name__ == '__main__':
     p.add_argument('-o','--outdir',help='output directory')
     p = p.parse_args()
 
-    cpar =[{'rotccw':0,'transpose':False,'fliplr':False,'flipud':False,'clim':(1000,7500)},
-           {'rotccw':0,'transpose':False,'fliplr':False,'flipud':False,'clim':(100,1500)}]
+    cpar = None #future
 
     makeplot=[]
 

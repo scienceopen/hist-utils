@@ -1,6 +1,7 @@
 from __future__ import division,absolute_import
 import logging
 from matplotlib.pyplot import figure,draw,subplots
+from matplotlib.colors import LogNorm
 from os.path import join
 from numpy import in1d
 from datetime import datetime
@@ -48,14 +49,15 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,figh,outdir):
                          #aspect='equal',
                          #extent=(0,C.superx,0,C.supery),
                          vmin=C.clim[0], vmax=C.clim[1],
-                         cmap='gray')
+                         cmap='gray',
+                         norm=LogNorm())
 
         if showcb: #showing the colorbar makes the plotting go 5-10x more slowly
             hc = fg.colorbar(hi, ax=ax) #not cax!
             hc.set_label(str(R.dtype) + ' data numbers')
         ax.set_title('Cam{}: {}'.format(C.name, datetime.fromtimestamp(C.tKeo[t],tz=UTC)))
         #ax.set_xlabel('x-pixel')
-        if C.name==0:
+        if False:#C.name==0:
             ax.set_ylabel('y-pixel')
     #%% plotting 1D cut line
         try:
