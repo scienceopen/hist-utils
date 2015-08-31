@@ -6,3 +6,4 @@ matplotlib
 six
 nose
 dateutil
+pytz
