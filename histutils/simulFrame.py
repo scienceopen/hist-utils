@@ -13,9 +13,7 @@ from pytz import UTC
 import h5py
 from numpy import arange, empty, uint16,unique
 from scipy.interpolate import interp1d
-from os.path import splitext
 # local
-import histutils.rawDMCreader as rdr
 from .get1Dcut import get1Dcut
 
 epoch = datetime(1970,1,1,tzinfo=UTC)
@@ -55,9 +53,9 @@ def HSTsync(sim,cam,verbose):
     """
     tall = arange(mutualStart,mutualStop,sim.kineticsec)
 
-    print('{} mutual frames available from {} to {}'.format(tall.size,
-                                  datetime.fromtimestamp(mutualStart,tz=UTC),
-                                  datetime.fromtimestamp(mutualStop,tz=UTC)))
+    logging.info('{} mutual frames available from {} to {}'.format(tall.size,
+                                  datetime.utcfromtimestamp(mutualStart,tz=UTC),
+                                  datetime.utcfromtimestamp(mutualStop,tz=UTC)))
 #%% adjust start/stop to user request
     treq = tall[(tall>reqStart) & (tall<reqStop)] #keep greater than start time
 
@@ -90,55 +88,26 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
     for C in cam:
         nProcFrame = C.pbInd.size #should be the same for all cameras! FIXME add assert
         keo = empty(( C.nCutPix, nProcFrame ),dtype=uint16,order='F') #1-D cut data
+#%% load HDF5 file
+        #40 time faster to read at once, even with this indexing trick than frame by frame
+        ind = unique(C.pbInd)
+        # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing
+        # IOError: Can't read data (Src and dest data spaces have different sizes)
+        # if you have repeated index in fancy indexing
+        with h5py.File(C.fn,'r',libver='latest') as f:
+            I = f['/rawimg'][ind,...]
+            I = I[C.pbInd-ind[0],...] #allows repeated indexes which h5py 2.5 does not for mmap
+            I = C.doorientimage(I)
+            rawdata.append(I)
 
-        if splitext(C.fn)[1] == '.h5':
-            #40 time faster to read at once, even with this indexing trick than frame by frame
-            ind = unique(C.pbInd)
-            # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing
-            # IOError: Can't read data (Src and dest data spaces have different sizes)
-            # if you have repeated index in fancy indexing
-            with h5py.File(C.fn,'r',libver='latest') as f:
-                I = f['/rawimg'][ind,...]
-                I = I[C.pbInd-ind[0],...] #allows repeated indexes which h5py 2.5 does not for mmap
-                I = C.doorientimage(I)
-                rawdata.append(I)
+            tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
 
-                tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
+            try:
+                keo = I[:,C.cutrow,C.cutcol]
+            except:
+                logging.debug('could not extract 1-D cut')
 
-                try:
-                    keo = I[:,C.cutrow,C.cutcol]
-                except:
-                    logging.debug('could not extract 1-D cut')
-
-        elif splitext(C.fn)[1] == '.DMCdata':
-            tKeo = empty(nProcFrame,dtype=float) #ut1_unix of each frame
-            #yes rawdata is order C!
-            rawdata.append(empty((nProcFrame,C.supery,C.superx),dtype=uint16,order='C'))
-            with open(C.fnStemCam, 'rb') as f:
-                finf = {'bytesperframe': C.BytesPerFrame,
-                        'pixelsperimage': C.PixelsPerImage,
-                        'nmetadata': C.Nmetadata,
-                        'superx': C.superx,
-                        'supery': C.supery
-                        }
-
-                for j,iFrm in enumerate(C.pbInd):
-
-                    #FIXME compare rawFrameInd with truly requested frame to catch off-by-one errors
-                    frame,rawFrameInd = rdr.getDMCframe(f,iFrm,finf,verbose=-1)
-
-                    frame = C.doorientimage(frame)
-
-                    # declare frame UTC time based on raw Index, start time, and kinetic rate
-                    tKeo[j] = ( C.startUT +
-                               (rawFrameInd - C.firstFrameNum) * C.kineticSec +
-                               C.timeShiftSec )
-                    # do pixel cutting
-                    keo[:,j] = frame[C.cutrow,C.cutcol]
-                    #store raw frame for playback synchronized of raw video
-                    rawdata[-1][j,...] = frame
-
-        #assign slice & time to class variables
+#%% assign slice & time to class variables
         C.keo = keo
         C.tKeo = tKeo
 

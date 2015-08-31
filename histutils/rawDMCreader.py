@@ -9,8 +9,9 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
     --- we can't use long, because that's only for Python 2.7
  """
 from __future__ import division, absolute_import
+import logging
 from os.path import getsize, expanduser, splitext, isfile
-from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_
+from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,array
 from re import search
 from warnings import warn
 from six import integer_types
@@ -35,14 +36,14 @@ except:
 #
 bpp = 16
 
-def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,rawFrameRate=None,startUTC=None,cmosinit=None,verbose=0):
+def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC=None,cmosinit=None,verbose=0):
 
     bigfn = expanduser(bigfn)
     ext = splitext(bigfn)[1]
 #%% setup data parameters
     if ext == '.DMCdata':
         # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
-        finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,ut1Req,rawFrameRate,startUTC,verbose)
+        finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,ut1Req,kineticraw,startUTC,verbose)
         data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=uint16, order='C')
         rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
@@ -52,11 +53,11 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,rawFrameRate=None,sta
                 data[j,...], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
 
     elif ext[:4] == '.tif':
-        finf,data,rawFrameInd = getTIFparam(bigfn,FrameIndReq,ut1Req,rawFrameRate,startUTC,cmosinit,verbose)
+        finf,data,rawFrameInd = getTIFparam(bigfn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
 
 
 #%% absolute time estimate
-    ut1_unix = frame2ut1(startUTC,rawFrameRate,rawFrameInd)
+    ut1_unix = frame2ut1(startUTC,kineticraw,rawFrameInd)
 
     return data, rawFrameInd,finf,ut1_unix
 #%% workers
@@ -88,7 +89,7 @@ def animate(i,data,himg,ht):
     return himg,ht
 
 
-def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None,startUTC=None,verbose=0):
+def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,verbose=0):
     nHeadBytes = 4 #FIXME for 2011-2014 data
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
 
@@ -105,7 +106,7 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None
 
     (firstRawInd,lastRawInd) = gri.getRawInd(bigfn,BytesPerImage,nHeadBytes,Nmetadata)
 
-    FrameIndRel = whichframes(bigfn,FrameIndReq,rawFrameRate,ut1req,startUTC,firstRawInd,lastRawInd,
+    FrameIndRel = whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
                               BytesPerImage,BytesPerFrame,verbose)
 
     return {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata,
@@ -113,7 +114,7 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,rawFrameRate=None
             'nframeextract':FrameIndRel.size,
             'frameindrel':FrameIndRel}
 
-def getTIFparam(bigfn,FrameIndReq,ut1req,rawFrameRate,startUTC,cmosinit,verbose):
+def getTIFparam(bigfn,FrameIndReq,ut1req,kineticsec,startUTC,cmosinit,verbose):
     """ assumption is that this is a Neo sCMOS file, where Solis chooses to break up the recordings
     into smaller files. Verify if this timing estimate makes sense for your application!
     I did not want to do regexp on the filename or USERTXT1 as I felt this too prone to error.
@@ -138,7 +139,7 @@ def getTIFparam(bigfn,FrameIndReq,ut1req,rawFrameRate,startUTC,cmosinit,verbose)
 
     PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
 
-    FrameIndRel = whichframes(bigfn,FrameIndReq,rawFrameRate,ut1req,startUTC,
+    FrameIndRel = whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,
                               cmosinit['firstrawind'],cmosinit['lastrawind'],
                               BytesPerImage,BytesPerFrame,verbose)
 
@@ -155,7 +156,7 @@ def howbig(SuperX,SuperY,nHeadBytes):
     BytesPerFrame = BytesPerImage + nHeadBytes
     return PixelsPerImage,BytesPerImage,BytesPerFrame
 
-def whichframes(bigfn,FrameIndReq,rawFrameRate,ut1req,startUTC,firstRawInd,lastRawInd,
+def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
                 BytesPerImage,BytesPerFrame,verbose):
     ext = splitext(bigfn)[1]
 #%% get file size
@@ -169,15 +170,14 @@ def whichframes(bigfn,FrameIndReq,rawFrameRate,ut1req,startUTC,firstRawInd,lastR
 
     nFrame = fileSizeBytes // BytesPerFrame
 
-    if verbose > 0:
-        print('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes,bigfn))
-        print("first / last raw frame #'s: {}  / {} ".format(firstRawInd,lastRawInd))
+    logging.info('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes,bigfn))
+    logging.info("first / last raw frame #'s: {}  / {} ".format(firstRawInd,lastRawInd))
 #%% absolute time estimate
     allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
     nFrameRaw = (lastRawInd-firstRawInd+1)
     if nFrameRaw != nFrame:
         warn('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
-    ut1_unix_all = frame2ut1(startUTC,rawFrameRate,allrawframe)
+    ut1_unix_all = frame2ut1(startUTC,kineticsec,allrawframe)
 #%% setup frame indices
     """
     if no requested frames were specified, read all frames. Otherwise, just
@@ -321,7 +321,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
+def dmcconvert(finf,bigfn,data,ut1,rawind,outfn,params):
     if not outfn:
         return
 
@@ -358,6 +358,22 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn):
                 fri = f.create_dataset('/rawind',data=rawind)
                 fri.attrs['units'] = 'one-based index since camera program started this session'
 
+
+            cparam = array((params['kineticsec'],
+                            params['rotccw'],
+                            params['transpose']==True,
+                            params['flipud']==True,
+                            params['fliplr']==True,
+                            params['fire'] is None),
+                           dtype=[('kineticsec','f8'),
+                                  ('rotccw',    'i1'),
+                                  ('transpose', 'i1'),
+                                  ('flipud',    'i1'),
+                                  ('fliplr',    'i1'),
+                                  ('questionable_ut1','i1')]
+                           )
+
+            f.create_dataset('/params',data=cparam)
 
     elif outfn.endswith('fits'):
         from astropy.io import fits

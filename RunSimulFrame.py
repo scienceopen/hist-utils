@@ -11,6 +11,7 @@ from os.path import expanduser
 import h5py
 from numpy import fliplr,flipud,rot90,percentile
 from matplotlib.pyplot import draw,pause
+from six import integer_types
 #
 from histutils.simulFrame import getSimulData
 from histutils.plotsimul import plotRealImg
@@ -74,7 +75,7 @@ class Cam:
         if self.transpose:
             frame = frame.transpose(0,2,1)
         # rotate -- note if you use origin='lower', rotCCW -> rotCW !
-        if self.rotccw != 0:
+        if isinstance(self.rotccw,integer_types):
             if frame.ndim==3:
                 for f in frame:
                     f = rot90(f,k=self.rotccw)

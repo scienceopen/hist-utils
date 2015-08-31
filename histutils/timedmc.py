@@ -24,7 +24,7 @@ from .fortrandates import forceutc
 #
 tepoch = datetime(1970,1,1,0,0,0,tzinfo=UTC)
 
-def frame2ut1(tstart,fps,rawind):
+def frame2ut1(tstart,kineticsec,rawind):
     """ if you don't have GPS & fire data, you use this function for a software-only
     estimate of time. This estimate may be off by more than a minute, so think of it
     as a relative indication only. You can try verifying your absolute time with satellite
@@ -37,7 +37,7 @@ def frame2ut1(tstart,fps,rawind):
     elif isinstance(tstart,(list,tuple)):
         tstart = tstart[0]
         warn('using first value {} as tstart.'.format(tstart))
-        return frame2ut1(tstart,fps,rawind)
+        return frame2ut1(tstart,kineticsec,rawind)
     elif isinstance(tstart,datetime):
         pass
     else:
@@ -46,7 +46,7 @@ def frame2ut1(tstart,fps,rawind):
     #total_seconds is required for Python 2 compatibility
     # this variable is in units of seconds since Jan 1, 1970, midnight
     # rawind-1 because camera is one-based indexing
-    return (forceutc(tstart)-tepoch).total_seconds() + (rawind-1)/fps
+    return (forceutc(tstart)-tepoch).total_seconds() + (rawind-1)*kineticsec
 
 def ut12frame(treq,ind,ut1_unix):
     """
