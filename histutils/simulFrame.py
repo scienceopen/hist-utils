@@ -11,7 +11,7 @@ from datetime import datetime
 from time import time
 from pytz import UTC
 import h5py
-from numpy import arange, empty, uint16,unique
+from numpy import arange, unique
 from scipy.interpolate import interp1d
 # local
 from .get1Dcut import get1Dcut
@@ -38,9 +38,6 @@ def HSTsync(sim,cam,verbose):
     except AttributeError: #no specified time
         reqStart = 0. #arbitrary time in the past
         reqStop =  3e9#arbitrary time in the future
-#%% get more parameters per used camera
-    for C in cam:
-        C.ingestcamparam(sim)
 #%% determine mutual start/stop frame
 # FIXME: assumes that all cameras overlap in time at least a little.
 # we will play only over UTC times for which both sites have frames available
@@ -54,8 +51,8 @@ def HSTsync(sim,cam,verbose):
     tall = arange(mutualStart,mutualStop,sim.kineticsec)
 
     logging.info('{} mutual frames available from {} to {}'.format(tall.size,
-                                  datetime.utcfromtimestamp(mutualStart,tz=UTC),
-                                  datetime.utcfromtimestamp(mutualStop,tz=UTC)))
+                                  datetime.fromtimestamp(mutualStart,tz=UTC),
+                                  datetime.fromtimestamp(mutualStop,tz=UTC)))
 #%% adjust start/stop to user request
     treq = tall[(tall>reqStart) & (tall<reqStop)] #keep greater than start time
 
@@ -86,9 +83,6 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
     tic = time()
     rawdata = []
     for C in cam:
-        nProcFrame = C.pbInd.size #should be the same for all cameras! FIXME add assert
-        keo = empty(( C.nCutPix, nProcFrame ),dtype=uint16,order='F') #1-D cut data
-#%% load HDF5 file
         #40 time faster to read at once, even with this indexing trick than frame by frame
         ind = unique(C.pbInd)
         # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing
@@ -103,7 +97,7 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
             tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
 
             try:
-                keo = I[:,C.cutrow,C.cutcol]
+                keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
             except:
                 logging.debug('could not extract 1-D cut')
 

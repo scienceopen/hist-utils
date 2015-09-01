@@ -60,16 +60,13 @@ class Cam:
             self.kineticsec   = p['kineticsec']
             self.rotccw       = p['rotccw']
             self.transpose    = p['transpose'] == 1
-            self.flipLR       = p['fliplr'] == 1
-            self.flipUD       = p['flipud'] == 1
+            self.fliplr       = p['fliplr'] == 1
+            self.flipud       = p['flipud'] == 1
 
             #auto contrast based on first frame
             self.clim         = percentile(f['/rawimg'][0,...],climperc)
 
         self.nCutPix = self.supery #FIXME future
-
-    def ingestcamparam(self,sim):
-        pass
 
     def doorientimage(self,frame):
         if self.transpose:

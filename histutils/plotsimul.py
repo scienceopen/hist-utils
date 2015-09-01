@@ -18,7 +18,7 @@ def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,outdir):
         ax.set_axis_off()
         ax.imshow(R[t,:,:],
                   origin='lower',
-                  vmin=C.clim[0], vmax=C.clim[1],
+                  vmin=max(C.clim[0],1), vmax=C.clim[1],
                   cmap='gray')
         ax.text(0.05, 0.075, datetime.fromtimestamp(C.tKeo[t],tz=UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:23],
                      ha='left',
@@ -45,12 +45,12 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,figh,outdir):
 
         #plotting raw uint16 data
         hi = ax.imshow(R[t,...],
-                         origin='lower',
+                         origin='lower',interpolation='none',
                          #aspect='equal',
                          #extent=(0,C.superx,0,C.supery),
-                         vmin=C.clim[0], vmax=C.clim[1],
-                         cmap='gray',
-                         norm=LogNorm())
+                         vmin=max(C.clim[0],1), vmax=C.clim[1],
+                         cmap='gray',)
+                         #norm=LogNorm())
 
         if showcb: #showing the colorbar makes the plotting go 5-10x more slowly
             hc = fg.colorbar(hi, ax=ax) #not cax!
