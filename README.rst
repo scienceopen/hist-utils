@@ -59,7 +59,7 @@ ConvertDMC2h5.py
 Typically used by our staff internally to convert our binary .DMCdata files to human- and fast processing- friendly HDF5 files.
 
 Example
-~~~~~~-
+~~~~~~~
 
 .. code:: bash
 
