@@ -25,7 +25,7 @@ Install
 =======
 From Terminal
 
-.. code: bash
+.. code:: bash
 
   $ git clone --depth 1 https://github.com/scienceopen/histutils
   $ cd histutils
