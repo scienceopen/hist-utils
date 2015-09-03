@@ -47,6 +47,7 @@ Simultaneous video playback of two or more cameras.
 
 Example
 ~~~~~~~
+
 .. code:: bash
 
   $ python RunSimulFrame.py -i ~/data/cmos2013-01-14T1-15.h5 ~/data/ccd2013-01-14T1-15.h5
@@ -59,6 +60,7 @@ Typically used by our staff internally to convert our binary .DMCdata files to h
 
 Example
 ~~~~~~-
+
 .. code:: bash
 
  $ python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/data/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z 
