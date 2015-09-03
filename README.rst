@@ -24,6 +24,7 @@ That is, from Windows, Mac, or Linux ``.py`` files should be callable from Pytho
 Install
 =======
 From Terminal
+
 .. code: bash
 
   $ git clone --depth 1 https://github.com/scienceopen/histutils
