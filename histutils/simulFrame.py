@@ -93,17 +93,14 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
             I = I[C.pbInd-ind[0],...] #allows repeated indexes which h5py 2.5 does not for mmap
             I = C.doorientimage(I)
             rawdata.append(I)
-
-            tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
-
-            try:
-                keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
-            except:
-                logging.debug('could not extract 1-D cut')
-
 #%% assign slice & time to class variables
-        C.keo = keo
-        C.tKeo = tKeo
+            C.tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
+
+            try: #C.cutrow, C.cutcol only exist if running from histfeas program, not used otherwise
+                C.keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
+            except:
+                logging.debug('skipped extracting 1-D cut')
 
     logging.debug('done extracting frames in {:.2f} seconds.'.format(time() - tic))
+
     return cam,rawdata

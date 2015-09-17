@@ -13,9 +13,9 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
 #%% (0) load az/el data from Astrometry.net
     for C in cam:
         with h5py.File(C.cal1Dfn,'r',libver='latest') as f:
-            C.doorient(f['/az'],f['/el'], f['/ra'], f['/dec'])
-            #xind = fid['/x'].value;      #yind = fid['/y'].value
-            #caltime = parser.parse(f['/timeFrame'])
+            # NEED .value in case no modifications do in .doorient()
+            C.doorient(f['/az'].value, f['/el'].value,
+                       f['/ra'].value, f['/dec'].value)
         C.toecef(srpts)
 
     #optional: plot ECEF of points between each camera and magnetic zenith (lying at az,el relative to each camera)
