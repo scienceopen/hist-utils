@@ -96,10 +96,19 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
 #%% assign slice & time to class variables
             C.tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
 
+<<<<<<< HEAD
             try: #C.cutrow, C.cutcol only exist if running from histfeas program, not used otherwise
                 C.keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
             except:
                 logging.debug('skipped extracting 1-D cut')
+=======
+            C.tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
+
+            try:
+                C.keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
+            except:
+                logging.debug('could not extract 1-D cut')
+>>>>>>> 20a600b0b74c36d5e14bafb238c602a563227fb1
 
     logging.debug('done extracting frames in {:.2f} seconds.'.format(time() - tic))
 
