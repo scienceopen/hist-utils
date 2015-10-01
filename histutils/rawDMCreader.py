@@ -326,7 +326,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
         return
 
     #%% saving
-    if data and outfn.endswith('h5'):
+    if outfn.endswith('h5'):
         """
         Reference: https://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html
         Thanks to Eric Piel of Delmic for pointing out this spec
@@ -334,19 +334,20 @@ def dmcconvert(data,ut1,rawind,outfn,params):
         other conforming readers to easily play images stacks as video.
         * the string_() calls are necessary to make fixed length strings per HDF5 spec
         """
-        print('user request writing {} raw image data as {}'.format(data.dtype,outfn))
 
         import h5py
         with h5py.File(outfn,'w',libver='latest') as f:
-            fimg = f.create_dataset('/rawimg',data=data,
+            
+            if data:
+                fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
                              compression_opts=4,
                              track_times=True)
-            fimg.attrs["CLASS"] = string_("IMAGE")
-            fimg.attrs["IMAGE_VERSION"] = string_("1.2")
-            fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
-            fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
-            fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
+                fimg.attrs["CLASS"] = string_("IMAGE")
+                fimg.attrs["IMAGE_VERSION"] = string_("1.2")
+                fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
+                fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
+                fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
                 print('writing {} frames from {} to {}'.format(data.shape[0],
