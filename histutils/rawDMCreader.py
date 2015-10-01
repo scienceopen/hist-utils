@@ -321,7 +321,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(finf,bigfn,data,ut1,rawind,outfn,params):
+def dmcconvert(data,ut1,rawind,outfn,params):
     if not outfn:
         return
 
