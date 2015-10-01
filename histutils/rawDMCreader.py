@@ -321,7 +321,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(finf,bigfn,data,ut1,rawind,outfn,params):
+def dmcconvert(data,ut1,rawind,outfn,params):
     if not outfn:
         return
 
@@ -337,15 +337,16 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn,params):
         """
         import h5py
         with h5py.File(outfn,'w',libver='latest') as f:
-            fimg = f.create_dataset('/rawimg',data=data,
-                             compression='gzip',
-                             compression_opts=4,
-                             track_times=True)
-            fimg.attrs["CLASS"] = string_("IMAGE")
-            fimg.attrs["IMAGE_VERSION"] = string_("1.2")
-            fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
-            fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
-            fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
+            if data is not None:
+                fimg = f.create_dataset('/rawimg',data=data,
+                                 compression='gzip',
+                                 compression_opts=4,
+                                 track_times=True)
+                fimg.attrs["CLASS"] = string_("IMAGE")
+                fimg.attrs["IMAGE_VERSION"] = string_("1.2")
+                fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
+                fimg.attrs["DISPLAY_ORIGIN"] = string_("LL")
+                fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
                 print('writing {} frames from {} to {}'.format(data.shape[0],
