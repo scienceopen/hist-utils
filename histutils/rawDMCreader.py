@@ -325,6 +325,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
     if not outfn:
         return
 
+    outfn = expanduser(outfn)
     #%% saving
     if outfn.endswith('h5'):
         """
@@ -336,7 +337,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
         """
 
         import h5py
-        with h5py.File(outfn,'w',libver='latest') as f:
+        with h5py.File(outfn,'a',libver='latest') as f:
             
             if data:
                 fimg = f.create_dataset('/rawimg',data=data,
@@ -350,8 +351,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
                 fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
-                print('writing {} frames from {} to {}'.format(data.shape[0],
-                                                               datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
+                print('writing from {} to {}'.format(datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
                                                                datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
                 fut1 = f.create_dataset('/ut1_unix',data=ut1)
                 fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
