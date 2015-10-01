@@ -325,7 +325,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
     if not outfn:
         return
 
-    print('user request writing {} raw image data as {}'.format(data.dtype,outfn))
+    outfn = expanduser(outfn)
     #%% saving
     if outfn.endswith('h5'):
         """
@@ -335,13 +335,14 @@ def dmcconvert(data,ut1,rawind,outfn,params):
         other conforming readers to easily play images stacks as video.
         * the string_() calls are necessary to make fixed length strings per HDF5 spec
         """
+
         import h5py
         with h5py.File(outfn,'w',libver='latest') as f:
-            if data is not None:
+            if data:
                 fimg = f.create_dataset('/rawimg',data=data,
-                                 compression='gzip',
-                                 compression_opts=4,
-                                 track_times=True)
+                             compression='gzip',
+                             compression_opts=4,
+                             track_times=True)
                 fimg.attrs["CLASS"] = string_("IMAGE")
                 fimg.attrs["IMAGE_VERSION"] = string_("1.2")
                 fimg.attrs["IMAGE_SUBCLASS"] = string_("IMAGE_GRAYSCALE")
@@ -349,8 +350,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
                 fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
-                print('writing {} frames from {} to {}'.format(data.shape[0],
-                                                               datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
+                print('writing from {} to {}'.format(datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
                                                                datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
                 fut1 = f.create_dataset('/ut1_unix',data=ut1)
                 fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
