@@ -326,7 +326,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
         return
 
     #%% saving
-    if outfn.endswith('h5'):
+    if data and outfn.endswith('h5'):
         """
         Reference: https://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html
         Thanks to Eric Piel of Delmic for pointing out this spec
