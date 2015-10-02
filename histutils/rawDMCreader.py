@@ -321,11 +321,11 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(finf,bigfn,data,ut1,rawind,outfn,params):
+def dmcconvert(data,ut1,rawind,outfn,params):
     if not outfn:
         return
 
-    print('user request writing {} raw image data as {}'.format(data.dtype,outfn))
+    outfn = expanduser(outfn)
     #%% saving
     if outfn.endswith('h5'):
         """
@@ -335,9 +335,9 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn,params):
         other conforming readers to easily play images stacks as video.
         * the string_() calls are necessary to make fixed length strings per HDF5 spec
         """
-        import h5py
-        with h5py.File(outfn,'a',libver='latest') as f:
 
+        import h5py
+        with h5py.File(outfn,'w',libver='latest') as f:
             if data is not None:
                 fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
@@ -350,8 +350,7 @@ def dmcconvert(finf,bigfn,data,ut1,rawind,outfn,params):
                 fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
-                print('writing {} frames from {} to {}'.format(data.shape[0],
-                                                               datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
+                print('writing from {} to {}'.format(datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
                                                                datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
                 fut1 = f.create_dataset('/ut1_unix',data=ut1)
                 fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'

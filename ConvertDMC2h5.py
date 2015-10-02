@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     rawImgData,rawind,finf,ut1_unix = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.kineticsec,p.startutc,cmosinit,p.verbose)
 #%% convert
-    dmcconvert(finf,p.infile,rawImgData,ut1_unix,rawind,p.output,params)
+    dmcconvert(rawImgData,ut1_unix,rawind,p.output,params)
 #%% plots and save
     try:
         from matplotlib.pyplot import show
