@@ -9,17 +9,20 @@ Aerosols, clouds, dust, etc. are not considered.
 assumes observer at sea level
 input: theta [deg] true (not apparent) solar elevation angle above horizon
 
+minelevation_deg: arbitrary, since refraction is not considered, the results are highly suspect for
+sun near horizon. Also consider blockage by terrain/buildings.
+
 Note: use https://github.com/scienceopen/lowtran for far more precise modeling
 """
 from __future__ import division
 from numpy import sin,radians,arange,copy,nan,cos,atleast_1d,asarray,empty_like
 from datetime import datetime
 
-def airmass(thetadeg,dtime):
+def airmass(thetadeg,dtime,minelevation_deg=5.):
     doy = Time2doy(dtime)
 
     thd = copy(thetadeg) #copy() so we don't corrupt the calling function!
-    thd[(thd<0) | (thd>90)] = nan
+    thd[(thd<minelevation_deg) | (thd>90)] = nan
     thr = radians(thd)
 #%% Air mass model (very simple model)
     """

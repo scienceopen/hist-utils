@@ -9,18 +9,24 @@ Michael Hirsch
  Aug 2012 -- updated to Astropy Feb 2015
 """
 from __future__ import absolute_import,division
+from numpy import trapz,isnan
 import astropy.units as u
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from astropy.time import Time
 from datetime import datetime
 from warnings import warn
 from dateutil.rrule import HOURLY,rrule
-#
+from matplotlib.dates import MonthLocator,DateFormatter
+from matplotlib.pyplot import figure,show
 try:
-    from .airMass import airmass
+    import seaborn as sns
+    sns.color_palette(sns.color_palette("cubehelix"))
+    sns.set(context='poster', style='whitegrid')
+    sns.set(rc={'image.cmap': 'cubehelix_r'}) #for contour
 except:
-    from airMass import airmass
-
+    pass
+#
+from histutils.airMass import airmass
 
 def compsolar(site,coord,year,plotperhour,doplot):
     if isinstance(year,datetime):
@@ -56,15 +62,21 @@ def compsolar(site,coord,year,plotperhour,doplot):
 
     Irr = airmass(sunel,times)[0]
 
+    Whr = estenergy(Irr,hoursofday)
+
     if doplot:
         lbl=MonthLocator(range(1,13),bymonthday=15,interval=1)
         fmt=DateFormatter("%b")
         plotIrr(dates,hoursofday,Irr,site,obs,lbl,fmt)
         plotyear(dates,hoursofday,sunel,site,obs,lbl,fmt)
+        plotenergy(Whr,dates,site,obs,lbl,fmt)
 
-        show()
+    return Irr,sunel,Whr
 
-    return Irr,sunel
+def estenergy(Irr,hoursofday):
+    secs = [(h-hoursofday[0]).total_seconds()/3600 for h in hoursofday]
+    Irr[isnan(Irr)] = 0
+    return trapz(Irr,x=secs,axis=0)
 
 def plotyear(dates,hoursofday,sunel,site,obs,lbl,fmt):
     fg = figure(figsize=(12,7),dpi=100)
@@ -73,8 +85,7 @@ def plotyear(dates,hoursofday,sunel,site,obs,lbl,fmt):
     CS = ax.contour(dates,hoursofday,sunel,V)
     ax.clabel(CS, inline=1, fontsize=10,fmt='%0.0f')#, manual=manual_locations)
     ax.set_ylabel('UTC')
-    ax.set_title(''.join(('Solar elevation angle (deg.)  ',site,': ',
-                          str(obs.latitude),', ',str(obs.longitude))))
+    ax.set_title('Solar elevation angle (deg.)  {}: {:.1f},{:.1f}'.format(site,obs.latitude,obs.longitude))
     ax.grid(True)
 #    fg.autofmt_xdate()
     ax.xaxis.set_major_locator(lbl)
@@ -86,8 +97,7 @@ def plotIrr(dates,hoursofday,sunel,site,obs,lbl,fmt):
     CS = ax.contour(dates,hoursofday,sunel)
     ax.clabel(CS, inline=1, fontsize=10,fmt='%0.0f')#, manual=manual_locations)
     ax.set_ylabel('UTC')
-    ax.set_title(''.join(('Sea level solar irradiance [W/m$^2$] at ',site,': ',
-                          str(obs.latitude),', ',str(obs.longitude))))
+    ax.set_title('Sea level solar irradiance [W/m$^2$] at {}: {:.1f},{:.1f}'.format(site,obs.latitude,obs.longitude))
     ax.grid(True)
 #    fg.autofmt_xdate()
     ax.xaxis.set_major_locator(lbl)
@@ -101,19 +111,29 @@ def plotday(t,sunalt,site):
     ax.grid(True)
     ax.set_title(site + ' ' + t[0].strftime('%Y-%m-%d'))
 
-if __name__ == '__main__':
-    from matplotlib.dates import MonthLocator,DateFormatter
-    from matplotlib.pyplot import figure,show
+def plotenergy(Whr,dates,site,obs,lbl,fmt):
+    ax = figure().gca()
+    ax.plot(dates,Whr/1000)
+    ax.set_xlabel('UTC')
+    ax.set_ylabel('kWhr m$^{-2}$ day$^{-1}$')
+    ax.set_title('Daily Solar Energy at {}: {:.1f}, {:.1f}'.format(site,obs.latitude,obs.longitude))
+    ax.xaxis.set_major_locator(lbl)
+    ax.xaxis.set_major_formatter(fmt)
 
+if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plots solar elevation angle')
+
     pg = p.add_mutually_exclusive_group(required=True)
-    pg.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',type=str,default='')
-    pg.add_argument('-c','--coord',help='specify site lat lon [degrees] ', nargs=3,type=float)
+    pg.add_argument('-s','--site',help='use a prestored site [sondrestrom, pfisr, bu, svalbard]',default='')
+    pg.add_argument('-c','--coord',help='specify site lat lon [degrees] ',nargs=3,type=float)
+
     p.add_argument('--pph', help='plot steps per hour (default 1)',type=int,default=1)
     p.add_argument('--noplot',help='disable plotting',action='store_false')
     p = p.parse_args()
 
     doplot = p.noplot
 
-    Irr, sunel = compsolar(p.site, p.coord, 2013, p.pph, doplot)
+    Irr, sunel,dates = compsolar(p.site, p.coord, 2013, p.pph, doplot)
+
+    show()
