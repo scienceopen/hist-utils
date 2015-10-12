@@ -4,10 +4,10 @@ Recursively loops for pattern-matching files, like GNU find
 Michael Hirsch
 Dec 2014
 """
-from os import walk, getcwd #not getcwdu, that's python 2 only
+from os import walk
 from os.path import join,expanduser,isdir, isfile
 from fnmatch import filter
-from six import string_types
+from six import string_types,getcwd
 from warnings import warn
 #from stat import S_ISDIR, S_ISREG
 
@@ -37,8 +37,8 @@ def walktree(root,pat):
 if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='Recursively loops for pattern-matching files, like GNU find')
-    p.add_argument('rootdir',help='path including and below which to search',type=str,default=getcwd(),nargs='?')
-    p.add_argument('pattern',help='text to search for (use double apostrophes and globbing e.g. "myfile*" ',type=str,default="*",nargs='?')
+    p.add_argument('rootdir',help='path including and below which to search',default=getcwd(),nargs='?')
+    p.add_argument('pattern',help='text to search for (use double apostrophes and globbing e.g. "myfile*" ',default="*",nargs='?')
     a=p.parse_args()
 
     found = walktree(a.rootdir,a.pattern)
