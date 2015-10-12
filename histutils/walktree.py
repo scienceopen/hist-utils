@@ -7,7 +7,8 @@ Dec 2014
 from os import walk
 from os.path import join,expanduser,isdir, isfile
 from fnmatch import filter
-from six import string_types,getcwd
+from six import string_types
+from six.moves import getcwd
 from warnings import warn
 #from stat import S_ISDIR, S_ISREG
 
