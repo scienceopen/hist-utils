@@ -6,7 +6,7 @@ x: array (float, int, datetime) within which to search for x0
 x0: singleton or array of values to search for in x
 
 outputs:
-idx: index of flattened x nearest to x0
+idx: index of flattened x nearest to x0  (i.e. works with higher than 1-D arrays also)
 xidx: x[idx]
 
 Observe how bisect.bisect() gives the incorrect result!
@@ -37,7 +37,7 @@ def INCORRECTRESULT_using_bisect(x,X0): #pragma: no cover
     x = asanyarray(x)
     return asanyarray(ind),x[ind]
 
-#if __name__ == '__main__': 
+#if __name__ == '__main__':
 
     #print(find_nearest([10,15,12,20,14,33],[32,12.01]))
 
