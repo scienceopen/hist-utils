@@ -31,10 +31,10 @@ def datetime2yd(dtime):
     return yd,utsec
 
 
-def datetime2gtd(dtime,glon=nan):
+def datetime2gtd(T,glon=nan):
     """
     Inputs:
-    t: Numpy 1-D array of datetime.datetime OR string suitable for dateutil.parser.parse
+    T: Numpy 1-D array of datetime.datetime OR string suitable for dateutil.parser.parse
     glon: Numpy 2-D array of geodetic longitudes (degrees)
 
     Outputs:
@@ -42,11 +42,12 @@ def datetime2gtd(dtime,glon=nan):
     utsec: seconds from midnight utc
     stl: local solar time
     """
-    dtime = atleast_1d(dtime); glon=atleast_2d(glon)
-    iyd=empty_like(dtime,dtype=int); utsec=empty_like(dtime,dtype=float)
-    stl = empty((dtime.size,glon.shape[0],glon.shape[1]))
+    T = atleast_1d(T); glon=atleast_2d(glon)
+    iyd=empty_like(T,dtype=int)
+    utsec=empty_like(T,dtype=float)
+    stl = empty((T.size,glon.shape[0],glon.shape[1]))
 
-    for i,t in enumerate(dtime):
+    for i,t in enumerate(T):
         if isinstance(t,string_types):
             t = parse(t)
 
