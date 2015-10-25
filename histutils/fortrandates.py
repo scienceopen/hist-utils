@@ -78,7 +78,7 @@ def forceutc(t):
     if t.tzinfo == None:
         t = t.replace(tzinfo = UTC)
     else:
-        t = t.astimezone(UTC)
+        t = t.astimezone(UTC) #changes timezone, preserving absolute time. E.g. noon EST = 5PM UTC
     return t
 
 
