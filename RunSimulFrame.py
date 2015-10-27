@@ -81,7 +81,7 @@ class Cam:
         if self.fliplr:
             frame = fliplr(frame)
         if self.flipud:
-            frame = flipud(frame)
+            frame = flipud(frame.transpose(1,2,0)).transpose(2,0,1)
         return frame
 
 if __name__ == '__main__':
