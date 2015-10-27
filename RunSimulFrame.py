@@ -75,12 +75,8 @@ class Cam:
         if self.transpose:
             frame = frame.transpose(0,2,1)
         # rotate -- note if you use origin='lower', rotCCW -> rotCW !
-        if isinstance(self.rotccw,integer_types):
-            if frame.ndim==3:
-                for f in frame:
-                    f = rot90(f,k=self.rotccw)
-            elif frame.ndim==2:
-                frame = rot90(frame,k=self.rotccw)
+        if self.rotccw: #NOT isinstance integertypes!
+            frame = rot90(frame.transpose(1,2,0),k=self.rotccw).transpose(2,0,1)
         # flip
         if self.fliplr:
             frame = fliplr(frame)
