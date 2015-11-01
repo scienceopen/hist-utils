@@ -5,20 +5,20 @@ from pytz import UTC
 from numpy import atleast_1d, empty_like, atleast_2d,nan,empty
 from dateutil.parser import parse
 
-def datetime2yd(dtime):
+def datetime2yd(T):
     """
     Inputs:
-    dtime: Numpy 1-D array of datetime.datetime OR string suitable for dateutil.parser.parse
+    T: Numpy 1-D array of datetime.datetime OR string suitable for dateutil.parser.parse
 
     Outputs:
     yd: yyyyddd four digit year, 3 digit day of year (INTEGER)
     utsec: seconds from midnight utc
     """
-    dtime = atleast_1d(dtime)
+    T = atleast_1d(T)
 
-    utsec=empty_like(dtime,dtype=float)
-    yd = empty_like(dtime,dtype=int)
-    for i,t in enumerate(dtime):
+    utsec=empty_like(T,dtype=float)
+    yd = empty_like(T,dtype=int)
+    for i,t in enumerate(T):
         if isinstance(t,string_types):
             t = parse(t)
 
