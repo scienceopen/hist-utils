@@ -2,7 +2,10 @@
 """
 Plays two or more camera files simultaneously
 Michael Hirsch
-Updated Aug 2015 to handle HDF5 user-friendly huge video file formatt
+Updated Aug 2015 to handle HDF5 user-friendly huge video file format
+
+example:
+./RunSimulFrame -i ~/data/2013-04-14/HST/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 """
 import logging
 logging.basicConfig(level=logging.WARN)
@@ -42,7 +45,7 @@ class Sim:
             self.startutc = parse(tstartstop[0])
             self.stoputc  = parse(tstartstop[1])
         except (TypeError,AttributeError): #no specified time
-            pass
+            print('loading all frames')
 
 class Cam:
     def __init__(self,fn,name):
@@ -72,17 +75,13 @@ class Cam:
         if self.transpose:
             frame = frame.transpose(0,2,1)
         # rotate -- note if you use origin='lower', rotCCW -> rotCW !
-        if isinstance(self.rotccw,integer_types):
-            if frame.ndim==3:
-                for f in frame:
-                    f = rot90(f,k=self.rotccw)
-            elif frame.ndim==2:
-                frame = rot90(frame,k=self.rotccw)
+        if self.rotccw: #NOT isinstance integertypes!
+            frame = rot90(frame.transpose(1,2,0),k=self.rotccw).transpose(2,0,1)
         # flip
-        if self.flipLR:
+        if self.fliplr:
             frame = fliplr(frame)
-        if self.flipUD:
-            frame = flipud(frame)
+        if self.flipud:
+            frame = flipud(frame.transpose(1,2,0)).transpose(2,0,1)
         return frame
 
 if __name__ == '__main__':
