@@ -16,26 +16,32 @@ idea based on http://stackoverflow.com/questions/2566412/find-nearest-value-in-n
 Michael Hirsch
 GPLv3+
 """
+from __future__ import division,absolute_import
+import logging
 from numpy import empty_like,absolute,atleast_1d,asanyarray
-from bisect import bisect
+#from bisect import bisect
 
 def find_nearest(x,x0):
     x = asanyarray(x) #for indexing upon return
     x0 = atleast_1d(x0)
+    if x.size==0 or x0.size==0:
+        logging.error('empty input(s)')
+        return None, None
+
     ind = empty_like(x0,dtype=int)
 
     for i,xi in enumerate(x0):
-       ind[i] = absolute(x-xi).argmin()
+        ind[i] = absolute(x-xi).argmin()
 
     return ind.squeeze(), x[ind].squeeze()
 
-def INCORRECTRESULT_using_bisect(x,X0): #pragma: no cover
-    X0 = atleast_1d(X0)
-    x.sort()
-    ind = [bisect(x,x0) for x0 in X0]
-
-    x = asanyarray(x)
-    return asanyarray(ind),x[ind]
+#def INCORRECTRESULT_using_bisect(x,X0): #pragma: no cover
+#    X0 = atleast_1d(X0)
+#    x.sort()
+#    ind = [bisect(x,x0) for x0 in X0]
+#
+#    x = asanyarray(x)
+#    return asanyarray(ind),x[ind]
 
 #if __name__ == '__main__':
 

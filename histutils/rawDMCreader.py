@@ -10,7 +10,7 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
  """
 from __future__ import division, absolute_import
 import logging
-from os.path import getsize, expanduser, splitext, isfile
+from pathlib2 import Path
 from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,array
 from re import search
 from warnings import warn
@@ -38,8 +38,8 @@ bpp = 16
 
 def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC=None,cmosinit=None,verbose=0):
 
-    bigfn = expanduser(bigfn)
-    ext = splitext(bigfn)[1]
+    bigfn = Path(bigfn).expanduser()
+    ext = bigfn.suffix
 #%% setup data parameters
     if ext == '.DMCdata':
         # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
@@ -48,7 +48,7 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,start
                     dtype=uint16, order='C')
         rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
         # read
-        with open(bigfn, 'rb') as fid:
+        with bigfn.open('rb') as fid:
             for j,i in enumerate(finf['frameindrel']): #j and i are NOT the same in general when not starting from beginning of file!
                 data[j,...], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
 
@@ -93,8 +93,8 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,s
     nHeadBytes = 4 #FIXME for 2011-2014 data
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
 
-    bigfn = expanduser(bigfn)
-    if not isfile(bigfn): #leave this here, getsize() doesn't fail on directory
+    bigfn = Path(bigfn)
+    if not bigfn.is_file(): #leave this here, getsize() doesn't fail on directory
         raise ValueError('{} is not a file!'.format(bigfn))
 
     #np.int64() in case we are fed a float or int
@@ -158,9 +158,9 @@ def howbig(SuperX,SuperY,nHeadBytes):
 
 def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
                 BytesPerImage,BytesPerFrame,verbose):
-    ext = splitext(bigfn)[1]
+    ext = Path(bigfn).suffix
 #%% get file size
-    fileSizeBytes = getsize(bigfn)
+    fileSizeBytes = bigfn.stat().st_size
 
     if fileSizeBytes < BytesPerImage:
         raise ValueError('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
@@ -294,7 +294,7 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
 #                       interval=playMovie, blit=False, repeat_delay=1000)
 
 def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
-    outStem = splitext(expanduser(bigfn))[0]
+    bigfn=Path(bigfn)
 
     if dohist:
         ax=figure().gca()
@@ -317,7 +317,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         ax.set_title('mean of image frames')
         fg.colorbar(hi)
 
-        pngfn = outStem + '_mean.png'
+        pngfn = bigfn.with_suffix('_mean.png')
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
@@ -325,9 +325,9 @@ def dmcconvert(data,ut1,rawind,outfn,params):
     if not outfn:
         return
 
-    outfn = expanduser(outfn)
+    outfn = Path(outfn).expanduser()
     #%% saving
-    if outfn.endswith('h5'):
+    if outfn.suffix == '.h5':
         """
         Reference: https://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html
         Thanks to Eric Piel of Delmic for pointing out this spec
@@ -337,7 +337,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
         """
 
         import h5py
-        with h5py.File(outfn,'w',libver='latest') as f:
+        with h5py.File(str(outfn),'w',libver='latest') as f:
             if data is not None:
                 fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
@@ -376,7 +376,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
 
             f.create_dataset('/params',data=cparam)
 
-    elif outfn.endswith('fits'):
+    elif outfn.suffix == '.fits':
         from astropy.io import fits
         #NOTE the with... syntax does NOT yet work with astropy.io.fits
         hdu = fits.PrimaryHDU(data)
@@ -387,7 +387,7 @@ def dmcconvert(data,ut1,rawind,outfn,params):
         image shown in Python should/must have the same orientation and pixel indexing')
         """
 
-    elif outfn.endswith('mat'):
+    elif outfn.suffix == '.mat':
         from scipy.io import savemat
         matdata = {'imgdata':data.transpose(1,2,0)} #matlab is fortran order
         savemat(outfn,matdata,oned_as='column')
