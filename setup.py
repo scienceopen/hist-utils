@@ -11,7 +11,7 @@ setup(name='histutils',
 	  long_description=long_description,
 	  author='Michael Hirsch',
 	  url='https://github.com/scienceopen/histutils',
-	  install_requires=['tifffile'],
+	  install_requires=['tifffile','pathlib2'],
       packages=['histutils'],
 	  )
 
