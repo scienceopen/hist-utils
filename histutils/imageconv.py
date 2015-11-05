@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from os.path import expanduser, join
+from __future__ import division,absolute_import
+import logging
+from pathlib2 import Path
 from os import listdir, remove
 import re
-from glob import glob
 from scipy.ndimage import imread # much better than PIL
 from scipy.misc import imresize #ditto
 from numpy import empty
@@ -13,32 +14,31 @@ from warnings import warn
 #note tifffile is 20x faster than freeimage
 from .image_write_multipage import write_multipage_tiff
 
-def png2multipage(odir,inext,outext='.tif',descr='',delete=False,verbose=0):
+def png2multipage(odir,inext,outext='.tif',descr='',delete=False):
     if odir is None:
         return
-    odir = expanduser(odir)
+    odir = Path(odir).expanduser()
     try:
-        olist = listdir(odir)
+        olist = listdir(str(odir))
     except OSError as e:
         warn(str(e))
         return
 
     # let's get the "first" file for each filetype
     pat ='.*_t\d+\\'+inext+'$'
-    if verbose>0: print('using regex {}'.format(pat))
+    logging.info('using regex {}'.format(pat))
     tlist = filterPick(olist,pat)
-    if verbose>0: print('{} file types found in {}'.format(len(tlist),odir))
+    logging.info('{} file types found in {}'.format(len(tlist),odir))
     #extract the prefixes for these files
     pref = [f.split('_t')[0] for f in tlist]
-    if verbose>0: print('{}   <-- file types found in {}'.format(pref,odir))
+    logging.info('{}   <-- file types found in {}'.format(pref,odir))
 #%% convert these sets of images to multipage image
     for p in pref:
-        gfn = join(odir,p+outext)
-        flist = glob(join(odir,p+'*'+inext))
+        gfn = odir/p+outext
+        flist = odir.glob(p+'*'+inext)
         flist.sort() #in-place method
 
-        if verbose>0:
-            print('globbed files {} to put into {}'.format(flist,gfn))
+        logging.debug('globbed files {} to put into {}'.format(flist,gfn))
         if not flist:
             warn('unexpected problem globbing, found no files')
             return
@@ -57,7 +57,7 @@ def png2multipage(odir,inext,outext='.tif',descr='',delete=False,verbose=0):
             if delete:
                 remove(f)
         #writeGif(gfn,images,duration=0.1,repeat=True)
-        write_multipage_tiff(images,gfn,descr=descr,verbose=verbose)
+        write_multipage_tiff(images,gfn,descr=descr)
 
 
 

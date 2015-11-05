@@ -18,11 +18,12 @@ numbers in this range."
 
 reference: http://www.digitalpreservation.gov/formats/content/tiff_tags.shtml
 """
+from __future__ import division,absolute_import
+from pathlib2 import Path
+import logging
 from tempfile import gettempdir
-from os.path import join
 from numpy import random, uint8
 from time import time
-from warnings import warn
 import tifffile
 
 #try:
@@ -34,12 +35,12 @@ import tifffile
 def tiffdemo(modules):
 #%% test parameters
     nframe=10
-    tdir = gettempdir()
+    tdir = Path(gettempdir())
 #%% generate synthetic multiframe image
     x = (random.rand(nframe,512,512,3)*255).astype(uint8)
 
     if 'tifffile' in modules:
-        ofn = join(tdir,'tifffile.tif')
+        ofn = tdir/'tifffile.tif'
         tic = time()
         write_multipage_tiff(x,ofn,descr='my random data',
                              tags=[(65000,'s',None,'My custom tag #1',True),
@@ -57,13 +58,13 @@ def tiffdemo(modules):
 
     if 'libtiff' in modules:
         tic = time()
-        y = rwlibtiff(x,join(tdir,'testlibtiff.tif'))
+        y = rwlibtiff(x,tdir/'testlibtiff.tif')
         print('{:.2f} seconds to read/write with libtiff.'.format(time()-tic))
 
     return y
 
 #%% using tifffile
-def write_multipage_tiff(x,ofn,descr=None,tags=(),verbose=0):
+def write_multipage_tiff(x,ofn,descr=None,tags=()):
     """ uses ZIP compression
     writes all frames at once
     note: using TiffWriter class, you can
@@ -73,26 +74,26 @@ def write_multipage_tiff(x,ofn,descr=None,tags=(),verbose=0):
     class TiffWriter
     https://github.com/blink1073/tifffile/blob/master/tifffile.py
     """
-    if verbose>0: print('write_mulitpage_tiff: description to write: {}'.format(descr))
+    logging.debug('write_mulitpage_tiff: description to write: {}'.format(descr))
 
     try:
-        tifffile.imsave(ofn,x,compress=6,
+        tifffile.imsave(str(ofn),x,compress=6,
                         #photometric='minisblack', #not for color
                         description=descr,
                         extratags=tags)
 
     except Exception as e:
-        warn('tifffile had a writing problem with {}   {} '.format(ofn,e))
+        logging.critical('tifffile had a writing problem with {}   {} '.format(ofn,e))
 
 def read_multipage_tiff(fn,verbose=False):
     try:
-        with tifffile.TiffFile(fn) as tif:
+        with tifffile.TiffFile(str(fn)) as tif:
             y = tif.asarray()
             if verbose:
                 loadtifftags(tif)
         return y
     except Exception as e:
-        warn('tifffile had a reading problem with {}   {} '.format(fn,e))
+        logging.error('tifffile had a reading problem with {}   {} '.format(fn,e))
 
 def loadtifftags(tif):
     for page in tif:
@@ -109,7 +110,7 @@ def write_multipage_freeimage(x,ofn):
     try:
         print('freeimage write {}   shape {}'.format(ofn,x.shape))
         #write demo (no tags)
-        freeimg.write_multipage(x, ofn)
+        freeimg.write_multipage(x, str(ofn))
     except Exception as e:
         print('freeimage had a problem: '+str(e))
         print('https://scivision.co/writing-multipage-tiff-with-python/')
@@ -125,10 +126,10 @@ def rwlibtiff(x,fn):
             print('libtiff write ' + fn)
 
             #write demo
-            tf.write_file(fn, compression='none')
+            tf.write_file(str(fn), compression='none')
 
         #read demo
-        with TIFF.open(fn,mode='r') as tif:
+        with TIFF.open(str(fn),mode='r') as tif:
 
             return tif.read_image()
             # for image in tif.iter_images():
