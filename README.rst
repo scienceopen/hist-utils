@@ -1,3 +1,5 @@
+.. image:: https://travis-ci.org/scienceopen/histutils.svg?branch=master
+    :target: https://travis-ci.org/scienceopen/histutils
 .. image:: https://codeclimate.com/github/scienceopen/histutils/badges/gpa.svg
    :target: https://codeclimate.com/github/scienceopen/histutils
    :alt: Code Climate
