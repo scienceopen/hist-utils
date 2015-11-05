@@ -6,6 +6,7 @@ INPUT FILE FORMAT: intended for use with "DMCdata" raw format, 4-byte
  "footer" containing frame index (must use typecast)
 """
 from __future__ import division,absolute_import
+#from pathlib2 import Path
 import logging
 from datetime import datetime
 from time import time
@@ -88,7 +89,7 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
         # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing
         # IOError: Can't read data (Src and dest data spaces have different sizes)
         # if you have repeated index in fancy indexing
-        with h5py.File(C.fn,'r',libver='latest') as f:
+        with h5py.File(str(C.fn),'r',libver='latest') as f:
             I = f['/rawimg'][ind,...]
             I = I[C.pbInd-ind[0],...] #allows repeated indexes which h5py 2.5 does not for mmap
             I = C.doorientimage(I)

@@ -2,6 +2,7 @@ from __future__ import division,absolute_import
 from numpy import logspace
 import h5py
 from os.path import join
+from matplotlib.pyplot import figure
 from mpl_toolkits.mplot3d import Axes3D #needed for this file
 #
 from pymap3d.coordconv3d import ecef2aer, ecef2geodetic
@@ -12,7 +13,7 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
     srpts = logspace(4.3,6.9,25) #4.5 had zero discards for hst0 #6.8 didn't quite get to zenith
 #%% (0) load az/el data from Astrometry.net
     for C in cam:
-        with h5py.File(C.cal1Dfn,'r',libver='latest') as f:
+        with h5py.File(str(C.cal1Dfn),'r',libver='latest') as f:
             # NEED .value in case no modifications do in .doorient()
             C.doorient(f['/az'].value, f['/el'].value,
                        f['/ra'].value, f['/dec'].value)
@@ -32,31 +33,31 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
 
 #%%
     if dbglvl>2 and progms is not None:
-        dbgfn = join(progms,'debugLSQ.h5')
+        dbgfn = progms/'debugLSQ.h5'
         print('writing', dbgfn)
-        with h5py.File(dbgfn,'w',libver='latest') as fid:
+        with h5py.File(str(dbgfn),'w',libver='latest') as fid:
             for C in cam:
                 fid.create_dataset('/cam{}/cutrow'.format(C.name), data= C.cutrow)
                 fid.create_dataset('/cam{}/cutcol'.format(C.name), data= C.cutcol)
                 fid.create_dataset('/cam{}/xpix'.format(C.name),   data= C.xpix)
     return cam
 
-def plotLOSecef(cam,makeplot,progms,dbglvl):
-    from matplotlib.pyplot import figure
-    if dbglvl>0:
-        figecef = figure()
-        clr = ['b','r','g','m']
-        if dbglvl>1:
-            import simplekml as skml
-            kml1d = skml.Kml()
+def plotLOSecef(cam,makeplot,progms,verbose):
+    if verbose<=0:
+        return
+
+    figecef = figure()
+    clr = ['b','r','g','m']
+    if verbose>1:
+        import simplekml as skml
+        kml1d = skml.Kml()
 
 
     for c in cam:
-        if dbglvl>0: #SHOW PLOT
-            axecef = figecef.gca(projection='3d')
-            axecef.plot(xs=cam[c].x2mz, ys=cam[c].y2mz, zs=cam[c].z2mz, zdir='z',
-                        color=clr[int(c)], label=c)
-            axecef.set_title('LOS to magnetic zenith')
+        axecef = figecef.gca(projection='3d')
+        axecef.plot(xs=cam[c].x2mz, ys=cam[c].y2mz, zs=cam[c].z2mz, zdir='z',
+                    color=clr[int(c)], label=c)
+        axecef.set_title('LOS to magnetic zenith')
 
         if 'kmlell' in makeplot: #Write KML
             #convert LOS ECEF -> LLA
@@ -76,11 +77,11 @@ def plotLOSecef(cam,makeplot,progms,dbglvl):
             linestr.altitudemode = skml.AltitudeMode.relativetoground
             linestr.style.linestyle.color = kclr[int(c)]
 
-    if dbglvl>0:
-        axecef.legend()
+
+    axecef.legend()
     if 'kmlell' in makeplot and progms is not None:
-        kmlfn = join(progms,'debug1dcut.kmz')
-        print('saving', kmlfn)
+        kmlfn = str(progms/'debug1dcut.kmz')
+        print('saving {}'.format(kmlfn))
         kml1d.savekmz(kmlfn)
 
 
