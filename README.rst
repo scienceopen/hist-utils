@@ -17,7 +17,7 @@ HiSTutils
 HiST project raw video data reading utilities.
 
 These programs are designed to be platform/OS agnostic.
-That is, from Windows, Mac, or Linux ``.py`` files should be callable from Python 2.7 / 3.4+ or Matlab R2014b+ using the ``py`` module of Matlab
+That is, from Windows, Mac, or Linux ``.py`` files should be callable from Python 3.4/3.5 or Matlab R2014b+ using the ``py`` module of Matlab
 
 .. contents::
 
