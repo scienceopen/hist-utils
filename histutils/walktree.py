@@ -6,10 +6,10 @@ Dec 2014
 """
 from six.moves import getcwd
 from pathlib2 import Path
+from six import string_types
 #from os import walk
 #from os.path import join,expanduser,isdir, isfile
 #from fnmatch import filter
-#from six import string_types
 #from warnings import warn
 #from stat import S_ISDIR, S_ISREG
 
@@ -18,9 +18,11 @@ def walktree(root,pat=''):
     and to raise awareness of pathlib
 
     output:
-    generator with all recursively globbed paths (use sorted() to get a sorted list. Just list() doesn't work.)
+    list with all recursively globbed paths (use sorted() to get a sorted list. Just list() doesn't work.)
     """
-    return Path(root).expanduser().glob('**/*'+pat)
+    assert isinstance(root,(Path,string_types))
+
+    return sorted(Path(root).expanduser().glob('**/*'+pat))
 
 
 #def walktree_obsolete(root,pat):
