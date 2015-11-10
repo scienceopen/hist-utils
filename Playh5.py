@@ -3,8 +3,8 @@
 Plays video contained in HDF5 file, especially from rawDMCreader program.
 """
 from __future__ import division,absolute_import
+from pathlib2 import Path
 import h5py
-from os.path import expanduser,splitext
 from scipy.misc import bytescale
 from numpy import dstack
 #
@@ -12,10 +12,10 @@ from numpy import dstack
 from histutils.rawDMCreader import doPlayMovie
 
 def playh5movie(h5fn,imgh5,outfn,clim):
-    h5fn = expanduser(h5fn)
+    h5fn = Path(h5fn).expanduser()
 
 
-    with h5py.File(h5fn,'r',libver='latest') as f:
+    with h5py.File(str(h5fn),'r',libver='latest') as f:
         data = f[imgh5]
         try:
             ut1_unix = f['/ut1_unix']
@@ -28,7 +28,7 @@ def playh5movie(h5fn,imgh5,outfn,clim):
             doPlayMovie(data,0.1,ut1_unix=ut1_unix,clim=clim)
 
 def hdf2video(data,imgh5,outfn,clim):
-    outfn = expanduser(outfn)
+    outfn = Path(outfn).expanduser()
 
     import cv2
     try:
@@ -36,11 +36,10 @@ def hdf2video(data,imgh5,outfn,clim):
     except Exception:
         from cv2 import VideoWriter_fourcc as fourcc
 
-    stem = splitext(outfn)[0]
-    outfn = stem + '.ogv'
+    outfn = outfn.with_suffix('.ogv')
     cc4 = fourcc(*'THEO')
     # we use isColor=True because some codecs have trouble with grayscale
-    hv = cv2.VideoWriter(outfn,cc4, fps=33,
+    hv = cv2.VideoWriter(str(outfn),cc4, fps=33,
                          frameSize=data.shape[1:][::-1],  #frameSize needs col,row
                          isColor=True) #right now we're only using grayscale
     if not hv.isOpened():
