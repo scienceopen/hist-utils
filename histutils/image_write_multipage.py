@@ -42,11 +42,11 @@ def tiffdemo(modules):
     if 'tifffile' in modules:
         ofn = tdir/'tifffile.tif'
         tic = time()
-        write_multipage_tiff(x,ofn,descr='my random data',
+        write_multipage_tiff(x,str(ofn),descr='my random data',
                              tags=[(65000,'s',None,'My custom tag #1',True),
                                    (65001,'s',None,'My custom tag #2',True),
                                    (65002,'f',2,[123456.789,9876.54321],True)])
-        y = read_multipage_tiff(ofn)
+        y = read_multipage_tiff(str(ofn))
         print('{:.2f} seconds to read/write with tiffile.'.format(time()-tic))
 
 #    if 'freeimage' in modules:
