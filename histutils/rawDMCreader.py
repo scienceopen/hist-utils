@@ -218,23 +218,19 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     if verbose>0:
         print('seeking to byte ' + str(currByte))
 
-    assert currByte.dtype == int64
+    assert isinstance(currByte.dtype,int64)
     try:
         f.seek(currByte,0) #no return value
     except IOError as e:
-        warn('I couldnt seek to byte {:d}'.format(currByte))
-        print('try using a 64-bit integer for iFrm')
-        print('is ' + str(f.name) +' a valid .DMCdata file?')
-        print(str(e))
-        return None, None
+        raise IOError('I couldnt seek to byte {:d}. try using a 64-bit integer for iFrm \n'
+              'is {} a vaMCdata file?  {}'.format(currByte,f.name,e))
 #%% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
         currFrame = fromfile(f, uint16,
                             finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),
                             order='C')
     except ValueError as e:
-        warn('we may have read past end of file?  {}'.format(e))
-        return None,None
+        raise ValueError('we may have read past end of file?  {}'.format(e))
 
     rawFrameInd = gri.meta2rawInd(f,finf['nmetadata'])
     return currFrame,rawFrameInd
