@@ -218,7 +218,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     if verbose>0:
         print('seeking to byte ' + str(currByte))
 
-    assert isinstance(currByte.dtype,int64)
+    assert isinstance(currByte,int64)
     try:
         f.seek(currByte,0) #no return value
     except IOError as e:
