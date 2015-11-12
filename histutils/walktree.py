@@ -3,6 +3,9 @@
 Recursively loops for pattern-matching files, like GNU find
 Michael Hirsch
 Dec 2014
+
+Note: Gives permission error on files w/o read permission;
+would need to use iterdir or the like to trap PermissionError
 """
 from __future__ import unicode_literals
 from six.moves import getcwd
@@ -29,4 +32,4 @@ if __name__ == '__main__':
     a=p.parse_args()
 
     found = walktree(a.rootdir,a.pattern)
-    print(found)
+    print('\n'.join([str(f) for f in found]))
