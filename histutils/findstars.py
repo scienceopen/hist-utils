@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 #from scipy.ndimage.filters import maximum_filter
+from __future__ import division,absolute_import
+from pathlib2 import Path
 from skimage.feature import peak_local_max
 from astropy.io import fits
 from skimage.draw import circle
 from matplotlib.pyplot import figure, show
 from matplotlib.colors import LogNorm
-from os.path import expanduser
 from warnings import warn
 '''
 Michael Hirsch 2014
@@ -18,18 +19,9 @@ http://scikit-image.org/docs/dev/auto_examples/plot_peak_local_max.html?highligh
 '''
 
 def getfitsimg(fn):
-    fn = expanduser(fn)
-    try:
-        with fits.open(fn,mode='readonly') as f:
-            if f[0].header['NAXIS']==2: #gray image
-                img = f[0].data
-            else:
-                warn('data shape {} but I expected only 2-dim array in {}'.format(img.shape,fn))
-    except OSError:
-        warn('could not find ' + fn)
-        img=None
-
-    return img
+    fn = Path(fn).expanduser()
+    with fits.open(str(fn),mode='readonly') as f:
+        return f[0].data
 
 def getstars(img,fn,mindist,relintthres):
     coord = peak_local_max(img,
@@ -70,7 +62,6 @@ if __name__ == '__main__':
 
     for f in fl:
         img = getfitsimg(f)
-        if img is None: continue
 
         peaks = getstars(img,f,a.mindist,a.relintthres)
 

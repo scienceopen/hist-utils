@@ -5,17 +5,16 @@ To download DASC images using Octave, Matlab, or Python checkout:
 https://github.com/jswoboda/ISR_Toolbox/blob/master/Allsky/dlFITS.m
 """
 from __future__ import absolute_import
+from pathlib2 import Path
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
 from datetime import datetime
 from warnings import warn
 from pytz import UTC
-#
-from .walktree import walktree
 
 def readCalFITS(indir,azfn,elfn):
-    flist = walktree(indir,"PKR_DASC_*.fits")
+    flist = sorted(Path(indir).expanduser().glob("PKR_DASC_*.fits"))
     return readFITS(flist,azfn,elfn)
 
 def readFITS(flist,azfn,elfn):
@@ -63,7 +62,7 @@ def readFITS(flist,azfn,elfn):
 
 if __name__ == '__main__':
     import cv2 # easy way to show fast movie
-    from sixteen2eight import sixteen2eight
+    from scipy.misc import bytescale
 
     from argparse import ArgumentParser
     p = ArgumentParser(description='for Poker Flat DASC all sky camera, read az/el mapping and images')
@@ -82,7 +81,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    img8 = sixteen2eight(img,(0,1000))
+    img8 = bytescale(img,0,1000)
 #%% play movie
     for I in img8:
         cv2.imshow('DASC',I)
