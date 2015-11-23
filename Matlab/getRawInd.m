@@ -2,7 +2,7 @@ function [firstRawIndex,lastRawIndex,ReqRawInd] = getRawInd(BigFN,BytesPerImage,
 % Michael Hirsch 2014
 % gets raw indices from a big .DMCdata file
 
-Nmetadata = nHeadBytes/2; %number of 16-bit words TODO not true for DMC2data files!
+Nmetadata = nHeadBytes/2; %number of 16-bit words
 fid = fopen(BigFN,'r');
 if fid<1, error(['Could not open ',BigFN]),end
 
@@ -33,7 +33,9 @@ end %function
 function rawInd = meta2rawInd(fid,Nmetadata)
 
     metadata = fread(fid,Nmetadata,'uint16=>uint16',0,'l');
-    if isempty(metadata),error('You have read past the end of the data file'), end
+    if isempty(metadata)
+        error('You have read past the end of the data file')
+    end
     %typecast those 16-bit metadata words into frame #'s
     rawInd = typecast([metadata(2) metadata(1)],'uint32');
     rawInd = double(rawInd); %to do expected math operations
