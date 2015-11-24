@@ -46,9 +46,25 @@ addParamValue(p,'playmovie',[])
 addParamValue(p,'clim',[])
 addParamValue(p,'rawframerate',[])
 addParamValue(p,'startutc',[])
-addParamValue(p,'verbose',false) %#ok<*NVREPL> % need this for Octave 4.0 which doesn't have addParameter
+addParamValue(p,'verbose',false) %#ok<*NVREPL>
 parse(p,varargin{:})
 U = p.Results;
+
+if isstruct(U.playmovie)
+    try
+        playmovie.fps = U.playmovie.fps;
+        playmovie.clim = U.playmovie.clim;
+    catch
+        warning('i didn''t understand your playback command')
+        playmovie.fps = 10;
+        playmovie.clim = [];
+    end
+elseif ~isempty(U.playmovie)
+    playmovie.fps = U.playmovie;
+    playmovie.clim = U.clim;
+else
+    playmovie = [];
+end
 %%
 [rawFrameRate,startUTC] = DMCtimeparams(bigfn,U.rawframerate,U.startutc);
 %% setup data parameters
@@ -68,15 +84,12 @@ fileInfo= dir(bigfn);
 if isempty(fileInfo), error(['file does not exist: ',bigfn]), end
 fileSizeBytes = fileInfo.bytes;
 
-if fileSizeBytes < BytesPerImage
-    error(['File size ',int2str(fileSizeBytes),' is smaller than a single image frame!'])
-end
+assert(fileSizeBytes >= BytesPerImage, ['File size ',int2str(fileSizeBytes),' is smaller than a single image frame!'])
 
 nFrame = fileSizeBytes / BytesPerFrame; % by inspection
  %there should be no partial frames
-
 if rem(nFrame,1) ~= 0
-    warning(['Looks like I am not reading this file correctly, with BPF ',int2str(BytesPerFrame)])
+    warning(['Not reading file correctly, bytesPerFrame: ',int2str(BytesPerFrame)])
 end
 
 %% get "raw" frame numbers -- that Camera FPGA tags each frame with 
@@ -97,24 +110,24 @@ if isempty(U.framereq)
 else
   FrameInd = U.framereq;
 end
-badReqInd = FrameInd > nFrame;
+badReqInd = FrameInd > nFrame | FrameInd<1;
 
 % check if we requested frames beyond what the BigFN contains
 if any(badReqInd)
-    warning(['You have requested Frames ',int2str(FrameInd(badReqInd)),', which exceed the length of the BigFN'])
+    warning(['You have requested Frames ',int2str(FrameInd(badReqInd)),', outside BigFN'])
 end
 
 %excise bad requests
 FrameInd(badReqInd) = [];
 % more parameters
 nFrameExtract = length(FrameInd); %to preallocate properly
+assert(nFrameExtract>0,'No frames requested were available in this file.')
 nBytesExtract = nFrameExtract*BytesPerFrame;
-if U.verbose
-    display(['Extracting ',sprintf('%ld',nBytesExtract),' bytes.'])
-end
-if nBytesExtract > 2e9
-    warning(['This will require ',num2str(nBytesExtract/1e9,'%0.1f'),...
-            ' Gigabytes of RAM. Do you have enough RAM?'])
+
+display(['Extracting ',int2str(nBytesExtract),' bytes from frame ',int2str(FrameInd(1)),' to ',int2str(FrameInd(end))])
+
+if nBytesExtract > 1e9
+    warning(['This will require ',num2str(nBytesExtract/1e9,'%0.1f'),' Gigabytes of RAM.'])
 end
 %% preallocate
 % note: Matlab's default data type is "double float", which takes 64-bits
@@ -138,8 +151,11 @@ else
 end
 %% read data
 fid = fopen(bigfn,'r');
-if fid<1, error(['error opening ',bigfn]), end
+assert(fid>0, ['error opening ',bigfn])
 jFrm = 0;
+tic %in case of remote file system, give user sense of progress
+disp('starting file read')
+Toc=toc;
 for iFrame = FrameInd  
     
     jFrm = jFrm + 1; %used for indexing memory
@@ -163,17 +179,29 @@ for iFrame = FrameInd
     if ~isempty(rawFrameRate)
         tUTC(jFrm) = U.startutc + ( rawFrameInd(jFrm) - 1 )/rawFrameRate /86400; 
     end
+    
+    %progress for slow drives/connections
+    if ~mod(jFrm,5) && toc-Toc>2
+        Toc=toc;
+        fprintf([num2str(jFrm/nFrameExtract*100,'%.1f'),'%%.. '])
+    end
+   
 end %for
 
 fclose(fid);
 %% play movie, if user chooses
-doPlayMovie(data,SuperY,SuperX,nFrameExtract,U.playmovie,U.clim,rawFrameInd,tUTC)
+doPlayMovie(data,SuperY,SuperX,nFrameExtract,playmovie,rawFrameInd,tUTC)
 %% cleanup
 if ~nargout, clear, end
 end %function
 
-function doPlayMovie(data,nRow,nCol,nFrameExtract,playMovie,Clim,rawFrameInd,tUTC)
-if isempty(playMovie), return, end
+function doPlayMovie(data,nRow,nCol,nFrameExtract,playmovie,rawFrameInd,tUTC)
+if isempty(playmovie)
+    return
+elseif isstruct(playmovie)
+    pbpause = 1/playmovie.fps;
+    Clim = playmovie.clim;
+end
 %% setup plot
     h.f = figure(1); clf(1)
     h.ax = axes('parent',h.f);
@@ -204,13 +232,13 @@ try
      end
      
      set(h.t,'String',titlestring)
-     pause(playMovie)
+     pause(pbpause)
     end
 catch ME
     display(iFrame)
     try
-    display(tUTC(iFrame))
-    display(rawFrameInd(iFrame))
+        display(tUTC(iFrame))
+        display(rawFrameInd(iFrame))
     end
     rethrow(ME)
 end

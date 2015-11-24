@@ -190,7 +190,8 @@ def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRaw
         if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
             FrameIndRel = arange(0,nFrame,FrameIndReq,dtype=int64)
         elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
-            FrameIndRel =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)
+            # this is -1 because user is specifying one-based index
+            FrameIndRel =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)-1 #keep -1 !
         else: #catch all
             FrameIndRel = arange(nFrame,dtype=int64) # has to be numpy.arange for > comparison
             if verbose>0:
