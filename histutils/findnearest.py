@@ -18,7 +18,8 @@ GPLv3+
 """
 from __future__ import division,absolute_import
 import logging
-from numpy import empty_like,absolute,atleast_1d,asanyarray
+from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty,hypot,
+                   delete,unravel_index,logical_not)
 #from bisect import bisect
 
 def find_nearest(x,x0):
@@ -34,6 +35,35 @@ def find_nearest(x,x0):
         ind[i] = absolute(x-xi).argmin()
 
     return ind.squeeze(), x[ind].squeeze()
+
+def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
+    assert az.shape    == el.shape
+    assert azpts.shape == elpts.shape
+    assert az.ndim == 2
+
+    npts = azpts.size  #numel
+    nearRow = empty(npts,dtype=int)
+    nearCol = empty(npts,dtype=int)
+    # can be FAR FAR faster than scipy.spatial.distance.cdist()
+    for i in range(npts):
+        #we do this point by point because we need to know the closest pixel for each point
+        errdist = absolute( hypot(az - azpts[i],
+                                  el - elpts[i]) )
+
+# ********************************************
+# THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
+        nearRow[i],nearCol[i] = unravel_index(errdist.argmin(),
+                                              az.shape,order='C')
+#************************************************
+
+
+    if discardEdgepix:
+        mask = logical_not(((nearCol==0) | (nearCol == az.shape[1]-1)) |
+                           ((nearRow==0) | (nearRow == az.shape[0]-1)))
+        nearRow = nearRow[mask]
+        nearCol = nearCol[mask]
+
+    return nearRow,nearCol
 
 #def INCORRECTRESULT_using_bisect(x,X0): #pragma: no cover
 #    X0 = atleast_1d(X0)

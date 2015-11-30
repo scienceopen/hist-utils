@@ -13,7 +13,6 @@ import logging
 from pathlib2 import Path
 from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,array
 from re import search
-from warnings import warn
 from six import integer_types
 from datetime import datetime
 from pytz import UTC
@@ -32,7 +31,7 @@ except:
 try:
     import tifffile
 except:
-    warn('unable to read tiff files,   pip install tifffile')
+    logging.warning('unable to read tiff files,   pip install tifffile')
 #
 bpp = 16
 
@@ -130,7 +129,7 @@ def getTIFparam(bigfn,FrameIndReq,ut1req,kineticsec,startUTC,cmosinit,verbose):
         data = tif.asarray()
 
     if data.ndim != 3:
-        warn('Im not sure what sort of tiff {} youre reading, I expect to read a 3-D array page x height x width'.format(bigfn))
+       logging.error('Im not sure what sort of tiff {} youre reading, I expect to read a 3-D array page x height x width'.format(bigfn))
 
     SuperX = data.shape[2]
     SuperY = data.shape[1]
@@ -166,7 +165,7 @@ def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRaw
         raise ValueError('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
 
     if ext=='.DMCdata' and fileSizeBytes % BytesPerFrame:
-        warn("Looks like I am not reading this file correctly, with BPF: {:d}".format(BytesPerFrame))
+        logging.error("Looks like I am not reading this file correctly, with BPF: {:d}".format(BytesPerFrame))
 
     nFrame = fileSizeBytes // BytesPerFrame
 
@@ -176,7 +175,7 @@ def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRaw
     allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
     nFrameRaw = (lastRawInd-firstRawInd+1)
     if nFrameRaw != nFrame:
-        warn('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
+        logging.warning('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
     ut1_unix_all = frame2ut1(startUTC,kineticsec,allrawframe)
 #%% setup frame indices
     """
@@ -199,15 +198,14 @@ def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRaw
     badReqInd = (FrameIndRel>nFrame) | (FrameIndRel<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
-        warn('You have requested frames outside the times covered in {}'.format(bigfn)) #don't include frames in case of None
-        return None
+        raise ValueError('You have requested frames outside the times covered in {}'.format(bigfn)) #don't include frames in case of None
 
     nFrameExtract = FrameIndRel.size #to preallocate properly
     nBytesExtract = nFrameExtract * BytesPerFrame
     if verbose > 0:
         print('Extracted {} frames from {} totaling {} bytes.'.format(nFrameExtract,bigfn,nBytesExtract))
     if nBytesExtract > 4e9:
-        warn('This will require {:.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
+        logging.warning('This will require {:.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
 
     return FrameIndRel
 
@@ -224,7 +222,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
         f.seek(currByte,0) #no return value
     except IOError as e:
         raise IOError('I couldnt seek to byte {:d}. try using a 64-bit integer for iFrm \n'
-              'is {} a vaMCdata file?  {}'.format(currByte,f.name,e))
+              'is {} a DMCdata file?  {}'.format(currByte,f.name,e))
 #%% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
         currFrame = fromfile(f, uint16,

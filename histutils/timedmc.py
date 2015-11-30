@@ -12,11 +12,11 @@ Outputs:
 Michael Hirsch
 """
 from __future__ import division,absolute_import
-from six import string_types
+from six import string_types,integer_types
 from datetime import datetime
 from dateutil.parser import parse
 from warnings import warn
-from numpy import atleast_1d,int64
+from numpy import atleast_1d,int64,empty,datetime64
 from pytz import UTC
 from scipy.interpolate import interp1d
 #
@@ -65,30 +65,37 @@ def ut12frame(treq,ind,ut1_unix):
         tstartreq = datetime2unix(treq[0])
         tendreq = datetime2unix(treq[1])
         treq = ut1_unix[(ut1_unix>tstartreq) & (ut1_unix<tendreq)]
+    else: #otherwise, it's a vector of requested values
+        treq = datetime2unix(treq)
 #%% get indices
     """
-    We use nearest neighbor interpolation to pick a frame index for each requested time
+    We use nearest neighbor interpolation to pick a frame index for each requested time.
     """
-    f = interp1d(ut1_unix,ind,kind='nearest')
-    try:
-        return f(treq).astype(int64)
-    except ValueError:
-        warn('a time was requested {} outside the range of times in the data file'.format(datetime.fromtimestamp(treq[0],tz=UTC)))
-        return None
+    f = interp1d(ut1_unix,ind,kind='nearest',bounds_error=False) #it won't output nan for int case in Numpy 1.10 and other versions too
+    framereq = f(treq).astype(int64)
+    framereq = framereq[framereq>=0] #discard outside time limits
+    return framereq
 
-def datetime2unix(dt):
+
+def datetime2unix(T):
     """
-    scalar only for now
+    converts datetime to UT1 unix epoch time
     """
-    if isinstance(dt,string_types):
-        dt = parse(dt) #datetime
-    elif isinstance(dt,datetime):
-        pass
-    else: #assuming float or int
-        pass
+    T = atleast_1d(T)
 
-    return (forceutc(dt)-tepoch).total_seconds() #ut1 seconds since unix epoch, need [] for error case
+    ut1_unix = empty(len(T),dtype=float)
+    for i,t in enumerate(T):
+        if isinstance(t,(datetime,datetime64)):
+            pass
+        elif isinstance(t,string_types):
+            t = parse(t) #datetime
+        elif isinstance(t,(float,integer_types)): #assuming ut1_unix already
+            return T
+        else:
+            raise TypeError('I only accept datetime or parseable date string')
 
+        ut1_unix[i] = (forceutc(t)-tepoch).total_seconds() #ut1 seconds since unix epoch, need [] for error case
+    return ut1_unix
 
 
 def firetime(tstart,Tfire):
