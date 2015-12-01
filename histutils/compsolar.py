@@ -7,13 +7,6 @@ from warnings import warn
 from dateutil.rrule import HOURLY,rrule
 from matplotlib.dates import MonthLocator,DateFormatter
 from matplotlib.pyplot import figure
-try:
-    import seaborn as sns
-    sns.color_palette(sns.color_palette("cubehelix"))
-    sns.set(context='poster', style='whitegrid')
-    sns.set(rc={'image.cmap': 'cubehelix_r'}) #for contour
-except:
-    pass
 #
 from .airMass import airmass
 

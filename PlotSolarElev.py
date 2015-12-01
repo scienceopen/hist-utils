@@ -11,6 +11,10 @@ Michael Hirsch
 from __future__ import absolute_import,division
 from histutils.compsolar import compsolar
 from matplotlib.pyplot import show
+import seaborn as sns
+sns.color_palette(sns.color_palette("cubehelix"))
+sns.set(context='poster', style='whitegrid')
+sns.set(rc={'image.cmap': 'cubehelix_r'}) #for contour
 
 
 if __name__ == '__main__':
