@@ -75,10 +75,7 @@ def HSTsync(sim,cam,verbose):
 
 def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
 #%% load 1D cut coord
-    try:
-        cam = get1Dcut(cam,makeplot,progms,verbose)
-    except Exception as e:
-        logging.info('skipping 1-D cut extraction  {}'.format(e))
+    cam = get1Dcut(cam,makeplot,progms,verbose)
 #%% use 1D cut coord
     logging.info('frameHandler: Loading and 1-D cutting data...')
     tic = time()
@@ -99,8 +96,8 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
 
             try: #C.cutrow, C.cutcol only exist if running from histfeas program, not used otherwise
                 C.keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
-            except:
-                logging.debug('skipped extracting 1-D cut')
+            except AttributeError as e:
+                logging.debug('skipped extracting 1-D cut {}'.format(e))
 
     logging.debug('done extracting frames in {:.2f} seconds.'.format(time() - tic))
 

@@ -1,7 +1,6 @@
 from __future__ import division,absolute_import
 from numpy import logspace
 import h5py
-from os.path import join
 from matplotlib.pyplot import figure
 from mpl_toolkits.mplot3d import Axes3D #needed for this file
 #
