@@ -34,7 +34,7 @@ def getmulticam(flist,tstartstop,cpar,makeplot,outdir):
     cam,rawdata,sim = getSimulData(sim,cam,makeplot)
 #%% plot data
     for t in range(sim.nTimeSlice):
-        plotRealImg(sim,cam,rawdata,t,makeplot,figh=1,outdir=outdir)
+        plotRealImg(sim,cam,rawdata,t,makeplot,odir=outdir)
         draw()
         pause(0.01)
 

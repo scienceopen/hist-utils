@@ -1,15 +1,15 @@
 from __future__ import division,absolute_import
+from pathlib2 import Path
 import logging
 from matplotlib.pyplot import figure,draw,subplots
 from matplotlib.colors import LogNorm
-from os.path import join
 from numpy import in1d
 from datetime import datetime
 from pytz import UTC
 
-plotdpi = 100
+dpi = 100
 
-def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,outdir):
+def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,odir):
     """http://stackoverflow.com/questions/22408237/named-colors-in-matplotlib"""
     for R,C in zip(rawdata,cam):
         figure(figh).clf()
@@ -30,22 +30,22 @@ def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,outdir):
                     )
 
         draw() #Must have this here or plot doesn't update in animation multiplot mode!
-        if in1d(('rawpng','save'),makeplot).any():
-            writeplots(fg,'cam{}rawFrame'.format(C.name),t,outdir)
+        if in1d(('png'),makeplot).any():
+            writeplots(fg,'cam{}rawFrame'.format(C.name),t,odir)
 
 #%%
-def plotRealImg(sim,cam,rawdata,t,makeplot,figh,outdir):
+def plotRealImg(sim,cam,rawdata,t,makeplot,odir):
     """
-    plots both cameras together, along with magnetic zenith 1-D cut line
-    
+    plots both cameras together,
+    and magnetic zenith 1-D cut line
+    and 1 degree radar beam red circle centered on magnetic zenith
     """
     showcb = False
-    figure(figh).clf()
 
-    fg,axm = subplots(nrows=1,ncols=2,num=figh, dpi=plotdpi)
+    fg,axm = subplots(nrows=1,ncols=2, figsize=(15,12),dpi=dpi)
     #fg.set_size_inches(15,5) #clips off
     for R,C,ax in zip(rawdata,cam,axm):
-        #fixme this would need help if one of the cameras isn't plotted (this will probably never happen)
+        #FIXME this would need help if one of the cameras isn't plotted (this will probably never happen)
 
         #plotting raw uint16 data
         hi = ax.imshow(R[t,...],
@@ -55,6 +55,7 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,figh,outdir):
                          vmin=max(C.clim[0],1), vmax=C.clim[1],
                          cmap='gray',)
                          #norm=LogNorm())
+        ax.autoscale(False) # False for case where we put plots on top of image
 
         if showcb: #showing the colorbar makes the plotting go 5-10x more slowly
             hc = fg.colorbar(hi, ax=ax) #not cax!
@@ -72,21 +73,21 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,figh,outdir):
                    y=C.cutrow[C.angleMagzenind],
                    marker='o',facecolors='none',color='red',s=500)
         except:
-           pass
+           logging.debug('skipped plotting cut line on video ind {}'.format(t))
     #%% plot cleanup
-        ax.autoscale(True,tight=True) #fills existing axes
         ax.grid(False) #in case Seaborn is used
+
 
     draw() #Must have this here or plot doesn't update in animation multiplot mode!
 
-    if in1d(('rawpng','save'),makeplot).any():
-        writeplots(fg,'rawFrame',t,makeplot,outdir)
+    if in1d(('png'),makeplot).any():
+        writeplots(fg,'rawFrame',t,makeplot,odir)
 
-def writeplots(fg,plotprefix,tInd,method,outdir):
+def writeplots(fg,plotprefix,tInd,method,odir):
     fmt = 'png'
 
     draw() #Must have this here or plot doesn't update in animation multiplot mode!
 
-    pfn = join(outdir,(plotprefix + '_t{:03d}.{}'.format(tInd,fmt)))
-    logging.info('write {}'.format(pfn))
-    fg.savefig(pfn,bbox_inches='tight',dpi=plotdpi,format=fmt)  # this is slow and async
+    pfn = Path(odir) / (plotprefix + '_t{:03d}.{}'.format(tInd,fmt))
+    print('write {}'.format(pfn))
+    fg.savefig(str(pfn),bbox_inches='tight',dpi=dpi,format=fmt)  # this is slow and async
