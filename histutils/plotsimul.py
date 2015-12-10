@@ -35,6 +35,10 @@ def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,outdir):
 
 #%%
 def plotRealImg(sim,cam,rawdata,t,makeplot,figh,outdir):
+    """
+    plots both cameras together, along with magnetic zenith 1-D cut line
+    
+    """
     showcb = False
     figure(figh).clf()
 
