@@ -1,6 +1,7 @@
 function [firstRawIndex,lastRawIndex,ReqRawInd] = getRawInd(BigFN,BytesPerImage,nHeadBytes,ReqFrameInd)
 % Michael Hirsch 2014
 % gets raw indices from a big .DMCdata file
+% remember indexing is one-based e..g first frame index is 1
 
 Nmetadata = nHeadBytes/2; %number of 16-bit words
 fid = fopen(BigFN,'r');

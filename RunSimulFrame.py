@@ -7,6 +7,7 @@ Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 example:
 ./RunSimulFrame -i ~/data/2013-04-14/HST/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 """
+from __future__ import division,absolute_import
 import logging
 logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
@@ -14,7 +15,6 @@ from os.path import expanduser
 import h5py
 from numpy import fliplr,flipud,rot90,percentile
 from matplotlib.pyplot import draw,pause
-from six import integer_types
 #
 from histutils.simulFrame import getSimulData
 from histutils.plotsimul import plotRealImg

@@ -7,12 +7,13 @@ INPUT FILE FORMAT: intended for use with "DMCdata" raw format, 4-byte
 """
 from __future__ import division,absolute_import
 #from pathlib2 import Path
+from six import integer_types
 import logging
 from datetime import datetime
 from time import time
 from pytz import UTC
 import h5py
-from numpy import arange, unique
+from numpy import arange, unique,atleast_1d,around
 from scipy.interpolate import interp1d
 # local
 from .get1Dcut import get1Dcut
@@ -33,12 +34,24 @@ def HSTsync(sim,cam,verbose):
         if isinstance(sim.startutc,datetime):
             reqStart = (sim.startutc - epoch).total_seconds()
             reqStop  = (sim.stoputc  - epoch).total_seconds()
-        else: #ut1_unix
+        elif isinstance(sim.startutc,(float,integer_types)): #ut1_unix
             reqStart = sim.startutc
             reqStop  = sim.stoputc
+        else:
+            raise TypeError('unknown time request format')
     except AttributeError: #no specified time
-        reqStart = 0. #arbitrary time in the past
-        reqStop =  3e9#arbitrary time in the future
+        try:
+            treqlist = atleast_1d(sim.treqlist)
+            if isinstance(treqlist[0],datetime):
+                treqlist = atleast_1d([(t-epoch).total_seconds() for t in treqlist])
+            elif isinstance(treqlist[0],(float,integer_types)):
+                pass #already ut1_unix
+            else:
+                reqStart = 0. #arbitrary time in the past
+                reqStop =  3e9#arbitrary time in the future
+        except AttributeError:
+            reqStart = 0. #arbitrary time in the past
+            reqStop =  3e9#arbitrary time in the future
 #%% determine mutual start/stop frame
 # FIXME: assumes that all cameras overlap in time at least a little.
 # we will play only over UTC times for which both sites have frames available
@@ -55,7 +68,10 @@ def HSTsync(sim,cam,verbose):
                                   datetime.fromtimestamp(mutualStart,tz=UTC),
                                   datetime.fromtimestamp(mutualStop,tz=UTC)))
 #%% adjust start/stop to user request
-    treq = tall[(tall>reqStart) & (tall<reqStop)] #keep greater than start time
+    try:
+        treq = treqlist
+    except NameError:
+        treq = tall[(tall>reqStart) & (tall<reqStop)] #keep greater than start time
 
     logging.info('Per user specification, analyzing {} frames from {} to {}'.format(
                                             treq.size,treq[0], treq[-1]) )
@@ -67,7 +83,8 @@ def HSTsync(sim,cam,verbose):
         ft = interp1d(C.ut1unix,
                       arange(C.ut1unix.size,dtype=int),
                       kind='nearest')
-        C.pbInd = ft(treq).astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
+
+        C.pbInd = around(ft(treq)).astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
 
     sim.nTimeSlice = treq.size
 
@@ -79,7 +96,7 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
 #%% use 1D cut coord
     logging.info('frameHandler: Loading and 1-D cutting data...')
     tic = time()
-    rawdata = []
+    rawdata = [] # one list element for each camera, of varying number of frames
     for C in cam:
         #40 time faster to read at once, even with this indexing trick than frame by frame
         ind = unique(C.pbInd)
@@ -88,14 +105,21 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
         # if you have repeated index in fancy indexing
         with h5py.File(str(C.fn),'r',libver='latest') as f:
             I = f['/rawimg'][ind,...]
-            I = I[C.pbInd-ind[0],...] #allows repeated indexes which h5py 2.5 does not for mmap
+            if ind.size != C.pbInd.size: # in case repeated frames selected, which h5py 2.5 can't handle (fancy indexing, non-increasing)
+                I = I[C.pbInd-ind[0],...] #FIXME allows repeated indexes which h5py 2.5 does not for mmap
             I = C.doorientimage(I)
             rawdata.append(I)
 #%% assign slice & time to class variables
-            C.tKeo = f['/ut1_unix'].value[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
+            #NOTE C.ut1unix is timeshift corrected, f['/ut1_unix'] is UNcorrected!
+            C.tKeo = C.ut1unix[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
 
             try: #C.cutrow, C.cutcol only exist if running from histfeas program, not used otherwise
-                C.keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
+                if I.ndim   == 3:
+                    C.keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
+                elif I.ndim == 2:
+                    C.keo = I[C.cutrow, C.cutcol].T
+                else:
+                    raise ValueError('ndim==2 or 3')
             except AttributeError as e:
                 logging.debug('skipped extracting 1-D cut {}'.format(e))
 

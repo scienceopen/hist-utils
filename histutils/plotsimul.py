@@ -1,11 +1,12 @@
-from __future__ import division,absolute_import
-from pathlib2 import Path
+from __future__ import division,absolute_import,unicode_literals
 import logging
 from matplotlib.pyplot import figure,draw,subplots
 from matplotlib.colors import LogNorm
 from numpy import in1d
 from datetime import datetime
 from pytz import UTC
+#
+from gridaurora.plots import writeplots
 
 dpi = 100
 
@@ -46,9 +47,14 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir):
     #fg.set_size_inches(15,5) #clips off
     for R,C,ax in zip(rawdata,cam,axm):
         #FIXME this would need help if one of the cameras isn't plotted (this will probably never happen)
-
+        if R.ndim ==3:
+            frame = R[t,...]
+        elif R.ndim==2:
+            frame = R
+        else:
+            raise ValueError('ndim==3 or 2')
         #plotting raw uint16 data
-        hi = ax.imshow(R[t,...],
+        hi = ax.imshow(frame,
                          origin='lower',interpolation='none',
                          #aspect='equal',
                          #extent=(0,C.superx,0,C.supery),
@@ -60,7 +66,10 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir):
         if showcb: #showing the colorbar makes the plotting go 5-10x more slowly
             hc = fg.colorbar(hi, ax=ax) #not cax!
             hc.set_label(str(R.dtype) + ' data numbers')
-        ax.set_title('Cam{}: {}'.format(C.name, datetime.fromtimestamp(C.tKeo[t],tz=UTC)))
+
+        dtframe = datetime.utcfromtimestamp(C.tKeo[t])
+
+        ax.set_title('Cam{}: {}'.format(C.name,dtframe))
         #ax.set_xlabel('x-pixel')
         if False:#C.name==0:
             ax.set_ylabel('y-pixel')
@@ -81,13 +90,4 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir):
     draw() #Must have this here or plot doesn't update in animation multiplot mode!
 
     if in1d(('png'),makeplot).any():
-        writeplots(fg,'rawFrame',t,makeplot,odir)
-
-def writeplots(fg,plotprefix,tInd,method,odir):
-    fmt = 'png'
-
-    draw() #Must have this here or plot doesn't update in animation multiplot mode!
-
-    pfn = Path(odir) / (plotprefix + '_t{:03d}.{}'.format(tInd,fmt))
-    print('write {}'.format(pfn))
-    fg.savefig(str(pfn),bbox_inches='tight',dpi=dpi,format=fmt)  # this is slow and async
+        writeplots(fg,'rawFrame',dtframe,makeplot,odir)
