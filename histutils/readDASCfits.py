@@ -1,20 +1,32 @@
 #!/usr/bin/env python3
 """
-Reads DASC allsky cameras images in FITS formats into GeoData. Can also run standalone.
+Reads DASC allsky cameras images in FITS formats into GeoData.
+Run standalone from PlayDASC.py
+
 To download DASC images using Octave, Matlab, or Python checkout:
 https://github.com/jswoboda/ISR_Toolbox/blob/master/Allsky/dlFITS.m
+or
+download manually from
+https://amisr.asf.alaska.edu/PKR/DASC/RAW/
+note the capitalization is required in that URL.
 """
-from __future__ import absolute_import
-from pathlib2 import Path
+from pathlib import Path
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
 from datetime import datetime
 from warnings import warn
 from pytz import UTC
+#
+from histutils.fortrandates import forceutc
 
 def readCalFITS(indir,azfn,elfn):
-    flist = sorted(Path(indir).expanduser().glob("PKR_DASC_*.fits"))
+    indir = Path(indir).expanduser()
+    pats = ["PKR_DASC_*.fits","PKR_DASC_*.FITS"]
+
+    flist = []
+    for p in pats:
+        flist += sorted(indir.glob(p))
     return readFITS(flist,azfn,elfn)
 
 def readFITS(flist,azfn,elfn):
@@ -23,9 +35,9 @@ def readFITS(flist,azfn,elfn):
     """
     if not flist:
         warn('no data files found')
-        return (None,)*5
+        return
 #%% preallocate, assuming all images the same size
-    with fits.open(flist[0],mode='readonly') as h:
+    with fits.open(str(flist[0]),mode='readonly') as h:
         img = h[0].data
     dataloc = np.empty((img.size,3))
     times =   np.empty((len(flist),2))
@@ -34,13 +46,13 @@ def readFITS(flist,azfn,elfn):
 #%% iterate over image files
     for i,fn in enumerate(flist):
         try:
-            with fits.open(fn,mode='readonly') as h:
-                expstart_dt = parse(h[0].header['OBSDATE'] + ' ' + h[0].header['OBSSTART'])
+            with fits.open(str(fn),mode='readonly') as h:
+                expstart_dt = forceutc(parse(h[0].header['OBSDATE'] + ' ' + h[0].header['OBSSTART']))
                 expstart_unix = (expstart_dt - epoch).total_seconds()
                 times[i,:] = [expstart_unix,expstart_unix + h[0].header['EXPTIME']]
                 img[i,...] = h[0].data
         except Exception as e:
-            print(fn+ 'has error {}'.format(e))
+            print('{} has error {}'.format(fn,e))
     data = {'image':img}
 
     coordnames="spherical"
@@ -56,34 +68,6 @@ def readFITS(flist,azfn,elfn):
         warn('could not read az/el mapping.   {}'.format(e))
         dataloc=None
 
-    sensorloc=np.array([65,-148,0])
+    sensorloc=np.array([65.13,-147.47,0])
 
     return data,coordnames,dataloc,sensorloc,times
-
-if __name__ == '__main__':
-    import cv2 # easy way to show fast movie
-    from scipy.misc import bytescale
-
-    from argparse import ArgumentParser
-    p = ArgumentParser(description='for Poker Flat DASC all sky camera, read az/el mapping and images')
-    p.add_argument('indir',help='directory of .fits or specific .fits file')
-    p.add_argument('azfn',help='filename for DASC .fits azimuth calibration',nargs='?')
-    p.add_argument('elfn',help='filename for DASC .fits elevation calibration',nargs='?')
-    p=p.parse_args()
-
-
-    data,coordnames,dataloc,sensorloc,times  = readCalFITS(p.indir,p.azfn,p.elfn)
-    img = data['image']
-
-    try:
-        az = dataloc[:,1].reshape(img.shape[1:])
-        el = dataloc[:,2].reshape(img.shape[1:])
-    except:
-        pass
-
-    img8 = bytescale(img,0,1000)
-#%% play movie
-    for I in img8:
-        cv2.imshow('DASC',I)
-        cv2.waitKey(50)
-    cv2.destroyAllWindows()
