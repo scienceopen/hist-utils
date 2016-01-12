@@ -19,16 +19,17 @@ if __name__ == '__main__':
     p.add_argument('indir',help='directory of .fits or specific .fits file')
     p.add_argument('-a','--azfn',help='filename for DASC .fits azimuth calibration')
     p.add_argument('-e','--elfn',help='filename for DASC .fits elevation calibration')
+    p.add_argument('-w','--wavelength',help='select wavelength(s) to plot simultaneously [428 558 630]',type=int,default=[],nargs='+')
     p=p.parse_args()
 
 
-    data,coordnames,dataloc,sensorloc,times  = readCalFITS(p.indir,p.azfn,p.elfn)
+    data,coordnames,dataloc,sensorloc,times  = readCalFITS(p.indir,p.azfn,p.elfn,p.wavelength)
     img = data['image']
 
     try:
         az = dataloc[:,1].reshape(img.shape[1:])
         el = dataloc[:,2].reshape(img.shape[1:])
-    except Exception:
+    except Exception: #azel data wasn't loaded
         pass
 
     img8 = bytescale(img,0,1000)
