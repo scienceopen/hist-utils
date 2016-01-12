@@ -2,13 +2,6 @@
 """
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
-
-To download DASC images using Octave, Matlab, or Python checkout:
-https://github.com/jswoboda/ISR_Toolbox/blob/master/Allsky/dlFITS.m
-or
-download manually from
-https://amisr.asf.alaska.edu/PKR/DASC/RAW/
-note the capitalization is required in that URL.
 """
 from pathlib import Path
 from astropy.io import fits

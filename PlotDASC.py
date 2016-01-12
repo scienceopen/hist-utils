@@ -2,6 +2,12 @@
 """
 Plots / plays Poker Flat DASC all-sky camera data FITS files
 
+To download DASC images using Octave, Matlab, or Python checkout:
+https://github.com/jswoboda/ISR_Toolbox/blob/master/Example_Scripts/loadDASC2013Apr14.py
+or
+download manually from
+https://amisr.asf.alaska.edu/PKR/DASC/RAW/
+note the capitalization is required in that URL.
 """
 from histutils.readDASCfits import readCalFITS
 
