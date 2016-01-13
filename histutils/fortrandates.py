@@ -70,6 +70,7 @@ def dt2utsec(t):
 
 def forceutc(t):
     """
+    Add UTC to datetime-naive and convert to UTC for datetime aware
     input: python datetime (naive, utc, non-utc)
     output: utc datetime
     """
@@ -80,9 +81,9 @@ def forceutc(t):
     else:
         raise TypeError('datetime only input')
 
-    if t.tzinfo == None:
+    if t.tzinfo == None: #datetime-naive
         t = t.replace(tzinfo = UTC)
-    else:
+    else: #datetime-aware
         t = t.astimezone(UTC) #changes timezone, preserving absolute time. E.g. noon EST = 5PM UTC
     return t
 
