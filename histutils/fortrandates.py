@@ -71,7 +71,8 @@ def dt2utsec(t):
 def forceutc(t):
     """
     Add UTC to datetime-naive and convert to UTC for datetime aware
-    input: python datetime (naive, utc, non-utc)
+    
+    input: python datetime (naive, utc, non-utc) or Numpy datetime64  #FIXME add Pandas and AstroPy time classes
     output: utc datetime
     """
     if isinstance(t,datetime64):
