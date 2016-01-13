@@ -6,14 +6,11 @@ reads .DMCdata files and displays them
 
 NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
    default to int32 instead of int64 like everyone else!
-    --- we can't use long, because that's only for Python 2.7
  """
-from __future__ import division, absolute_import
 import logging
-from pathlib2 import Path
+from pathlib import Path
 from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,array
 from re import search
-from six import integer_types
 from datetime import datetime
 from pytz import UTC
 #
@@ -186,7 +183,7 @@ def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRaw
     FrameIndRel = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
 
     if FrameIndRel is None or len(FrameIndRel)==0: #NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
-        if isinstance(FrameIndReq,integer_types): #the user is specifying a step size
+        if isinstance(FrameIndReq,int): #the user is specifying a step size
             FrameIndRel = arange(0,nFrame,FrameIndReq,dtype=int64)
         elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
             # this is -1 because user is specifying one-based index

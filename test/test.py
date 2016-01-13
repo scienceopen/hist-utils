@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division,absolute_import
-from pathlib2 import Path
+from pathlib import Path
 from numpy import array,nan,uint16,int64
 from numpy.testing import assert_allclose,assert_almost_equal
 from datetime import datetime

@@ -2,8 +2,7 @@
 """
 Plays video contained in HDF5 file, especially from rawDMCreader program.
 """
-from __future__ import division,absolute_import
-from pathlib2 import Path
+from pathlib import Path
 import h5py
 from scipy.misc import bytescale
 from numpy import dstack
