@@ -9,6 +9,7 @@ download manually from
 https://amisr.asf.alaska.edu/PKR/DASC/RAW/
 note the capitalization is required in that URL.
 """
+from pathlib import Path
 from numpy import arange
 from pytz import UTC
 from datetime import datetime
@@ -27,7 +28,13 @@ if __name__ == '__main__':
     p.add_argument('-w','--wavelength',help='select wavelength(s) to plot simultaneously [428 558 630]',type=int,default=[428,558,630],nargs='+')
     p.add_argument('-m','--minmax',help='set values outside these limits to 0, due to data corruption',type=int,nargs=2,default=[350,7000])
     p.add_argument('-c','--cadence',help='set playback cadence to request times [sec]',type=float,default=5.)
+    p.add_argument('-o','--odir',help='output directory')
     p=p.parse_args()
+
+    try:
+        odir = Path(p.odir).expanduser()
+    except Exception:
+        odir = None
 
     img = []; times = []
     for w in p.wavelength:
@@ -48,16 +55,18 @@ if __name__ == '__main__':
     for a,I in zip(axs,img):
         a.hist(I.ravel(),bins=128)
         a.set_yscale('log')
+    if odir:
+        fg.savefig(str(odir/'DASChistogram.png'),bbox_inches='tight')
 #%% play movie
     fg,axs = subplots(1,3,figsize=(15,5))
     hi = []; ht=[]
-    for a,w,x,mm in zip(axs,p.wavelength,(0.25,0.5,0.75),
+    for a,w,x,mm in zip(axs,p.wavelength,(0.225,0.5,0.775),
                      ((350,800),(350,7000),(350,900))):
         a.axis('off')
-        fg.text(x,0.05,str(w) + ' nm')
+        fg.text(x,0.05,str(w) + ' nm',color='green')
         hi.append(a.imshow(img[0][0],vmin=mm[0],vmax=mm[1],origin='bottom',
                         norm=LogNorm(),cmap='gray'))
-        ht.append(a.set_title(''))
+        ht.append(a.set_title('',color='green'))
         #fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
 
     T = max([t[0,0] for t in times])
@@ -75,4 +84,6 @@ if __name__ == '__main__':
         #print(datetime.fromtimestamp(T,tz=UTC))
 
         draw(); pause(0.05)
+        if odir:
+            fg.savefig(str(odir/'DASC{}.png'.format(T)),bbox_inches='tight',facecolor='k')
         T += p.cadence
