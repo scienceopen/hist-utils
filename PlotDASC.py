@@ -60,13 +60,13 @@ if __name__ == '__main__':
 #%% play movie
     fg,axs = subplots(1,3,figsize=(15,5))
     hi = []; ht=[]
-    for a,w,x,mm in zip(axs,p.wavelength,(0.225,0.5,0.775),
-                     ((350,800),(350,7000),(350,900))):
+    for a,w,x,mm,c in zip(axs,p.wavelength,(0.225,0.5,0.775),
+                     ((350,800),(350,7000),(350,900)),('b','g','r')):
         a.axis('off')
-        fg.text(x,0.05,str(w) + ' nm',color='green')
+        fg.text(x,0.05,str(w) + ' nm',color=c)
         hi.append(a.imshow(img[0][0],vmin=mm[0],vmax=mm[1],origin='bottom',
                         norm=LogNorm(),cmap='gray'))
-        ht.append(a.set_title('',color='green'))
+        ht.append(a.set_title('',color=c))
         #fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
 
     T = max([t[0,0] for t in times])
