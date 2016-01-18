@@ -31,22 +31,10 @@ def frame2ut1(tstart,kineticsec,rawind):
     passes in the FOV using a plate-scaled calibration and ephemeris data.
     Contact Michael Hirsch, he does have Github code for this.
     """
-
-    if isinstance(tstart,string_types):
-        tstart = parse(tstart)
-    elif isinstance(tstart,(list,tuple)):
-        tstart = tstart[0]
-        warn('using first value {} as tstart.'.format(tstart))
-        return frame2ut1(tstart,kineticsec,rawind)
-    elif isinstance(tstart,datetime):
-        pass
-    else:
-        return None
-
     #total_seconds is required for Python 2 compatibility
     # this variable is in units of seconds since Jan 1, 1970, midnight
     # rawind-1 because camera is one-based indexing
-    return (forceutc(tstart)-tepoch).total_seconds() + (rawind-1)*kineticsec
+    return datetime2unix(tstart)[0] + (rawind-1)*kineticsec
 
 def ut12frame(treq,ind,ut1_unix):
     """
@@ -54,7 +42,7 @@ def ut12frame(treq,ind,ut1_unix):
     treq scalar or vector of ut1_unix time (seconds since Jan 1, 1970)
     """
     if treq is None: #have to do this since interp1 will return last index otherwise
-        return None
+        return
 
     treq = atleast_1d(treq)
 #%% handle human specified string scalar case
@@ -83,7 +71,7 @@ def datetime2unix(T):
     """
     T = atleast_1d(T)
 
-    ut1_unix = empty(len(T),dtype=float)
+    ut1_unix = empty(T.shape,dtype=float)
     for i,t in enumerate(T):
         if isinstance(t,(datetime,datetime64)):
             pass

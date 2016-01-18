@@ -9,10 +9,12 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
  """
 import logging
 from pathlib import Path
+from dateutil.parser import parse
 from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,array
 from re import search
 from datetime import datetime
 from pytz import UTC
+from astropy.io import fits
 #
 from .timedmc import frame2ut1,ut12frame
 from . import getRawInd as gri
@@ -47,15 +49,17 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,start
         with bigfn.open('rb') as fid:
             for j,i in enumerate(finf['frameindrel']): #j and i are NOT the same in general when not starting from beginning of file!
                 data[j,...], rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
+#%% absolute time estimate, software timing (at your peril)
+        finf['ut1'] = frame2ut1(startUTC,kineticraw,rawFrameInd)
+
 
     elif ext[:4] == '.tif':
-        finf,data,rawFrameInd = getTIFparam(bigfn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
+        finf,data = getNeoParam(bigfn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
+        rawFrameInd = finf['frameind'] #FIXME this is for individual file, not start of night.
 
 
-#%% absolute time estimate
-    ut1_unix = frame2ut1(startUTC,kineticraw,rawFrameInd)
 
-    return data, rawFrameInd,finf,ut1_unix
+    return data, rawFrameInd,finf#,ut1_unix
 #%% workers
 def getserialnum(flist):
     """
@@ -110,41 +114,53 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,s
             'nframeextract':FrameIndRel.size,
             'frameindrel':FrameIndRel}
 
-def getTIFparam(bigfn,FrameIndReq,ut1req,kineticsec,startUTC,cmosinit,verbose):
-    """ assumption is that this is a Neo sCMOS file, where Solis chooses to break up the recordings
+def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cmosinit={},verbose=False):
+    """ assumption is that this is a Neo sCMOS FITS/TIFF file, where Solis chooses to break up the recordings
     into smaller files. Verify if this timing estimate makes sense for your application!
     I did not want to do regexp on the filename or USERTXT1 as I felt this too prone to error.
-    This function should be rarely enough used that it's worth the user knowing what they're doing.
 
     inputs:
     -------
     cmosinit = {'firstrawind','lastrawind'}
     """
+    fn = Path(fn).expanduser()
+
     nHeadBytes=0
 
-    with tifffile.TiffFile(bigfn) as tif:
-        data = tif.asarray()
-
-    if data.ndim != 3:
-       logging.error('Im not sure what sort of tiff {} youre reading, I expect to read a 3-D array page x height x width'.format(bigfn))
-
-    SuperX = data.shape[2]
-    SuperY = data.shape[1]
-
+    if fn.suffix.lower() in '.tiff':
+        #FIXME didn't the 2011 TIFFs have headers? maybe not.
+        with tifffile.TiffFile(str(fn)) as f:
+            data = f.asarray()
+            SuperX,SuperY,nframe = data.shape[2], data.shape[1],data.shape[0]
+    elif fn.suffix.lower() in '.fits':
+        with fits.open(str(fn),mode='readonly',memmap=False) as f:
+            data = None #f[0].data  #NOTE You can read the data if you want, I didn't need it here.
+            kineticsec = f[0].header['KCT']
+            start = parse(f[0].header['FRAME']+'Z')
+            startUTC = start.timestamp()
+            nframe = f[0].header['NUMKIN']
+            cmosinit={'firstrawind':1,'lastrawind':nframe}
+            SuperX,SuperY = f[0].header['NAXIS1'],f[0].header['NAXIS2']
 #%% FrameInd relative to this file
-
     PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
 
-    FrameIndRel = whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,
+    FrameIndRel = whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,
                               cmosinit['firstrawind'],cmosinit['lastrawind'],
                               BytesPerImage,BytesPerFrame,verbose)
 
-    rawFrameInd = arange(cmosinit['firstrawind'],cmosinit['lastrawind']+1,1,dtype=int64)
+    assert isinstance(FrameIndReq,int), 'TODO: add multi-frame request case'
+    rawFrameInd = arange(cmosinit['firstrawind'],cmosinit['lastrawind']+1,FrameIndReq,dtype=int64)
 
-    return {'superx':SuperX,
+    finf = {'superx':SuperX,
             'supery':SuperY,
-            'nframeextract':data.shape[0],
-            'frameindrel':FrameIndRel}, data, rawFrameInd
+            'nframeextract':nframe,
+            'nframe':nframe,
+            'frameindrel':FrameIndRel,
+            'frameind':rawFrameInd}
+#%% absolute frame timing (software, yikes)
+    finf['ut1'] = frame2ut1(startUTC,kineticsec,rawFrameInd)
+
+    return finf, data
 
 def howbig(SuperX,SuperY,nHeadBytes):
     PixelsPerImage= SuperX * SuperY
@@ -152,11 +168,11 @@ def howbig(SuperX,SuperY,nHeadBytes):
     BytesPerFrame = BytesPerImage + nHeadBytes
     return PixelsPerImage,BytesPerImage,BytesPerFrame
 
-def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
+def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
                 BytesPerImage,BytesPerFrame,verbose):
-    ext = Path(bigfn).suffix
+    ext = Path(fn).suffix
 #%% get file size
-    fileSizeBytes = bigfn.stat().st_size
+    fileSizeBytes = fn.stat().st_size
 
     if fileSizeBytes < BytesPerImage:
         raise ValueError('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
@@ -164,15 +180,19 @@ def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRaw
     if ext=='.DMCdata' and fileSizeBytes % BytesPerFrame:
         logging.error("Looks like I am not reading this file correctly, with BPF: {:d}".format(BytesPerFrame))
 
-    nFrame = fileSizeBytes // BytesPerFrame
+    if ext=='.DMCdata':
+        nFrame = fileSizeBytes // BytesPerFrame
+        logging.info('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes, fn))
 
-    logging.info('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes,bigfn))
+        nFrameRaw = (lastRawInd-firstRawInd+1)
+        if nFrameRaw != nFrame:
+             logging.warning('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
+    else:
+        nFrame = lastRawInd-firstRawInd+1
+
+    allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
     logging.info("first / last raw frame #'s: {}  / {} ".format(firstRawInd,lastRawInd))
 #%% absolute time estimate
-    allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
-    nFrameRaw = (lastRawInd-firstRawInd+1)
-    if nFrameRaw != nFrame:
-        logging.warning('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
     ut1_unix_all = frame2ut1(startUTC,kineticsec,allrawframe)
 #%% setup frame indices
     """
@@ -195,12 +215,12 @@ def whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRaw
     badReqInd = (FrameIndRel>nFrame) | (FrameIndRel<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
-        raise ValueError('You have requested frames outside the times covered in {}'.format(bigfn)) #don't include frames in case of None
+        raise ValueError('You have requested frames outside the times covered in {}'.format(fn)) #don't include frames in case of None
 
     nFrameExtract = FrameIndRel.size #to preallocate properly
     nBytesExtract = nFrameExtract * BytesPerFrame
     if verbose > 0:
-        print('Extracted {} frames from {} totaling {} bytes.'.format(nFrameExtract,bigfn,nBytesExtract))
+        print('Extracted {} frames from {} totaling {} bytes.'.format(nFrameExtract,fn,nBytesExtract))
     if nBytesExtract > 4e9:
         logging.warning('This will require {:.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
 

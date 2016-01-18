@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import division,absolute_import
-import logging
 from numpy import int64
+#
 from histutils.rawDMCreader import goRead,dmcconvert,doPlayMovie,doplotsave
 
 if __name__ == "__main__":
@@ -33,13 +33,13 @@ if __name__ == "__main__":
     params = {'kineticsec':p.kineticsec,'rotccw':p.rotccw,'transpose':p.transpose,
               'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire}
 
-    rawImgData,rawind,finf,ut1_unix = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.kineticsec,p.startutc,cmosinit,p.verbose)
+    rawImgData,rawind,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.kineticsec,p.startutc,cmosinit,p.verbose)
 #%% convert
-    dmcconvert(rawImgData,ut1_unix,rawind,p.output,params)
+    dmcconvert(rawImgData,finf['ut1'],rawind,p.output,params)
 #%% plots and save
     try:
         from matplotlib.pyplot import show
-        doPlayMovie(rawImgData,p.movie, ut1_unix=ut1_unix,clim=p.clim)
+        doPlayMovie(rawImgData,p.movie, ut1_unix=finf['ut1'],clim=p.clim)
         doplotsave(p.infile,rawImgData,rawind,p.clim,p.hist,p.avg)
         show()
     except Exception as e:
