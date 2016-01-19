@@ -8,6 +8,7 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
    default to int32 instead of int64 like everyone else!
  """
 import logging
+import re
 from pathlib import Path
 from dateutil.parser import parse
 from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,array
@@ -135,12 +136,25 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
     elif fn.suffix.lower() in '.fits':
         with fits.open(str(fn),mode='readonly',memmap=False) as f:
             data = None #f[0].data  #NOTE You can read the data if you want, I didn't need it here.
+
             kineticsec = f[0].header['KCT']
-            start = parse(f[0].header['FRAME']+'Z')
-            startUTC = start.timestamp()
+            startseries = parse(f[0].header['DATE'] + 'Z') #TODO start of night's recording (with some Solis versionss)
+
+            #TODO this is terrible to have to do this, shame on Andor Solis authors.
+            frametxt = f[0].header['USERTXT1']
+            m = re.search('(?<=Images\:)\d+-\d+(?=\.)',frametxt)
+            o = m.group(0).split('-')
+
+            cmosinit={'firstrawind':int(o[0]),
+                      'lastrawind':int(o[1])}
+
+            #start = parse(f[0].header['FRAME']+'Z') No, incorrect by several hours with some 2015 Solis versions!
+
             nframe = f[0].header['NUMKIN']
-            cmosinit={'firstrawind':1,'lastrawind':nframe}
             SuperX,SuperY = f[0].header['NAXIS1'],f[0].header['NAXIS2']
+
+        startUTC = startseries.timestamp()
+
 #%% FrameInd relative to this file
     PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
 
@@ -148,7 +162,7 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
                               cmosinit['firstrawind'],cmosinit['lastrawind'],
                               BytesPerImage,BytesPerFrame,verbose)
 
-    assert isinstance(FrameIndReq,int), 'TODO: add multi-frame request case'
+    assert isinstance(FrameIndReq,int) or FrameIndReq is None, 'TODO: add multi-frame request case'
     rawFrameInd = arange(cmosinit['firstrawind'],cmosinit['lastrawind']+1,FrameIndReq,dtype=int64)
 
     finf = {'superx':SuperX,
