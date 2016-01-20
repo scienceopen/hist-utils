@@ -170,7 +170,8 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
             'nframeextract':nframe,
             'nframe':nframe,
             'frameindrel':FrameIndRel,
-            'frameind':rawFrameInd}
+            'frameind':rawFrameInd,
+            'kineticsec':kineticsec}
 #%% absolute frame timing (software, yikes)
     finf['ut1'] = frame2ut1(startUTC,kineticsec,rawFrameInd)
 
@@ -347,7 +348,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         print('writing mean PNG ' + pngfn)
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
-def dmcconvert(data,ut1,rawind,outfn,params):
+def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
     if not outfn:
         return
 
@@ -367,7 +368,8 @@ def dmcconvert(data,ut1,rawind,outfn,params):
             if data is not None:
                 fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
-                             compression_opts=4,
+                             compression_opts=1, #no difference in size from 1 to 5, except much faster to use lower numbers!
+                             shuffle=True,
                              track_times=True)
                 fimg.attrs["CLASS"] = string_("IMAGE")
                 fimg.attrs["IMAGE_VERSION"] = string_("1.2")
@@ -376,22 +378,28 @@ def dmcconvert(data,ut1,rawind,outfn,params):
                 fimg.attrs['IMAGE_WHITE_IS_ZERO'] = uint8(0)
 
             if ut1 is not None: #needs is not None
-                print('writing from {} to {}'.format(datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
-                                                               datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
-                fut1 = f.create_dataset('/ut1_unix',data=ut1)
-                fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
+                try:
+                    print('writing from {} to {}'.format(datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
+                                                                   datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
+                    fut1 = f.create_dataset('/ut1_unix',data=ut1)
+                    fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
+                except Exception as e:
+                    print(e)
 
             if rawind is not None:
-                fri = f.create_dataset('/rawind',data=rawind)
-                fri.attrs['units'] = 'one-based index since camera program started this session'
+                try:
+                    fri = f.create_dataset('/rawind',data=rawind)
+                    fri.attrs['units'] = 'one-based index since camera program started this session'
+                except Exception as e:
+                    logging.error(e)
 
-
-            cparam = array((params['kineticsec'],
+            try:
+                cparam = array((params['kineticsec'],
                             params['rotccw'],
                             params['transpose']==True,
                             params['flipud']==True,
                             params['fliplr']==True,
-                            params['fire'] is None),
+                            1),
                            dtype=[('kineticsec','f8'),
                                   ('rotccw',    'i1'),
                                   ('transpose', 'i1'),
@@ -400,7 +408,20 @@ def dmcconvert(data,ut1,rawind,outfn,params):
                                   ('questionable_ut1','i1')]
                            )
 
-            f.create_dataset('/params',data=cparam)
+                f.create_dataset('/params',data=cparam)
+            except Exception as e:
+                logging.error(e)
+
+            try:
+                l = params['sensorloc']
+                lparam = array((l[0],l[1],l[2]),     dtype=[('lat','f8'),('lon','f8'),('alt_m','f8')])
+
+                Ld = f.create_dataset('/sensorloc',data=lparam)
+                Ld.attrs['units'] = 'WGS-84 lat (deg),lon (deg), altitude (meters)'
+            except Exception as e:
+                logging.error('sensorloc  {}'.format(e))
+
+            f.create_dataset('/cmdlog',data=str(cmdlog))
 
     elif outfn.suffix == '.fits':
         from astropy.io import fits
