@@ -370,6 +370,7 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
                              compression='gzip',
                              compression_opts=1, #no difference in size from 1 to 5, except much faster to use lower numbers!
                              shuffle=True,
+                             fletcher32=True,
                              track_times=True)
                 fimg.attrs["CLASS"] = string_("IMAGE")
                 fimg.attrs["IMAGE_VERSION"] = string_("1.2")
@@ -381,7 +382,7 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
                 try:
                     print('writing from {} to {}'.format(datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
                                                                    datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
-                    fut1 = f.create_dataset('/ut1_unix',data=ut1)
+                    fut1 = f.create_dataset('/ut1_unix',data=ut1,fletcher32=True)
                     fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
                 except Exception as e:
                     print(e)
@@ -408,7 +409,7 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
                                   ('questionable_ut1','i1')]
                            )
 
-                f.create_dataset('/params',data=cparam)
+                f.create_dataset('/params',data=cparam,fletcher32=True)
             except Exception as e:
                 logging.error(e)
 
@@ -416,12 +417,12 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
                 l = params['sensorloc']
                 lparam = array((l[0],l[1],l[2]),     dtype=[('lat','f8'),('lon','f8'),('alt_m','f8')])
 
-                Ld = f.create_dataset('/sensorloc',data=lparam)
+                Ld = f.create_dataset('/sensorloc',data=lparam,fletcher32=True)
                 Ld.attrs['units'] = 'WGS-84 lat (deg),lon (deg), altitude (meters)'
             except Exception as e:
                 logging.error('sensorloc  {}'.format(e))
 
-            f.create_dataset('/cmdlog',data=str(cmdlog))
+            f.create_dataset('/cmdlog',data=str(cmdlog),fletcher32=True)
 
     elif outfn.suffix == '.fits':
         from astropy.io import fits
