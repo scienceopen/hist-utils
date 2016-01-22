@@ -26,7 +26,7 @@ if __name__ == '__main__':
     p.add_argument('-a','--azfn',help='filename for DASC .fits azimuth calibration')
     p.add_argument('-e','--elfn',help='filename for DASC .fits elevation calibration')
     p.add_argument('-w','--wavelength',help='select wavelength(s) to plot simultaneously [428 558 630]',type=int,default=[428,558,630],nargs='+')
-    p.add_argument('-m','--minmax',help='set values outside these limits to 0, due to data corruption',type=int,nargs=2,default=[350,7000])
+    p.add_argument('-m','--minmax',help='set values outside these limits to 0, due to data corruption',type=int,nargs=2,default=[350,8000])
     p.add_argument('-c','--cadence',help='set playback cadence to request times [sec]',type=float,default=5.)
     p.add_argument('-o','--odir',help='output directory')
     p=p.parse_args()
@@ -35,6 +35,8 @@ if __name__ == '__main__':
         odir = Path(p.odir).expanduser()
     except Exception:
         odir = None
+
+    odir.mkdir(parents=True,exist_ok=True)
 
     img = []; times = []
     for w in p.wavelength:
@@ -61,7 +63,7 @@ if __name__ == '__main__':
     fg,axs = subplots(1,3,figsize=(15,5))
     hi = []; ht=[]
     for a,w,x,mm,c in zip(axs,p.wavelength,(0.225,0.5,0.775),
-                     ((350,800),(350,7000),(350,900)),('b','g','r')):
+                     ((350,800),(350,8000),(350,900)),('b','g','r')):
         a.axis('off')
         fg.text(x,0.05,str(w) + ' nm',color=c)
         hi.append(a.imshow(img[0][0],vmin=mm[0],vmax=mm[1],origin='bottom',
