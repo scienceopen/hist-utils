@@ -18,9 +18,10 @@ GPLv3+
 """
 from __future__ import division,absolute_import
 import logging
-from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty,hypot,
-                   delete,unravel_index,logical_not)
+from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty, unravel_index,ma)
 #from bisect import bisect
+#
+from pymap3d.haversine import angledist
 
 def find_nearest(x,x0):
     x = asanyarray(x) #for indexing upon return
@@ -37,31 +38,40 @@ def find_nearest(x,x0):
     return ind.squeeze(), x[ind].squeeze()
 
 def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
+    """
+    assumes that azpts, elpts are each list of 1-D arrays or 2-D arrays
+
+    """
+    assert az.ndim     == 2
     assert az.shape    == el.shape
     assert azpts.shape == elpts.shape
-    assert az.ndim == 2
 
-    npts = azpts.size  #numel
-    nearRow = empty(npts,dtype=int)
-    nearCol = empty(npts,dtype=int)
+    az = ma.masked_invalid(az)
+    el = ma.masked_invalid(el)
+    nearRow = []; nearCol=[]
     # can be FAR FAR faster than scipy.spatial.distance.cdist()
-    for i in range(npts):
-        #we do this point by point because we need to know the closest pixel for each point
-        errdist = absolute( hypot(az - azpts[i],
-                                  el - elpts[i]) )
+    for apts,epts in zip(azpts,elpts): #list of arrays or 2-D array
+        assert apts.size==epts.size
+        r = empty(apts.size,dtype=int); c = empty(apts.size,dtype=int)
+        for i,(apt,ept) in enumerate(zip(apts,epts)):
+            #we do this point by point because we need to know the closest pixel for each point
+            errang = angledist(az,el, apt,ept)
 
-# ********************************************
-# THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
-        nearRow[i],nearCol[i] = unravel_index(errdist.argmin(),
-                                              az.shape,order='C')
-#************************************************
+    # ********************************************
+    # THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
+            r[i], c[i] = unravel_index(errang.argmin(), az.shape,order='C')
+    #************************************************
 
 
-    if discardEdgepix:
-        mask = logical_not(((nearCol==0) | (nearCol == az.shape[1]-1)) |
-                           ((nearRow==0) | (nearRow == az.shape[0]-1)))
-        nearRow = nearRow[mask]
-        nearCol = nearCol[mask]
+
+        if discardEdgepix:
+            mask = ((c==0) | (c == az.shape[1]-1) |
+                    (r==0) | (r == az.shape[0]-1))
+        else:
+            mask = False
+
+        nearRow.append(ma.array(r,mask=mask))
+        nearCol.append(ma.array(c,mask=mask))
 
     return nearRow,nearCol
 
