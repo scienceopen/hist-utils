@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from pathlib import Path
 from numpy import array,nan,uint16,int64
-from numpy.testing import assert_allclose,assert_almost_equal
+from numpy.testing import assert_allclose,assert_almost_equal,assert_array_equal
 from datetime import datetime
 from pytz import timezone
 #
@@ -39,9 +39,9 @@ def test_rawread():
 
     assert testind.dtype == int64
     assert testframe.dtype == uint16
-    assert testind == 710731
-    assert (testframe[0,:5,0] == array([642, 1321,  935,  980, 1114])).all()
-    assert (testframe[0,-5:,-1] == array([2086, 1795, 2272, 1929, 1914])).all()
+    assert testind == 710730
+    assert_array_equal(testframe[0,:5,0],  [ 956,  700, 1031,  730,  732])
+    assert_array_equal(testframe[0,-5:,-1],[1939, 1981, 1828, 1752, 1966])
 
 def test_plotsolar():
     Irr,sunel,Whr = compsolar('pfisr',(None,None,None),

@@ -90,13 +90,13 @@ def animate(i,data,himg,ht):
     return himg,ht
 
 
-def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,verbose=0):
+def getDMCparam(fn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,verbose=0):
     nHeadBytes = 4 #FIXME for 2011-2014 data
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
 
-    bigfn = Path(bigfn)
-    if not bigfn.is_file(): #leave this here, getsize() doesn't fail on directory
-        raise ValueError('{} is not a file!'.format(bigfn))
+    fn = Path(fn).expanduser()
+    if not fn.is_file(): #leave this here, getsize() doesn't fail on directory
+        raise ValueError('{} is not a file!'.format(fn))
 
     #np.int64() in case we are fed a float or int
     SuperX = int64(xyPix[0]) // int64(xyBin[0]) # "//" keeps as integer
@@ -105,9 +105,9 @@ def getDMCparam(bigfn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,s
 
     PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
 
-    (firstRawInd,lastRawInd) = gri.getRawInd(bigfn,BytesPerImage,nHeadBytes,Nmetadata)
+    (firstRawInd,lastRawInd) = gri.getRawInd(fn,BytesPerImage,nHeadBytes,Nmetadata)
 
-    FrameIndRel = whichframes(bigfn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
+    FrameIndRel = whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
                               BytesPerImage,BytesPerFrame,verbose)
 
     return {'superx':SuperX, 'supery':SuperY, 'nmetadata':Nmetadata,

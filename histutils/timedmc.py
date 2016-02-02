@@ -11,18 +11,13 @@ Outputs:
 
 Michael Hirsch
 """
-from __future__ import division,absolute_import
-from six import string_types,integer_types
 from datetime import datetime
 from dateutil.parser import parse
-from warnings import warn
 from numpy import atleast_1d,int64,empty,datetime64
-from pytz import UTC
 from scipy.interpolate import interp1d
 #
 from .fortrandates import forceutc
-#
-tepoch = datetime(1970,1,1,0,0,0,tzinfo=UTC)
+
 
 def frame2ut1(tstart,kineticsec,rawind):
     """ if you don't have GPS & fire data, you use this function for a software-only
@@ -34,7 +29,10 @@ def frame2ut1(tstart,kineticsec,rawind):
     #total_seconds is required for Python 2 compatibility
     # this variable is in units of seconds since Jan 1, 1970, midnight
     # rawind-1 because camera is one-based indexing
-    return datetime2unix(tstart)[0] + (rawind-1)*kineticsec
+    try:
+        return datetime2unix(tstart)[0] + (rawind-1)*kineticsec
+    except TypeError:
+        return
 
 def ut12frame(treq,ind,ut1_unix):
     """
@@ -75,14 +73,14 @@ def datetime2unix(T):
     for i,t in enumerate(T):
         if isinstance(t,(datetime,datetime64)):
             pass
-        elif isinstance(t,string_types):
+        elif isinstance(t,str):
             t = parse(t) #datetime
-        elif isinstance(t,(float,integer_types)): #assuming ut1_unix already
+        elif isinstance(t,(float,int)): #assuming ut1_unix already
             return T
         else:
             raise TypeError('I only accept datetime or parseable date string')
 
-        ut1_unix[i] = (forceutc(t)-tepoch).total_seconds() #ut1 seconds since unix epoch, need [] for error case
+        ut1_unix[i] = forceutc(t).timestamp() #ut1 seconds since unix epoch, need [] for error case
     return ut1_unix
 
 
