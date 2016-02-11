@@ -10,4 +10,3 @@ h5py
 astropy
 matplotlib
 seaborn
-scikit-image
