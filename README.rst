@@ -86,11 +86,9 @@ of these can also be used from the Terminal directly.
 
   cp_parents              Copies files to target, making directories as needed in Python -- acts like ``cp --parents`` in Bash
   empty_file              creates/overwrites empty file in Python includes making directories as needed. Like ``>myfile`` in Bash
-  walktree                recursive filename search in Python like GNU Find in Bash
 
   rawDMCreader            Reads .DMCdata files output by the DMC and HiST networked optical auroral observation systems
   getRawInd               for ``.DMCdata`` video files, lists the first and last raw frame indices in file
-  findstars               detects stars and plots detections in image
   normframe               Given an 8-bit, 16-bit, or float image, normalize to [0..1] data range
   sixteen2eight           converts a 16-bit image to 8-bit image
 
@@ -123,14 +121,14 @@ These examples are old, now we use HDF5 files. Kept for reference only.
 
 Read .DMCdata file from within a Python script
 ----------------------------------------------
-.. code:: python
+.. code::
 
-	from histutils import rawDMCreader
-	data = rawDMCreader.goRead('myfile.DMCdata')[0]
+    from histutils import rawDMCreader
+    data = rawDMCreader.goRead('myfile.DMCdata')[0]
 
 Using rawDMCreader.py from Terminal
 -----------------------------------
-.. code:: bash
+.. code::
 
-    $ cd histutils/histutils
-    $ python3 rawDMCreader.py ~/data/
+    cd histutils/histutils
+    python3 rawDMCreader.py ~/data/
