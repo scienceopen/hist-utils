@@ -428,7 +428,7 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
         from astropy.io import fits
         #NOTE the with... syntax does NOT yet work with astropy.io.fits
         hdu = fits.PrimaryHDU(data)
-        hdu.writeto(outfn,clobber=False)
+        hdu.writeto(outfn,clobber=False,checksum=True)
         #no close
         """
         Note: the orientation of this FITS in NASA FV program and the preview
