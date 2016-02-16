@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import division,absolute_import
+from sys import argv
 from numpy import int64
 #
 from histutils.rawDMCreader import goRead,dmcconvert,doPlayMovie,doplotsave
@@ -26,16 +27,17 @@ if __name__ == "__main__":
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
     p.add_argument('--cmos',help='start stop raw frame of CMOS file',nargs=2,metavar=('firstrawind','lastrawind'),type=int,default=(None,)*2)
     p.add_argument('--fire',help='fire filename')
+    p.add_argument('-l','--loc',help='lat lon alt_m of sensor',type=float,nargs=3)
     p = p.parse_args()
 
     cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}
 
     params = {'kineticsec':p.kineticsec,'rotccw':p.rotccw,'transpose':p.transpose,
-              'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire}
+              'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire,'sensorloc':p.loc}
 
     rawImgData,rawind,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.kineticsec,p.startutc,cmosinit,p.verbose)
 #%% convert
-    dmcconvert(rawImgData,finf['ut1'],rawind,p.output,params)
+    dmcconvert(rawImgData,finf['ut1'],rawind,p.output,params,argv)
 #%% plots and save
     try:
         from matplotlib.pyplot import show

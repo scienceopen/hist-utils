@@ -57,7 +57,7 @@ def ut12frame(treq,ind,ut1_unix):
     """
     We use nearest neighbor interpolation to pick a frame index for each requested time.
     """
-    f = interp1d(ut1_unix,ind,kind='nearest',bounds_error=False) #it won't output nan for int case in Numpy 1.10 and other versions too
+    f = interp1d(ut1_unix,ind,kind='nearest',bounds_error=True,assume_sorted=True) #it won't output nan for int case in Numpy 1.10 and other versions too
     framereq = f(treq).astype(int64)
     framereq = framereq[framereq>=0] #discard outside time limits
     return framereq
@@ -74,13 +74,18 @@ def datetime2unix(T):
         if isinstance(t,(datetime,datetime64)):
             pass
         elif isinstance(t,str):
-            t = parse(t) #datetime
+            try:
+                ut1_unix[i] = float(t) #it was ut1_unix in a string
+                continue
+            except ValueError:
+                t = parse(t) #datetime in a string
         elif isinstance(t,(float,int)): #assuming ut1_unix already
             return T
         else:
             raise TypeError('I only accept datetime or parseable date string')
 
         ut1_unix[i] = forceutc(t).timestamp() #ut1 seconds since unix epoch, need [] for error case
+
     return ut1_unix
 
 

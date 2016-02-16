@@ -409,7 +409,7 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
                                   ('questionable_ut1','i1')]
                            )
 
-                f.create_dataset('/params',data=cparam,fletcher32=True)
+                f.create_dataset('/params',data=cparam) #cannot use fletcher32 here, typeerror
             except Exception as e:
                 logging.error(e)
 
@@ -417,12 +417,12 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
                 l = params['sensorloc']
                 lparam = array((l[0],l[1],l[2]),     dtype=[('lat','f8'),('lon','f8'),('alt_m','f8')])
 
-                Ld = f.create_dataset('/sensorloc',data=lparam,fletcher32=True)
+                Ld = f.create_dataset('/sensorloc',data=lparam) #cannot use fletcher32 here, typeerror
                 Ld.attrs['units'] = 'WGS-84 lat (deg),lon (deg), altitude (meters)'
             except Exception as e:
                 logging.error('sensorloc  {}'.format(e))
 
-            f.create_dataset('/cmdlog',data=str(cmdlog),fletcher32=True)
+            f.create_dataset('/cmdlog',data=' '.join(cmdlog)) #cannot use fletcher32 here, typeerror
 
     elif outfn.suffix == '.fits':
         from astropy.io import fits
