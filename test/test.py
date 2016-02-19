@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from pathlib import Path
 from numpy import array,nan,uint16,int64
-from numpy.testing import assert_allclose,assert_almost_equal,assert_array_equal
+from numpy.testing import assert_allclose,assert_almost_equal,assert_array_equal,run_module_suite
 from datetime import datetime
 from pytz import timezone
 #
@@ -77,11 +77,4 @@ def test_datetimefortran():
 
 
 if __name__ == '__main__':
-    test_findnearest()
-    test_airmass()
-    test_rawread()
-    test_plotsolar()
-    test_diric()
-    test_fortrandates()
-    test_utc()
-    test_datetimefortran()
+    run_module_suite()
