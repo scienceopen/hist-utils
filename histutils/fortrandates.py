@@ -2,7 +2,7 @@ from __future__ import division,absolute_import
 from six import string_types,integer_types
 from datetime import timedelta,datetime, time
 from pytz import UTC
-from numpy import atleast_1d, empty_like, atleast_2d,nan,empty,datetime64,ndarray
+from numpy import atleast_1d, empty_like, atleast_2d,nan,empty,datetime64,ndarray,array
 from dateutil.parser import parse
 
 def datetime2yd(T):
@@ -61,7 +61,7 @@ def datetime2gtd(T,glon=nan):
         stl[i,...] = utsec[i]/3600 + glon/15 #FIXME let's be sure this is appropriate
     return iyd,utsec,stl
 
-def dt2utsec(t):
+def dt2utsec(t: datetime) -> float:
     """ seconds since utc midnight"""
     assert isinstance(t,datetime)
 
@@ -80,7 +80,7 @@ def forceutc(t):
     elif isinstance(t,datetime):
         pass
     elif isinstance(t,(ndarray,list,tuple)):
-        return [forceutc(T) for T in t]
+        return array([forceutc(T) for T in t])
     else:
         raise TypeError('datetime only input')
 
