@@ -2,7 +2,7 @@ from __future__ import division,absolute_import
 from six import string_types,integer_types
 from datetime import timedelta,datetime, time
 from pytz import UTC
-from numpy import atleast_1d, empty_like, atleast_2d,nan,empty,datetime64
+from numpy import atleast_1d, empty_like, atleast_2d,nan,empty,datetime64,ndarray
 from dateutil.parser import parse
 
 def datetime2yd(T):
@@ -71,7 +71,7 @@ def dt2utsec(t):
 def forceutc(t):
     """
     Add UTC to datetime-naive and convert to UTC for datetime aware
-    
+
     input: python datetime (naive, utc, non-utc) or Numpy datetime64  #FIXME add Pandas and AstroPy time classes
     output: utc datetime
     """
@@ -79,6 +79,8 @@ def forceutc(t):
         t=t.astype('M8[ms]').astype('O') #for Numpy 1.10 at least...
     elif isinstance(t,datetime):
         pass
+    elif isinstance(t,(ndarray,list,tuple)):
+        return [forceutc(T) for T in t]
     else:
         raise TypeError('datetime only input')
 
