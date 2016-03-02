@@ -364,7 +364,8 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
         """
 
         import h5py
-        with h5py.File(str(outfn),'w',libver='latest') as f:
+        #NOTE write mode r+ to not overwrite incremental images
+        with h5py.File(str(outfn),'r+',libver='latest') as f:
             if data is not None:
                 fimg = f.create_dataset('/rawimg',data=data,
                              compression='gzip',
@@ -422,7 +423,7 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
             except Exception as e:
                 logging.error('sensorloc  {}'.format(e))
 
-            f.create_dataset('/cmdlog',data=' '.join(cmdlog)) #cannot use fletcher32 here, typeerror
+            f.create_dataset('/cmdlog',data=str(cmdlog)) #cannot use fletcher32 here, typeerror
 
     elif outfn.suffix == '.fits':
         from astropy.io import fits
