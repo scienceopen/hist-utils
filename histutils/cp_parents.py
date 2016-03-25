@@ -9,14 +9,12 @@ dest: /tmp/a/b/c/d/
 result: /tmp/a/b/c/d/tmp/e/f
 
 """
-from __future__ import unicode_literals
-from pathlib2 import Path
-from six import string_types
+from pathlib import Path
 from shutil import copy2
 
 def cp_parents(files,target_dir):
 #%% make list if it's a string
-    if isinstance(files,(string_types,Path)):
+    if isinstance(files,(str,Path)):
         files = [files]
 #%% cleanup user
     files = (Path(f).expanduser() for f in files)   #relative path or absolute path is fine
