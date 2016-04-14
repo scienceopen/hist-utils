@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
-
+import os,sys
 from setuptools import setup
 import subprocess
+
+exepath = os.path.dirname(sys.executable)
+try:
+    subprocess.call([os.path.join(exepath,'conda'),'install','--yes','--file','requirements.txt'])
+except Exception as e:
+    print('tried conda in {}, but you will need to install packages in requirements.txt  {}'.format(exepath,e))
+
 
 with open('README.rst','r') as f:
 	long_description = f.read()
 
 setup(name='histutils',
-      version='0.1',
+      version=0.1,
 	  description='utilities for the HiST auroral tomography system',
 	  long_description=long_description,
 	  author='Michael Hirsch',
@@ -18,11 +25,4 @@ setup(name='histutils',
       packages=['histutils'],
 	  )
 
-#%%
-try:
-    subprocess.run(['conda','install','--yes','--quiet','--file','requirements.txt'])
-except Exception as e:
-    print('you will need to install packages in requirements.txt  {}'.format(e))
-    with open('requirements.txt','r') as f:
-        print(f.read())
 
