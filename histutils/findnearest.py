@@ -18,7 +18,8 @@ GPLv3+
 """
 from __future__ import division,absolute_import
 import logging
-from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty, unravel_index,ma)
+from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty,
+                   unravel_index,ma,nanargmin)
 #from bisect import bisect
 #
 from pymap3d.haversine import angledist
@@ -32,8 +33,10 @@ def find_nearest(x,x0):
 
     ind = empty_like(x0,dtype=int)
 
+    # NOTE: not trapping IndexError (all-nan) becaues returning None can surprise with slice indexing
     for i,xi in enumerate(x0):
-        ind[i] = absolute(x-xi).argmin()
+        ind[i] = nanargmin(absolute(x-xi))
+
 
     return ind.squeeze(), x[ind].squeeze()
 
