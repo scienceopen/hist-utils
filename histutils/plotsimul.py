@@ -1,7 +1,6 @@
-from __future__ import division,absolute_import,unicode_literals
 import logging
 from matplotlib.pyplot import figure,draw,subplots
-from matplotlib.colors import LogNorm
+#from matplotlib.colors import LogNorm
 from numpy import in1d
 from datetime import datetime
 from pytz import UTC
@@ -70,9 +69,10 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir):
         dtframe = datetime.utcfromtimestamp(C.tKeo[t])
 
         ax.set_title('Cam{}: {}'.format(C.name,dtframe))
+
         #ax.set_xlabel('x-pixel')
-        if False:#C.name==0:
-            ax.set_ylabel('y-pixel')
+        #if C.name==0:
+        #    ax.set_ylabel('y-pixel')
     #%% plotting 1D cut line
         try:
            ax.plot(C.cutcol,C.cutrow,
