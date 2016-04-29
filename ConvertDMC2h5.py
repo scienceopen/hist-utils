@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import division,absolute_import
 from sys import argv
 from numpy import int64
 #
