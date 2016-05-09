@@ -5,9 +5,6 @@ functions for loading HST real camera raw data
 INPUT FILE FORMAT: intended for use with "DMCdata" raw format, 4-byte
  "footer" containing frame index (must use typecast)
 """
-from __future__ import division,absolute_import
-#from pathlib2 import Path
-from six import integer_types
 import logging
 from datetime import datetime
 from time import time
@@ -34,7 +31,7 @@ def HSTsync(sim,cam,verbose):
         if isinstance(sim.startutc,datetime):
             reqStart = (sim.startutc - epoch).total_seconds()
             reqStop  = (sim.stoputc  - epoch).total_seconds()
-        elif isinstance(sim.startutc,(float,integer_types)): #ut1_unix
+        elif isinstance(sim.startutc,(float,int)): #ut1_unix
             reqStart = sim.startutc
             reqStop  = sim.stoputc
         else:
@@ -44,7 +41,7 @@ def HSTsync(sim,cam,verbose):
             treqlist = atleast_1d(sim.treqlist)
             if isinstance(treqlist[0],datetime):
                 treqlist = atleast_1d([(t-epoch).total_seconds() for t in treqlist])
-            elif isinstance(treqlist[0],(float,integer_types)):
+            elif isinstance(treqlist[0],(float,int)):
                 pass #already ut1_unix
             else:
                 reqStart = 0. #arbitrary time in the past
@@ -55,8 +52,8 @@ def HSTsync(sim,cam,verbose):
 #%% determine mutual start/stop frame
 # FIXME: assumes that all cameras overlap in time at least a little.
 # we will play only over UTC times for which both sites have frames available
-    mutualStart = max( [C.filestartutc for C in cam] ) # who started last
-    mutualStop =  min( [C.filestoputc  for C in cam] ) # who ended first
+    mutualStart = max( [C.filestartutc for C in cam if C.usecam] ) # who started last
+    mutualStop =  min( [C.filestoputc  for C in cam if C.usecam] ) # who ended first
 #%% make playback time steps
     """
     based on the "simulated" UTC times that do not necessarily correspond exactly
@@ -80,11 +77,12 @@ def HSTsync(sim,cam,verbose):
     might skip some frames altogether
     """
     for C in cam:
-        ft = interp1d(C.ut1unix,
-                      arange(C.ut1unix.size,dtype=int),
-                      kind='nearest')
+        if C.usecam:
+            ft = interp1d(C.ut1unix,
+                          arange(C.ut1unix.size,dtype=int),
+                          kind='nearest')
 
-        C.pbInd = around(ft(treq)).astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
+            C.pbInd = around(ft(treq)).astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
 
     sim.nTimeSlice = treq.size
 
@@ -98,6 +96,7 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
     tic = time()
     rawdata = [] # one list element for each camera, of varying number of frames
     for C in cam:
+        if not C.usecam: continue
         #40 time faster to read at once, even with this indexing trick than frame by frame
         ind = unique(C.pbInd)
         # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing

@@ -1,8 +1,9 @@
 import logging
 from matplotlib.pyplot import figure,draw,subplots
 #from matplotlib.colors import LogNorm
-from datetime import datetime
+from datetime import datetime,timedelta
 from pytz import UTC
+from histfeas.nans import nans
 try:
     from GeoData.utilityfuncs import readAllskyFITS
 except ImportError:
@@ -41,32 +42,45 @@ def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,odir):
             writeplots(fg,'cam{}rawFrame'.format(C.name),t,odir)
 
 #%%
-def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None,asi=None):
+def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
     """
     sim: histfeas/simclass.py
     cam: histfeas/camclass.py
     t:
     makeplot: list/tuple of requested plots
     odir: output directory (where to write results)
-    asi: filename of allsky camera
 
     plots both cameras together,
     and magnetic zenith 1-D cut line
     and 1 degree radar beam red circle centered on magnetic zenith
     """
-    T=[None,None]
+    ncols = len(cam)
+    T=nans(ncols,dtype=datetime)
 
-    ncols=3 if asi is not None else 2
+#    if asi is not None:
+#        ncols=3
+#        if isinstance(asi,(tuple,list)):
+#            pass
+#        elif isinstance(asi,(str,Path)):
+#            asi = Path(asi).expanduser()
+#            if asi.is_dir():
+#                asi=list(asi.glob('*.FITS'))
 
     fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi)
     #fg.set_size_inches(15,5) #clips off
     #for i,(R,C,ax) in enumerate(zip(rawdata,cam,axm)):
     for i in range(ncols):
         #FIXME this would need help if one of the cameras isn't plotted (this will probably never happen)
-        if i<3:
-            dtframe = updateframe(t,rawdata[i],cam[i],axs[i],fg)
-            T[i] = dtframe #hold times for all cameras at this time step
-
+        if cam[i].usecam: #HiST2 cameras
+            T[i] = updateframe(t,rawdata[i],cam[i],axs[i],fg) #hold times for all cameras at this time step
+        elif cam[i].name=='asi': #ASI
+            twind = timedelta(seconds=15)
+            asi_tlim = (T[sim.useCamBool].min()-twind, T[sim.useCamBool].max()+twind) # NOTE: arbitrary 30+ second window for ASI
+            (optical,coordnames,dataloc,sensorloc,times) = readAllskyFITS(cam[i].fn,None,None,
+                                                                          timelims=asi_tlim)
+            T[i]=times
+        else:
+            raise TypeError('unknown camera {} index {}'.format(cam[i].name,i))
     draw() #Must have this here or plot doesn't update in animation multiplot mode!
 
     if 'png' in makeplot:
@@ -96,7 +110,7 @@ def updateframe(t,raw,cam,ax,fg):
         hc = fg.colorbar(hi, ax=ax) #not cax!
         hc.set_label('{} data numbers'.format(raw.dtype))
 
-    dtframe = datetime.utcfromtimestamp(cam.tKeo[t])
+    dtframe = datetime.fromtimestamp(cam.tKeo[t],tz=UTC)
 
     ax.set_title('Cam{}: {}'.format(cam.name,dtframe))
 

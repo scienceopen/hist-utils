@@ -12,11 +12,12 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
     srpts = logspace(4.3,6.9,25) #4.5 had zero discards for hst0 #6.8 didn't quite get to zenith
 #%% (0) load az/el data from Astrometry.net
     for C in cam:
-        with h5py.File(str(C.cal1Dfn),'r',libver='latest') as f:
-            # NEED .value in case no modifications do in .doorient()
-            C.doorient(f['/az'].value, f['/el'].value,
-                       f['/ra'].value, f['/dec'].value)
-        C.toecef(srpts)
+        if C.usecam:
+            with h5py.File(str(C.cal1Dfn),'r',libver='latest') as f:
+                # NEED .value in case no modifications do in .doorient()
+                C.doorient(f['/az'].value, f['/el'].value,
+                           f['/ra'].value, f['/dec'].value)
+            C.toecef(srpts)
 
     #optional: plot ECEF of points between each camera and magnetic zenith (lying at az,el relative to each camera)
     plotLOSecef(cam,makeplot,progms,dbglvl)
@@ -28,7 +29,8 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
 #%% (3) find indices corresponding to these az,el in each image
         # and Least squares fit line to nearest points found in step 3
     for C in cam:
-        C.findClosestAzel(discardEdgepix)
+        if C.usecam:
+            C.findClosestAzel(discardEdgepix)
 
 #%%
     if dbglvl>2 and progms is not None:
