@@ -11,6 +11,10 @@ except ImportError:
     GeoData=None
 #
 from gridaurora.plots import writeplots
+try:
+    from themisasi.readthemis import mergefov #for ASI with narrow FOV outline plot
+except ImportError:
+    mergefov = None
 
 dpi = 100
 
