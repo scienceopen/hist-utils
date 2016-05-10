@@ -24,12 +24,12 @@ def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,odir):
         figure(figh).clf()
         fg = figure(figh)
         ax = fg.gca()
-        ax.set_axis_off()
+        ax.set_axis_off() #no ticks
         ax.imshow(R[t,:,:],
                   origin='lower',
                   vmin=max(C.clim[0],1), vmax=C.clim[1],
                   cmap='gray')
-        ax.text(0.05, 0.075, datetime.fromtimestamp(C.tKeo[t],tz=UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:23],
+        ax.text(0.05, 0.075, datetime.fromtimestamp(C.tKeo[t],tz=UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
                      ha='left',
                      va='top',
                      transform=ax.transAxes,
@@ -67,7 +67,7 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
 #            if asi.is_dir():
 #                asi=list(asi.glob('*.FITS'))
 
-    fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi)
+    fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi,facecolor='black')
     #fg.set_size_inches(15,5) #clips off
     #for i,(R,C,ax) in enumerate(zip(rawdata,cam,axm)):
     for i in range(ncols):
@@ -85,6 +85,13 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
             updateframe(dtimes[ti],optical['image'][:,ti],cam[i],axs[i],fg)
         else:
             raise TypeError('unknown camera {} index {}'.format(cam[i].name,i))
+
+        if i==0:
+            axs[0].set_ylabel(datetime.strftime(T[0],'%x')).set_color('limegreen')
+            #fg.suptitle(datetime.strftime(T[0],'%x')) #makes giant margins that tight_layout doesn't help, bug
+            #fg.text(0.5,0.15,datetime.strftime(T[0],'%x'))#, va='top',ha='center') #bug too
+            #fg.tight_layout()
+            #fg.subplots_adjust(top=0.95)
     draw() #Must have this here or plot doesn't update in animation multiplot mode!
 
     if 'png' in makeplot:
@@ -121,7 +128,14 @@ def updateframe(t,raw,cam,ax,fg):
     except AttributeError: #asi
         dtframe = t
 
-    ax.set_title('Cam {}: {}'.format(cam.name,dtframe))
+    if cam.name == 'asi':
+        dtstr = datetime.strftime(dtframe,'%H:%M:%S')
+    else:
+        dtstr = datetime.strftime(dtframe,'%H:%M:%S.%f')[:-3] #millisecond
+
+    ax.set_title('Cam {}: {}'.format(cam.name,dtstr),color='limegreen')
+
+    ax.set_axis_off() #no ticks
 
     #ax.set_xlabel('x-pixel')
     #if cam.name==0:
