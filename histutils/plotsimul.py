@@ -121,7 +121,7 @@ def updateframe(t,raw,cam,ax,fg):
     except AttributeError: #asi
         dtframe = t
 
-    ax.set_title('Cam{}: {}'.format(cam.name,dtframe))
+    ax.set_title('Cam {}: {}'.format(cam.name,dtframe))
 
     #ax.set_xlabel('x-pixel')
     #if cam.name==0:
