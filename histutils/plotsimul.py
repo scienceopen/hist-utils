@@ -11,10 +11,7 @@ except ImportError:
     GeoData=None
 #
 from gridaurora.plots import writeplots
-try:
-    from themisasi.fov import mergefov #for ASI with narrow FOV outline plot
-except ImportError:
-    mergefov = None
+from themisasi.plots import overlayrowcol
 
 dpi = 100
 
@@ -45,7 +42,6 @@ def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,odir):
         draw() #Must have this here or plot doesn't update in animation multiplot mode!
         if 'png' in makeplot:
             writeplots(fg,'cam{}rawFrame'.format(C.name),t,odir)
-
 #%%
 def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
     """
@@ -74,21 +70,21 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
     fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi,facecolor='black')
     #fg.set_size_inches(15,5) #clips off
     #for i,(R,C,ax) in enumerate(zip(rawdata,cam,axm)):
-    for i in range(ncols):
-        #FIXME this would need help if one of the cameras isn't plotted (this will probably never happen)
-        if cam[i].usecam: #HiST2 cameras
+    for i,C in enumerate(cam):
+        if C.usecam: #HiST2 cameras
             T[i] = updateframe(t,rawdata[i],cam[i],axs[i],fg) #hold times for all cameras at this time step
-        elif cam[i].name=='asi': #ASI
+        elif C.name=='asi': #ASI
             twind = timedelta(seconds=15)
             asi_tlim = (T[sim.useCamBool].min()-twind, T[sim.useCamBool].max()+twind) # NOTE: arbitrary 30+ second window for ASI
-            (optical,coordnames,dataloc,sensorloc,times) = readAllskyFITS(cam[i].fn,None,None,
+            (optical,coordnames,dataloc,sensorloc,times) = readAllskyFITS(C.fn,None,None,
                                                                           timelims=asi_tlim)
 
             dtimes = array([datetime.fromtimestamp(t,tz=UTC) for t in times[:,0]])
             ti = abs(T[0]-dtimes).argmin()
-            updateframe(dtimes[ti],optical['image'][:,ti],cam[i],axs[i],fg)
+            updateframe(dtimes[ti],optical['image'][:,ti],C,axs[i],fg)
+            overlayrowcol(axs[i],C.hlrows,C.hlcols)
         else:
-            raise TypeError('unknown camera {} index {}'.format(cam[i].name,i))
+            raise TypeError('unknown camera {} index {}'.format(C.name,i))
 
         if i==0:
             axs[0].set_ylabel(datetime.strftime(T[0],'%x')).set_color('limegreen')
