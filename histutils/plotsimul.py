@@ -1,8 +1,8 @@
-import logging
-from numpy import array,sqrt,isclose
-from matplotlib.pyplot import figure,draw,subplots
+#!/usr/bin/env python3
+from numpy import sqrt
+from matplotlib.pyplot import figure,draw,subplots,close
 #from matplotlib.colors import LogNorm
-from datetime import datetime,timedelta
+from datetime import datetime
 from pytz import UTC
 from histfeas.nans import nans
 #
@@ -85,11 +85,12 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
             #fg.text(0.5,0.15,datetime.strftime(T[0],'%x'))#, va='top',ha='center') #bug too
             #fg.tight_layout()
             #fg.subplots_adjust(top=0.95)
-    draw() #Must have this here or plot doesn't update in animation multiplot mode!
+   # draw()
 
     if 'png' in makeplot:
         writeplots(fg,'rawFrame',T[0],makeplot,odir) #FIXME: T[0] is fastest cam now, but needs generalization
 
+    close(fg)
 
 def updateframe(t,raw,wavelen,cam,ax,fg):
     showcb = False
