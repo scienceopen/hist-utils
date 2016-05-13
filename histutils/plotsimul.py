@@ -95,7 +95,7 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
 def updateframe(t,raw,wavelen,cam,ax,fg):
     showcb = False
 
-    ttxt='Cam {}:'.format(cam.name)
+    ttxt='Cam {}: '.format(cam.name)
 
     if raw.ndim ==3:
         frame = raw[t,...]
