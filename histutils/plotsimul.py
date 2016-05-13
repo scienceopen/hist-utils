@@ -1,15 +1,12 @@
 import logging
-from numpy import array,sqrt
+from numpy import array,sqrt,isclose
 from matplotlib.pyplot import figure,draw,subplots
 #from matplotlib.colors import LogNorm
 from datetime import datetime,timedelta
 from pytz import UTC
 from histfeas.nans import nans
-try:
-    from GeoData.utilityfuncs import readAllskyFITS
-except ImportError:
-    GeoData=None
 #
+from dascutils.readDASCfits import readDASC
 from gridaurora.plots import writeplots
 from themisasi.plots import overlayrowcol
 
@@ -72,16 +69,12 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
     #for i,(R,C,ax) in enumerate(zip(rawdata,cam,axm)):
     for i,C in enumerate(cam):
         if C.usecam: #HiST2 cameras
-            T[i] = updateframe(t,rawdata[i],cam[i],axs[i],fg) #hold times for all cameras at this time step
+            T[i] = updateframe(t,rawdata[i],None,cam[i],axs[i],fg) #hold times for all cameras at this time step
         elif C.name=='asi': #ASI
-            twind = timedelta(seconds=15)
-            asi_tlim = (T[sim.useCamBool].min()-twind, T[sim.useCamBool].max()+twind) # NOTE: arbitrary 30+ second window for ASI
-            (optical,coordnames,dataloc,sensorloc,times) = readAllskyFITS(C.fn,None,None,
-                                                                          timelims=asi_tlim)
+            (opt,_,_,times) = readDASC(C.fn, None,None, treq=T[sim.useCamBool][0])
+            C.tKeo = times[:,0]
 
-            dtimes = array([datetime.fromtimestamp(t,tz=UTC) for t in times[:,0]])
-            ti = abs(T[0]-dtimes).argmin()
-            updateframe(dtimes[ti],optical['image'][:,ti],C,axs[i],fg)
+            updateframe(0,opt['image'],opt['lambda'],C,axs[i],fg)
             overlayrowcol(axs[i],C.hlrows,C.hlcols)
         else:
             raise TypeError('unknown camera {} index {}'.format(C.name,i))
@@ -98,8 +91,10 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
         writeplots(fg,'rawFrame',T[0],makeplot,odir) #FIXME: T[0] is fastest cam now, but needs generalization
 
 
-def updateframe(t,raw,cam,ax,fg):
+def updateframe(t,raw,wavelen,cam,ax,fg):
     showcb = False
+
+    ttxt='Cam {}:'.format(cam.name)
 
     if raw.ndim ==3:
         frame = raw[t,...]
@@ -123,23 +118,35 @@ def updateframe(t,raw,cam,ax,fg):
         hc = fg.colorbar(hi, ax=ax) #not cax!
         hc.set_label('{} data numbers'.format(raw.dtype))
 
-    try:
-        dtframe = datetime.fromtimestamp(cam.tKeo[t],tz=UTC)
-    except AttributeError: #asi
-        dtframe = t
+
+    dtframe = datetime.fromtimestamp(cam.tKeo[t],tz=UTC)
 
     if cam.name == 'asi':
         dtstr = datetime.strftime(dtframe,'%H:%M:%S')
+        if int(wavelen[t])==428:
+            tcolor='blue'
+        elif int(wavelen[t])==557:
+            tcolor='limegreen'
+        elif int(wavelen[t])==630:
+            tcolor='red'
+        else:
+            tcolor='limegreen'
+        ttxt += '{} $\lambda$ {:.1f}'.format(dtstr,wavelen[t])
     else:
         dtstr = datetime.strftime(dtframe,'%H:%M:%S.%f')[:-3] #millisecond
+        tcolor='limegreen'
+        ttxt += '{}'.format(dtstr)
 
-    ax.set_title('Cam {}: {}'.format(cam.name,dtstr),color='limegreen')
+
+
+    ax.set_title(ttxt,color=tcolor)
 
     ax.set_axis_off() #no ticks
 
-    #ax.set_xlabel('x-pixel')
-    #if cam.name==0:
-    #    ax.set_ylabel('y-pixel')
+    if False:
+        ax.set_xlabel('x-pixel')
+        if cam.name==0:
+            ax.set_ylabel('y-pixel')
 #%% plotting 1D cut line
     try:
        ax.plot(cam.cutcol,cam.cutrow,
