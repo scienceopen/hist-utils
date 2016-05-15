@@ -1,4 +1,3 @@
-import logging
 from numpy import array,sqrt
 from matplotlib.pyplot import figure,draw,subplots
 #from matplotlib.colors import LogNorm
