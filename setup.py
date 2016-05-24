@@ -20,8 +20,11 @@ setup(name='histutils',
 	  author='Michael Hirsch',
 	  url='https://github.com/scienceopen/histutils',
 	  install_requires=['tifffile',
-			    'pymap3d'],
-   dependency_links = ['https://github.com/scienceopen/pymap3d/tarball/master#egg=pymap3d'],
+			            'pymap3d','dmcutils'],
+   dependency_links = [
+        'https://github.com/scienceopen/pymap3d/tarball/master#egg=pymap3d',
+        'https://github.com/scienceopen/dmcutils/tarball/master#egg=dmcutils',
+        ],
       packages=['histutils'],
 	  )
 

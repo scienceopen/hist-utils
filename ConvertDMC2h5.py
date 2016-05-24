@@ -2,7 +2,8 @@
 from sys import argv
 from numpy import int64
 #
-from histutils.rawDMCreader import goRead,dmcconvert,doPlayMovie,doplotsave
+from histutils.rawDMCreader import goRead,dmcconvert
+from histutils.plots import doPlayMovie,doplotsave
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -34,9 +35,9 @@ if __name__ == "__main__":
     params = {'kineticsec':p.kineticsec,'rotccw':p.rotccw,'transpose':p.transpose,
               'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire,'sensorloc':p.loc}
 
-    rawImgData,rawind,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.kineticsec,p.startutc,cmosinit,p.verbose)
+    rawImgData,rawind,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.kineticsec,p.startutc,cmosinit,p.verbose,p.output)
 #%% convert
-    dmcconvert(rawImgData,finf['ut1'],rawind,p.output,params,argv)
+    dmcconvert(None,finf['ut1'],rawind,p.output,params,argv)
 #%% plots and save
     try:
         from matplotlib.pyplot import show
