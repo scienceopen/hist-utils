@@ -40,6 +40,7 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,start
 #%% output (variable or file)
         if outfn:
             setupimgh5(outfn,finf['nframeextract'],finf['supery'],finf['superx'])
+            data = None
         else:
             data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=uint16, order='C')
