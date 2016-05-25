@@ -70,6 +70,8 @@ def HSTsync(sim,cam,verbose):
     except NameError:
         treq = tall[(tall>reqStart) & (tall<reqStop)] #keep greater than start time
 
+    assert len(treq)>0, 'did not find any times within your limits'
+
     logging.info('Per user specification, analyzing {} frames from {} to {}'.format(
                                             treq.size,treq[0], treq[-1]) )
 #%% use *nearest neighbor* interpolation to find mutual frames to display.
