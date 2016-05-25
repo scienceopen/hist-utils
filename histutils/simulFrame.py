@@ -10,12 +10,10 @@ from datetime import datetime
 from time import time
 from pytz import UTC
 import h5py
-from numpy import arange, unique,atleast_1d,around
+from numpy import arange, unique,atleast_1d,around,array
 from scipy.interpolate import interp1d
 # local
 from .get1Dcut import get1Dcut
-
-epoch = datetime(1970,1,1,tzinfo=UTC)
 
 def getSimulData(sim,cam,makeplot,progms=None,verbose=0):
 #%% synchronize
@@ -29,21 +27,24 @@ def HSTsync(sim,cam,verbose):
     """
     try:
         if isinstance(sim.startutc,datetime):
-            reqStart = (sim.startutc - epoch).total_seconds()
-            reqStop  = (sim.stoputc  - epoch).total_seconds()
+            reqStart = sim.startutc.timestamp()
+            reqStop  = sim.stoputc.timestamp()
         elif isinstance(sim.startutc,(float,int)): #ut1_unix
             reqStart = sim.startutc
             reqStop  = sim.stoputc
         else:
             raise TypeError('unknown time request format')
-    except AttributeError: #no specified time
+    except AttributeError: #no specified start,stop, but is there a specifed time list?
         try:
             treqlist = atleast_1d(sim.treqlist)
             if isinstance(treqlist[0],datetime):
-                treqlist = atleast_1d([(t-epoch).total_seconds() for t in treqlist])
+                treqlist = array([t.timestamp() for t in treqlist])
             elif isinstance(treqlist[0],(float,int)):
                 pass #already ut1_unix
+            elif isinstance(treqlist[0],str):
+                raise TypeError('parse dates before passing them in here')
             else:
+                logging.error('I did not understand your time request, falling back to all times')
                 reqStart = 0. #arbitrary time in the past
                 reqStop =  3e9#arbitrary time in the future
         except AttributeError:
