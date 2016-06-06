@@ -4,9 +4,6 @@ notifications:
 git:
   depth: 3
   
-env: 
-  global:
-    - pyv=3.5
 
 matrix:
   include:
@@ -14,6 +11,7 @@ matrix:
       osx_image: xcode7.3
       env: 
         - osv=MacOSX
+        - pyv=3.5
       compiler: gcc
       before_install:
         - brew update
@@ -24,6 +22,7 @@ matrix:
       dist: trusty
       env: 
         - osv=Linux
+        - pyv=3.5
       addons:
         apt:
           packages:
@@ -41,7 +40,7 @@ install:
     - python setup.py develop
 
 script:
-    - coverage run test/test.py
+    - coverage run tests/test.py
 
 after_success:
     - coveralls

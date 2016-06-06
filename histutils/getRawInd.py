@@ -5,7 +5,7 @@ GPL v3+ license
 
 TRAVIS CI: this file is covered by rawDMCreader.py selftest
 """
-from pathlib import Path
+from . import Path
 from numpy import fromfile,uint16
 from struct import pack,unpack
 

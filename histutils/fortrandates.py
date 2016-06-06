@@ -1,4 +1,3 @@
-from __future__ import division,absolute_import
 from six import string_types,integer_types
 from datetime import timedelta,datetime, time
 from pytz import UTC
@@ -61,7 +60,8 @@ def datetime2gtd(T,glon=nan):
         stl[i,...] = utsec[i]/3600 + glon/15 #FIXME let's be sure this is appropriate
     return iyd,utsec,stl
 
-def dt2utsec(t: datetime) -> float:
+#def dt2utsec(t: datetime) -> float:
+def dt2utsec(t):
     """ seconds since utc midnight"""
     assert isinstance(t,datetime)
 

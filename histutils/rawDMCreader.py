@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 reads .DMCdata files and displays them
  Michael Hirsch
@@ -9,7 +9,7 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
  """
 import logging
 import re
-from pathlib import Path
+from . import Path
 from dateutil.parser import parse
 from numpy import int64,uint16,uint8,zeros,arange,fromfile,string_,array
 from re import search
@@ -24,7 +24,7 @@ from . import getRawInd as gri
 try:
     import tifffile
 except:
-    logging.warning('unable to read tiff files,   pip install tifffile')
+    tifffile=None
 #
 bpp = 16
 
@@ -119,6 +119,7 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
     nHeadBytes=0
 
     if fn.suffix.lower() in '.tiff':
+        if tifffile is None: raise ImportError('pip install tifffile')
         #FIXME didn't the 2011 TIFFs have headers? maybe not.
         with tifffile.TiffFile(str(fn)) as f:
             data = f.asarray()

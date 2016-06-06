@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from pathlib import Path
-from numpy import array,nan,uint16,int64
+from histutils import Path
+from numpy import nan,uint16,int64
 from numpy.testing import assert_allclose,assert_almost_equal,assert_array_equal,run_module_suite
 from datetime import datetime
 from pytz import timezone
