@@ -21,7 +21,7 @@ setup(name='histutils',
 	  url='https://github.com/scienceopen/histutils',
 	  install_requires=['tifffile',
 			            'pymap3d','dmcutils'],
-   dependency_links = [
+      dependency_links = [
         'https://github.com/scienceopen/pymap3d/tarball/master#egg=pymap3d',
         'https://github.com/scienceopen/dmcutils/tarball/master#egg=dmcutils',
         ],

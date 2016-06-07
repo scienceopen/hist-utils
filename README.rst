@@ -17,20 +17,14 @@ HiSTutils
 :License: GPLv3+
 
 HiST project raw video data reading utilities.
-Expects Python >= 3.5
 
 .. contents::
 
 Install
 =======
-From Terminal
-
-.. code:: bash
-
-  $ git clone --depth 1 https://github.com/scienceopen/histutils
-  $ cd histutils
-  $ conda install --file requirements.txt
-  $ python setup.py develop
+::
+  
+  python setup.py develop
 
 User Programs/Scripts
 =====================
@@ -60,11 +54,11 @@ Typically used by our staff internally to convert our binary .DMCdata files to h
 
 Example
 ~~~~~~~
+::
 
-.. code:: bash
+ python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/data/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z 
 
- $ python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/data/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z 
- $ python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0333333333333333 -o testframes_cam1.h5 ~/data/2013-04-14T07-00-CamSer1387_frames_205111-1-208621.DMCdata -s 2013-04-14T07:00:07Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
+ python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0333333333333333 -o testframes_cam1.h5 ~/data/2013-04-14T07-00-CamSer1387_frames_205111-1-208621.DMCdata -s 2013-04-14T07:00:07Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
 
 WhenEnd.py
 ----------
@@ -121,14 +115,14 @@ These examples are old, now we use HDF5 files. Kept for reference only.
 
 Read .DMCdata file from within a Python script
 ----------------------------------------------
-.. code::
+::
 
     from histutils import rawDMCreader
     data = rawDMCreader.goRead('myfile.DMCdata')[0]
 
 Using rawDMCreader.py from Terminal
 -----------------------------------
-.. code::
+::
 
     cd histutils/histutils
     python3 rawDMCreader.py ~/data/
