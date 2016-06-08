@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Plays video contained in HDF5 file, especially from rawDMCreader program.
 """
-from pathlib import Path
+from histutils import Path
 import h5py
 from scipy.misc import bytescale
 from numpy import dstack
@@ -32,7 +32,7 @@ def hdf2video(data,imgh5,outfn,clim):
     import cv2
     try:
         from cv2.cv import FOURCC as fourcc #Windows needs from cv2.cv
-    except Exception:
+    except ImportError:
         from cv2 import VideoWriter_fourcc as fourcc
 
     outfn = outfn.with_suffix('.ogv')
