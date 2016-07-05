@@ -45,7 +45,7 @@ def test_rawread():
 
 def test_plotsolar():
     Irr,sunel,Whr = compsolar('pfisr',(None,None,None),
-                          datetime(2015,7,1,0,0,0), 1, False)
+                          datetime(2015,7,1,0,0,0),5., 1, False)
     assert_allclose(Irr[[16,14,6],[105,155,174]], [ 437.853895,  412.637988,  414.4017],rtol=0.1) #astropy changes with revisions..
     assert_allclose(sunel[[6,14,6],[2,125,174]], [-33.155075,   4.35278 ,   9.32486],rtol=0.01)
 

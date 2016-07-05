@@ -1,33 +1,43 @@
+#!/usr/bin/env python
+from __future__ import division,absolute_import
 from numpy import trapz,isnan
 import astropy.units as u
 from astropy.coordinates import get_sun, EarthLocation, AltAz
 from astropy.time import Time
 from datetime import datetime
-from warnings import warn
 from dateutil.rrule import HOURLY,rrule
 from matplotlib.dates import MonthLocator,DateFormatter
 from matplotlib.pyplot import figure
 #
 from .airMass import airmass
 
-def compsolar(site,coord,year,plotperhour,doplot):
+def compsolar(site,coord,year,minel,plotperhour,doplot):
+    """
+    site: arbitrary string
+    coord: 2- or 3-tuple of WGS-84 coordinates in degrees optional altitude in meters
+    year: CE calendar year
+    minel: minimum solar elevation above horizon to consider usable for solar energy (degrees)
+    plotperhour: smoother plot but longer time to compute
+    doplot: boolean
+    """
     if isinstance(year,datetime):
         year=year.year
 #%%
     site = site.lower()
-    if len(site) == 0 and coord[0] is not None:
+    if len(site)==0 and coord[0] is not None: # len(site) == 0 to be nicer than None for string proc.
+        if len(coord)==2:
+            coord.append(0.) #in case altitude not specified
         obs = EarthLocation(lat=coord[0]*u.deg, lon=coord[1]*u.deg, height=coord[2]*u.m)
-    elif site == "sondrestrom":
+    elif "sondrestrom" in site:
         obs = EarthLocation(lat=66.98*u.deg, lon=-50.94*u.deg, height=180*u.m)
-    elif site=="pfisr":
+    elif "pfisr" in site:
         obs = EarthLocation(lat=65.12*u.deg, lon=-147.49*u.deg, height=210*u.m)
-    elif site=="bu":
+    elif site == "bu":
         obs = EarthLocation(lat=42.4*u.deg, lon=-71.1*u.deg, height=5*u.m)
-    elif site=="svalbard":
+    elif "svalbard" in site:
         obs = EarthLocation(lat=78.23*u.deg, lon=15.4*u.deg, height=450*u.m)
     else:
-        warn('you must specify a site or coordinates')
-        return None, None
+        raise ValueError('you must specify a site or coordinates')
 
     plotperday = 24*plotperhour
     #don't fool around with Pandas or Numpy, since Numpy datetime64 doesn't work with Matplotlib
@@ -42,7 +52,7 @@ def compsolar(site,coord,year,plotperhour,doplot):
     sun = get_sun(Time(times)).transform_to(AltAz(obstime=times,location=obs))
     sunel = sun.alt.degree.reshape((plotperday,-1),order='F')
 
-    Irr = airmass(sunel,times)[0]
+    Irr = airmass(sunel,times,minel)[0]
 
     Whr = estenergy(Irr,hoursofday)
 
@@ -91,7 +101,7 @@ def plotday(t,sunalt,site):
     ax.set_ylabel('Solar elevation [deg.]')
     ax.set_xlabel('UTC')
     ax.grid(True)
-    ax.set_title(site + ' ' + t[0].strftime('%Y-%m-%d'))
+    ax.set_title('{} {}'.format(site,t[0].strftime('%Y-%m-%d')))
 
 def plotenergy(Whr,dates,site,obs,lbl,fmt):
     ax = figure().gca()
@@ -99,5 +109,6 @@ def plotenergy(Whr,dates,site,obs,lbl,fmt):
     ax.set_xlabel('UTC')
     ax.set_ylabel('kWhr m$^{-2}$ day$^{-1}$')
     ax.set_title('Daily Solar Energy at {}: {:.1f}, {:.1f}'.format(site,obs.latitude,obs.longitude))
+    ax.set_ylim(0,12)
     ax.xaxis.set_major_locator(lbl)
     ax.xaxis.set_major_formatter(fmt)
