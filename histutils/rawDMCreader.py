@@ -45,7 +45,7 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,start
             data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=uint16, order='C')
 #%% read
-        with bigfn.open('rb') as fid:
+        with open(str(bigfn),'rb') as fid: #NOTE: not pathlib due to Python 2.7, Numpy 1.11 incompat. Py3.5 OK
             for j,i in enumerate(finf['frameindrel']): #j and i are NOT the same in general when not starting from beginning of file!
                 D, rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
                 if outfn:

@@ -1,3 +1,4 @@
+from __future__ import division #needed for py2.7
 from six import string_types,integer_types
 from datetime import timedelta,datetime, time
 from pytz import UTC

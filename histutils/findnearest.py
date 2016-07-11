@@ -37,8 +37,7 @@ def find_nearest(x,x0):
     for i,xi in enumerate(x0):
         ind[i] = nanargmin(absolute(x-xi))
 
-
-    return ind.squeeze(), x[ind].squeeze()
+    return ind.squeeze()[()], x[ind].squeeze()[()]   # [()] to pop scalar from 0d array
 
 def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
     """

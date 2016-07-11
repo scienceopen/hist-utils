@@ -5,13 +5,12 @@ GPL v3+ license
 
 TRAVIS CI: this file is covered by rawDMCreader.py selftest
 """
-from . import Path
 from numpy import fromfile,uint16
 from struct import pack,unpack
 
 def getRawInd(BigFN,BytesPerImage,nHeadBytes,Nmetadata):
     # gets first and last raw indices from a big .DMCdata file
-    with Path(BigFN).expanduser().open('rb') as f:
+    with open(str(BigFN),'rb') as f: #NOTE didn't use path here due to Python 2.7, Numpy 1.11 lack of pathlib support. Py3.5 is OK
         f.seek(BytesPerImage, 0) # get first raw frame index
         firstRawIndex = meta2rawInd(f,Nmetadata)
 
