@@ -332,7 +332,8 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
             except Exception as e:
                 logging.error('sensorloc  {}'.format(e))
 
-            f.create_dataset('/cmdlog',data=str(cmdlog)) #cannot use fletcher32 here, typeerror
+            cmdlog = [' '.join(cmdlog)]
+            f.create_dataset('/cmdlog',data=cmdlog) #cannot use fletcher32 here, typeerror
 
     elif outfn.suffix == '.fits':
         from astropy.io import fits
