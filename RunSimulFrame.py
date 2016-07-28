@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Plays two or more camera files simultaneously
 Michael Hirsch
@@ -7,7 +7,6 @@ Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 example:
 ./RunSimulFrame -i ~/data/2013-04-14/HST/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 """
-from __future__ import division,absolute_import
 import logging
 logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
@@ -70,6 +69,8 @@ class Cam:
             self.clim         = percentile(f['/rawimg'][0,...],climperc)
 
         self.nCutPix = self.supery #FIXME future
+
+        self.usecam = True
 
     def doorientimage(self,frame):
         if self.transpose:
