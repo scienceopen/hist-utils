@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D #needed for this file
 #
 from pymap3d.coordconv3d import ecef2aer, ecef2geodetic
 
-def get1Dcut(cam,makeplot,progms,dbglvl):
+def get1Dcut(cam,odir,dbglvl):
     discardEdgepix = True #gets rid of duplicates beyond FOV of image that cause lsq estimation error
 #%% determine slant range between other camera and magnetic zenith to evaluate at
     srpts = logspace(4.3,6.9,25) #4.5 had zero discards for hst0 #6.8 didn't quite get to zenith
@@ -20,7 +20,7 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
             C.toecef(srpts)
 
     #optional: plot ECEF of points between each camera and magnetic zenith (lying at az,el relative to each camera)
-    plotLOSecef(cam,makeplot,progms,dbglvl)
+    plotLOSecef(cam,odir,dbglvl)
 #%% (2) get az,el of these points from camera to the other camera's points
     cam[0].az2pts,cam[0].el2pts,cam[0].r2pts = ecef2aer(cam[1].x2mz, cam[1].y2mz, cam[1].z2mz,
                                                              cam[0].lat, cam[0].lon, cam[0].alt_m)
@@ -33,8 +33,8 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
             C.findClosestAzel(discardEdgepix)
 
 #%%
-    if dbglvl>2 and progms is not None:
-        dbgfn = progms/'debugLSQ.h5'
+    if dbglvl>2 and odir:
+        dbgfn = odir / 'debugLSQ.h5'
         print('writing', dbgfn)
         with h5py.File(str(dbgfn),'w',libver='latest') as fid:
             for C in cam:
@@ -43,7 +43,7 @@ def get1Dcut(cam,makeplot,progms,dbglvl):
                 fid.create_dataset('/cam{}/xpix'.format(C.name),   data= C.xpix)
     return cam
 
-def plotLOSecef(cam,makeplot,progms,verbose):
+def plotLOSecef(cam,odir,verbose):
     if verbose<=0:
         return
 
@@ -60,7 +60,7 @@ def plotLOSecef(cam,makeplot,progms,verbose):
                     color=clr[int(c)], label=c)
         axecef.set_title('LOS to magnetic zenith')
 
-        if 'kmlell' in makeplot: #Write KML
+        if verbose and odir: #Write KML
             #convert LOS ECEF -> LLA
             loslat,loslon,losalt = ecef2geodetic(cam[c].x2mz,cam[c].y2mz,cam[c].z2mz)
             kclr = ['ff5c5ccd','ffff0000']
@@ -80,8 +80,8 @@ def plotLOSecef(cam,makeplot,progms,verbose):
 
 
     axecef.legend()
-    if 'kmlell' in makeplot and progms is not None:
-        kmlfn = str(progms/'debug1dcut.kmz')
+    if verbose and odir:
+        kmlfn = str(odir/'debug1dcut.kmz')
         print('saving {}'.format(kmlfn))
         kml1d.savekmz(kmlfn)
 

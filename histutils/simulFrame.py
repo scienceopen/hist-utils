@@ -15,11 +15,11 @@ from scipy.interpolate import interp1d
 # local
 from .get1Dcut import get1Dcut
 
-def getSimulData(sim,cam,makeplot,progms=None,verbose=0):
+def getSimulData(sim,cam,progms=None,verbose=0):
 #%% synchronize
     cam,sim = HSTsync(sim,cam,verbose)
 #%% load 1-D cut slices into keogram array
-    cam,rawdata = HSTframeHandler(sim,cam,makeplot,progms,verbose)
+    cam,rawdata = HSTframeHandler(sim,cam,progms,verbose)
     return cam,rawdata,sim
 
 def HSTsync(sim,cam,verbose):
@@ -91,10 +91,10 @@ def HSTsync(sim,cam,verbose):
 
     return cam,sim
 
-def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
+def HSTframeHandler(sim,cam,progms,verbose=0):
 #%% load 1D cut coord
     try:
-        cam = get1Dcut(cam,makeplot,progms,verbose)
+        cam = get1Dcut(cam,progms,verbose)
     except AttributeError:
         pass
 #%% use 1D cut coord

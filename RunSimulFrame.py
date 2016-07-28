@@ -7,20 +7,22 @@ Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 example:
 ./RunSimulFrame -i ~/data/2013-04-14/HST/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 """
+import matplotlib
+matplotlib.use('Agg')
+#
 import logging
 logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
-from os.path import expanduser
+from histutils import Path
 import h5py
 from numpy import fliplr,flipud,rot90,percentile
-from matplotlib.pyplot import draw,pause
 #
 from histutils.simulFrame import getSimulData
 from histutils.plotsimul import plotRealImg
 
 climperc = (1,99.9) #for auto-contrast
 
-def getmulticam(flist,tstartstop,cpar,makeplot,outdir):
+def getmulticam(flist,tstartstop,cpar,outdir):
 #%%
     sim = Sim(tstartstop)
 
@@ -30,12 +32,11 @@ def getmulticam(flist,tstartstop,cpar,makeplot,outdir):
 
     sim.kineticsec = min([C.kineticsec for C in cam]) #playback only, arbitrary
 #%% extract data
-    cam,rawdata,sim = getSimulData(sim,cam,makeplot)
+    cam,rawdata,sim = getSimulData(sim,cam)
 #%% plot data
     for t in range(sim.nTimeSlice):
-        plotRealImg(sim,cam,rawdata,t,makeplot,odir=outdir)
-        draw()
-        pause(0.01)
+        plotRealImg(sim,cam,rawdata,t,odir=outdir)
+
 
 #%% classdef
 class Sim:
@@ -49,9 +50,9 @@ class Sim:
 class Cam:
     def __init__(self,fn,name):
         self.name = name
-        self.fn = expanduser(fn)
+        self.fn = Path(fn).expanduser()
 
-        with h5py.File(self.fn,'r',libver='latest') as f:
+        with h5py.File(str(self.fn),'r',libver='latest') as f:
             self.filestartutc = f['/ut1_unix'][0]
             self.filestoputc  = f['/ut1_unix'][-1]
             self.ut1unix      = f['/ut1_unix'].value
@@ -88,13 +89,11 @@ class Cam:
 if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plays two or more cameras at the same time')
-    p.add_argument('-i','--flist',help='list of files to play at the same time',nargs='+')
+    p.add_argument('-i','--flist',help='list of files to play at the same time',nargs='+',required=True)
     p.add_argument('-t','--tstartstop',metavar=('start','stop'),help='start stop time to play yyyy-mm-ddTHH:MM:SSZ',nargs=2)
-    p.add_argument('-o','--outdir',help='output directory')
+    p.add_argument('-o','--outdir',help='output directory',default='.')
     p = p.parse_args()
 
     cpar = None #future
 
-    makeplot=[]
-
-    getmulticam(p.flist,p.tstartstop,cpar,makeplot,p.outdir)
+    getmulticam(p.flist,p.tstartstop,cpar,p.outdir)
