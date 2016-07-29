@@ -1,10 +1,8 @@
-#!?usr/bin/env python3
+#!/usr/bin/env python
 """
 computes cost of storing camera data
 """
-from __future__ import division,print_function
-
-
+from __future__ import division
 
 class Cam():
     def __init__(self,npix,fps,hddTB,cost,nbit=16):

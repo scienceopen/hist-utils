@@ -6,6 +6,7 @@ INPUT FILE FORMAT: intended for use with "DMCdata" raw format, 4-byte
  "footer" containing frame index (must use typecast)
 """
 import logging
+from six import integer_types,string_types
 from datetime import datetime
 from time import time
 from pytz import UTC
@@ -15,11 +16,11 @@ from scipy.interpolate import interp1d
 # local
 from .get1Dcut import get1Dcut
 
-def getSimulData(sim,cam,progms=None,verbose=0):
+def getSimulData(sim,cam,odir=None,verbose=0):
 #%% synchronize
     cam,sim = HSTsync(sim,cam,verbose)
 #%% load 1-D cut slices into keogram array
-    cam,rawdata = HSTframeHandler(sim,cam,progms,verbose)
+    cam,rawdata = HSTframeHandler(sim,cam,odir,verbose)
     return cam,rawdata,sim
 
 def HSTsync(sim,cam,verbose):
@@ -29,7 +30,7 @@ def HSTsync(sim,cam,verbose):
         if isinstance(sim.startutc,datetime):
             reqStart = sim.startutc.timestamp()
             reqStop  = sim.stoputc.timestamp()
-        elif isinstance(sim.startutc,(float,int)): #ut1_unix
+        elif isinstance(sim.startutc,(float,integer_types)): #ut1_unix
             reqStart = sim.startutc
             reqStop  = sim.stoputc
         else:
@@ -39,9 +40,9 @@ def HSTsync(sim,cam,verbose):
             treqlist = atleast_1d(sim.treqlist)
             if isinstance(treqlist[0],datetime):
                 treqlist = array([t.timestamp() for t in treqlist])
-            elif isinstance(treqlist[0],(float,int)):
+            elif isinstance(treqlist[0],(float,integer_types)):
                 pass #already ut1_unix
-            elif isinstance(treqlist[0],str):
+            elif isinstance(treqlist[0],string_types):
                 raise TypeError('parse dates before passing them in here')
             else:
                 logging.error('I did not understand your time request, falling back to all times')
@@ -89,15 +90,17 @@ def HSTsync(sim,cam,verbose):
             ind = around(ft(treq))
             ind = ind[isfinite(ind)] #discard requests outside of file bounds
             C.pbInd = ind.astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
+            print('using frames {} to {} for camera {}'.format(C.pbInd[0],C.pbInd[-1],C.name))
+
 
     sim.nTimeSlice = treq.size
 
     return cam,sim
 
-def HSTframeHandler(sim,cam,progms,verbose=0):
+def HSTframeHandler(sim,cam,odir=None,verbose=0):
 #%% load 1D cut coord
     try:
-        cam = get1Dcut(cam,progms,verbose)
+        cam = get1Dcut(cam,odir,verbose)
     except AttributeError:
         pass
     except OSError as e:

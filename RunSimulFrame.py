@@ -19,21 +19,23 @@ examples:
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.animation as anim
-from matplotlib.pyplot import figure,draw,pause
+from matplotlib.pyplot import figure
 #
+from six import string_types
 from datetime import datetime
+from numpy import arange
 import logging
 logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
 #
 from histutils import Path
 from histfeas.camclass import Cam
-from histutils.simulFrame import getSimulData
+from histutils.simulFrame import getSimulData,HSTframeHandler
 from histutils.plotsimul import plotRealImg
 
 DPI = 100
 
-def getmulticam(flist,tstartstop,cpar,odir,cals):
+def getmulticam(flist,tstartstop,framereq,cpar,odir,cals):
 #%%
     flist = [Path(f) for f in flist]
     dpath = flist[0].expanduser().parent
@@ -42,7 +44,7 @@ def getmulticam(flist,tstartstop,cpar,odir,cals):
         fnlist.append(f.name)
     cpar['fn'] = ','.join(fnlist)
 
-    sim = Sim(dpath,tstartstop)
+    sim = Sim(dpath,tstartstop,framereq)
 #%% cams
     if len(cals) != len(flist):
         cals=[None]*len(flist)
@@ -53,14 +55,18 @@ def getmulticam(flist,tstartstop,cpar,odir,cals):
 
     sim.kineticsec = min([C.kineticsec for C in cam]) #playback only, arbitrary
 #%% extract data
-    cam,rawdata,sim = getSimulData(sim,cam)
+    if hasattr(sim,'pbInd'): #one camera, specified indices
+        cam[0].pbInd = sim.pbInd
+        cam, rawdata = HSTframeHandler(sim,cam)
+    else:
+        cam,rawdata,sim = getSimulData(sim,cam)
 #%% make movie
     ofn = Path(odir).expanduser() / flist[0].with_suffix('.mkv').name
     print('writing {}'.format(ofn))
 
     fg = figure()
     Writer = anim.writers['ffmpeg']
-    writer = Writer(fps=15)#, codec='ffv1')
+    writer = Writer(fps=15, codec='ffv1') # ffv1 is lossless codec. Omitting makes smeared video
     with writer.saving(fg,str(ofn),DPI):
         for t in range(sim.nTimeSlice):
             plotRealImg(sim,cam,rawdata,t,odir=None,fg=fg) #odir=None stops png writing
@@ -68,10 +74,16 @@ def getmulticam(flist,tstartstop,cpar,odir,cals):
             if not t % 200: print('{}/{}'.format(t,sim.nTimeSlice))
 #%% classdef
 class Sim:
-    def __init__(self,dpath,tstartstop):
+    def __init__(self,dpath,tstartstop,framereq):
         try:
-            self.startutc = parse(tstartstop[0])
-            self.stoputc  = parse(tstartstop[1])
+            if isinstance(tstartstop[0],string_types):
+                self.startutc = parse(tstartstop[0])
+                self.stoputc  = parse(tstartstop[1])
+            elif framereq[0] is not None:
+                self.pbInd = arange(framereq[0],framereq[1],framereq[2]) #NOT range
+                self.nTimeSlice = self.pbInd.size
+            else:
+                raise TypeError
         except (TypeError,AttributeError): #no specified time
             print('loading all frames')
 
@@ -85,7 +97,8 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plays two or more cameras at the same time')
     p.add_argument('-i','--flist',help='list of files to play at the same time',nargs='+',required=True)
-    p.add_argument('-t','--tstartstop',metavar=('start','stop'),help='start stop time to play yyyy-mm-ddTHH:MM:SSZ',nargs=2)
+    p.add_argument('-t','--tstartstop',metavar=('start','stop'),help='start stop time to play yyyy-mm-ddTHH:MM:SSZ',nargs=2,default=[None])
+    p.add_argument('-f','--frames',metavar=('start','stop','step'),help='start stop step frame indices to play',nargs=3,type=int)
     p.add_argument('-o','--outdir',help='output directory',default='.')
     p.add_argument('-c','--clist',help='list of calibration file for each camera',nargs='+',default=[])
     p.add_argument('-s','--toffs',help='time offset [sec] to account for camera drift',type=float,nargs='+',required=True)
@@ -102,4 +115,4 @@ if __name__ == '__main__':
             'plotMaxVal':p.cmax,
             'Bepoch':datetime(2013,4,14,8,54)}
 
-    getmulticam(p.flist,p.tstartstop,cpar,p.outdir,p.clist)
+    getmulticam(p.flist,p.tstartstop,p.frames,cpar,p.outdir,p.clist)

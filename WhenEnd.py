@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 calculates a few times relevant to a .DMCdata file depending on inputs:
 starttime
@@ -6,6 +6,7 @@ fps
 xpix,ypix
 and so on
 """
+from __future__ import division
 from datetime import timedelta
 from dateutil.parser import parse
 from argparse import ArgumentParser
