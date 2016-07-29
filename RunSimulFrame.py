@@ -5,12 +5,14 @@ Michael Hirsch
 Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 
 examples:
-./RunSimulFrame -i ~/data/2013-04-14/HST/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
-./RunSimulFrame -i ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 -m 77.5 19.9
+./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
+./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
+./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1050 --cmax 200 1150 -m 77.5 19.9
 """
 import matplotlib
 matplotlib.use('Agg')
 #
+from datetime import datetime
 import logging
 logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
@@ -20,19 +22,22 @@ from histfeas.camclass import Cam
 from histutils.simulFrame import getSimulData
 from histutils.plotsimul import plotRealImg
 
-climperc = (1,99.9) #for auto-contrast
-
 def getmulticam(flist,tstartstop,cpar,outdir,cals):
 #%%
-    dpath = Path(flist[0]).expanduser().parent
+    flist = [Path(f) for f in flist]
+    dpath = flist[0].expanduser().parent
+    fnlist=[]
+    for f in flist:
+        fnlist.append(f.name)
+    cpar['fn'] = ','.join(fnlist)
+
     sim = Sim(dpath,tstartstop)
 #%% cams
     if len(cals) != len(flist):
         cals=[None]*len(flist)
 
     cam = []
-    for i,(f,c) in enumerate(zip(flist,cals)):
-        cpar['fn'] = f + ','
+    for i,c in enumerate(cals):
         cam.append(Cam(sim,cpar,i,calfn=c))
 
     sim.kineticsec = min([C.kineticsec for C in cam]) #playback only, arbitrary
@@ -54,6 +59,8 @@ class Sim:
         self.realdata = True
         self.realdatapath = dpath
 
+        self.dpi = 60
+
 if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plays two or more cameras at the same time')
@@ -63,11 +70,16 @@ if __name__ == '__main__':
     p.add_argument('-c','--clist',help='list of calibration file for each camera',nargs='+',default=[])
     p.add_argument('-s','--toffs',help='time offset [sec] to account for camera drift',type=float,nargs='+',required=True)
     p.add_argument('-m','--mag',help='inclination, declination',nargs=2,type=float,default=(None,None))
+    p.add_argument('--cmin',help='min data values per camera',nargs='+',type=int,default=(100,100))
+    p.add_argument('--cmax',help='max data values per camera',nargs='+',type=int,default=(1200,1200))
     p = p.parse_args()
 
-    cpar = {'nCutPix':'512,',
+    cpar = {'nCutPix':'512,512',
             'timeShiftSec':p.toffs,
             'Bincl':p.mag[0],
-            'Bdecl':p.mag[1]}
+            'Bdecl':p.mag[1],
+            'plotMinVal':p.cmin,
+            'plotMaxVal':p.cmax,
+            'Bepoch':datetime(2013,4,14,8,54)}
 
     getmulticam(p.flist,p.tstartstop,cpar,p.outdir,p.clist)

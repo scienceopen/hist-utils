@@ -50,7 +50,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None):
     and 1 degree radar beam red circle centered on magnetic zenith
     """
     ncols = len(cam)
-    print('using {} cameras'.format(ncols))
+  #  print('using {} cameras'.format(ncols))
     T=nans(ncols,dtype=datetime)
 
 #    if asi is not None:
@@ -68,7 +68,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None):
 
     for i,C in enumerate(cam):
         if C.usecam: #HiST2 cameras
-            print('frame {}'.format(t))
+           # print('frame {}'.format(t))
             T[i] = updateframe(t,rawdata[i],None,cam[i],axs[i],fg) #hold times for all cameras at this time step
         elif C.name=='asi': #ASI
             (opt,_,_,times) = readDASC(C.fn, None,None, treq=T[sim.useCamBool][0])
@@ -86,7 +86,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None):
             #fg.tight_layout()
             #fg.subplots_adjust(top=0.95)
 
-    writeplots(fg,'rawFrame',T[0],odir) #FIXME: T[0] is fastest cam now, but needs generalization
+    writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi) #FIXME: T[0] is fastest cam now, but needs generalization
 
     close(fg)
 
@@ -111,7 +111,7 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
                      vmin=cam.clim[0], vmax=cam.clim[1],
                      cmap='gray',)
                      #norm=LogNorm())
-    ax.autoscale(False) # False for case where we put plots on top of image
+ #   ax.autoscale(False) # False for case where we put plots on top of image
 
     if showcb: #showing the colorbar makes the plotting go 5-10x more slowly
         hc = fg.colorbar(hi, ax=ax) #not cax!
