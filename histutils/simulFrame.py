@@ -97,6 +97,8 @@ def HSTframeHandler(sim,cam,makeplot,progms,verbose=0):
         cam = get1Dcut(cam,makeplot,progms,verbose)
     except AttributeError:
         pass
+    except OSError as e:
+        print(e)
 #%% use 1D cut coord
     logging.info('frameHandler: Loading and 1-D cutting data...')
     tic = time()

@@ -20,13 +20,17 @@ from histutils.plotsimul import plotRealImg
 
 climperc = (1,99.9) #for auto-contrast
 
-def getmulticam(flist,tstartstop,cpar,makeplot,outdir):
+def getmulticam(flist,tstartstop,cpar,makeplot,outdir,cals):
 #%%
     sim = Sim(tstartstop)
 
+#%% cams
+    if len(cals) != len(flist):
+        cals=[None]*len(flist)
+
     cam = []
-    for i,f in enumerate(flist):
-        cam.append(Cam(f,i))
+    for i,(f,c) in enumerate(zip(flist,cals)):
+        cam.append(Cam(f,i,c))
 
     sim.kineticsec = min([C.kineticsec for C in cam]) #playback only, arbitrary
 #%% extract data
@@ -34,8 +38,7 @@ def getmulticam(flist,tstartstop,cpar,makeplot,outdir):
 #%% plot data
     for t in range(sim.nTimeSlice):
         plotRealImg(sim,cam,rawdata,t,makeplot,odir=outdir)
-        draw()
-        pause(0.01)
+        draw(); pause(0.01)
 
 #%% classdef
 class Sim:
@@ -47,7 +50,7 @@ class Sim:
             print('loading all frames')
 
 class Cam:
-    def __init__(self,fn,name):
+    def __init__(self,fn,name,calfn=None):
         self.name = name
         self.fn = expanduser(fn)
 
@@ -72,6 +75,8 @@ class Cam:
 
         self.usecam = True
 
+        self.cal1Dfn = calfn
+
     def doorientimage(self,frame):
         if self.transpose:
             frame = frame.transpose(0,2,1)
@@ -91,10 +96,11 @@ if __name__ == '__main__':
     p.add_argument('-i','--flist',help='list of files to play at the same time',nargs='+')
     p.add_argument('-t','--tstartstop',metavar=('start','stop'),help='start stop time to play yyyy-mm-ddTHH:MM:SSZ',nargs=2)
     p.add_argument('-o','--outdir',help='output directory')
+    p.add_argument('-c','--clist',help='list of calibration file for each camera',nargs='+',default=[])
     p = p.parse_args()
 
     cpar = None #future
 
     makeplot=[]
 
-    getmulticam(p.flist,p.tstartstop,cpar,makeplot,p.outdir)
+    getmulticam(p.flist,p.tstartstop,cpar,makeplot,p.outdir,p.clist)
