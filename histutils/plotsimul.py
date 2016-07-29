@@ -37,7 +37,7 @@ def plotPlainImg(sim,cam,rawdata,t,odir):
 
         writeplots(fg,'cam{}rawFrame'.format(C.name),t,odir)
 #%%
-def plotRealImg(sim,cam,rawdata,t,odir=None):
+def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
     """
     sim: histfeas/simclass.py
     cam: histfeas/camclass.py
@@ -61,10 +61,14 @@ def plotRealImg(sim,cam,rawdata,t,odir=None):
 #            asi = Path(asi).expanduser()
 #            if asi.is_dir():
 #                asi=list(asi.glob('*.FITS'))
+    if fg is None:
+        fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi,facecolor='black')
+        axs = atleast_1d(axs) #in case only 1
+        #fg.set_size_inches(15,5) #clips off
+    else: # maintain original figure handle for anim.writer
+        fg.clf()
+        axs = [fg.add_subplot(1,ncols,i+1) for i in range(ncols)]
 
-    fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi,facecolor='black')
-    axs = atleast_1d(axs) #in case only 1
-    #fg.set_size_inches(15,5) #clips off
 
     for i,C in enumerate(cam):
         if C.usecam: #HiST2 cameras
@@ -86,9 +90,10 @@ def plotRealImg(sim,cam,rawdata,t,odir=None):
             #fg.tight_layout()
             #fg.subplots_adjust(top=0.95)
 
-    writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi) #FIXME: T[0] is fastest cam now, but needs generalization
+    if odir is not None: # don't close if writer
+        writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi) #FIXME: T[0] is fastest cam now, but needs generalization
+        close(fg)
 
-    close(fg)
 
 def updateframe(t,raw,wavelen,cam,ax,fg):
     showcb = False

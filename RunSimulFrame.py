@@ -4,13 +4,22 @@ Plays two or more camera files simultaneously
 Michael Hirsch
 Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 
+uses data converted from raw .DMCdata format by a command like
+./ConvertDMC2h5.py ~/U/irs_archive4/HSTdata/2013-04-14-HST1/2013-04-14T07-00-CamSer1387.DMCdata -s 2013-04-14T07:00:07Z -k 0.0333333333333333 -t 2013-04-14T9:25:00Z 2013-04-14T9:35:00Z -l 65.12657 -147.496908333 210 --rotccw 2 -o ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5
+
+
 examples:
 ./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
+
 ./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
-./RunSimulFrame.py  -i d:/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 d:/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
+./RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
+
+./RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 -c cal/hst1cal.h5 --cmin 1025 --cmax 1130 -t 2013-04-14T09:27Z 2013-04-14T09:30Z -s 0
 """
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.animation as anim
+from matplotlib.pyplot import figure,draw,pause
 #
 from datetime import datetime
 import logging
@@ -22,7 +31,9 @@ from histfeas.camclass import Cam
 from histutils.simulFrame import getSimulData
 from histutils.plotsimul import plotRealImg
 
-def getmulticam(flist,tstartstop,cpar,outdir,cals):
+DPI = 100
+
+def getmulticam(flist,tstartstop,cpar,odir,cals):
 #%%
     flist = [Path(f) for f in flist]
     dpath = flist[0].expanduser().parent
@@ -43,9 +54,18 @@ def getmulticam(flist,tstartstop,cpar,outdir,cals):
     sim.kineticsec = min([C.kineticsec for C in cam]) #playback only, arbitrary
 #%% extract data
     cam,rawdata,sim = getSimulData(sim,cam)
-#%% plot data
-    for t in range(sim.nTimeSlice):
-        plotRealImg(sim,cam,rawdata,t,odir=outdir)
+#%% make movie
+    ofn = Path(odir).expanduser() / flist[0].with_suffix('.mkv').name
+    print('writing {}'.format(ofn))
+
+    fg = figure()
+    Writer = anim.writers['ffmpeg']
+    writer = Writer(fps=15)#, codec='ffv1')
+    with writer.saving(fg,str(ofn),DPI):
+        for t in range(sim.nTimeSlice):
+            plotRealImg(sim,cam,rawdata,t,odir=None,fg=fg) #odir=None stops png writing
+            writer.grab_frame(facecolor='k')
+            if not t % 200: print('{}/{}'.format(t,sim.nTimeSlice))
 #%% classdef
 class Sim:
     def __init__(self,dpath,tstartstop):
