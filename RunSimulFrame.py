@@ -6,7 +6,7 @@ Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 
 examples:
 ./RunSimulFrame -i ~/data/2013-04-14/HST/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
-./RunSimulFrame -i ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453
+./RunSimulFrame -i ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 -m 77.5 19.9
 """
 import matplotlib
 matplotlib.use('Agg')
@@ -62,9 +62,12 @@ if __name__ == '__main__':
     p.add_argument('-o','--outdir',help='output directory',default='.')
     p.add_argument('-c','--clist',help='list of calibration file for each camera',nargs='+',default=[])
     p.add_argument('-s','--toffs',help='time offset [sec] to account for camera drift',type=float,nargs='+',required=True)
+    p.add_argument('-m','--mag',help='inclination, declination',nargs=2,type=float,default=(None,None))
     p = p.parse_args()
 
     cpar = {'nCutPix':'512,',
-            'timeShiftSec':p.toffs}
+            'timeShiftSec':p.toffs,
+            'Bincl':p.mag[0],
+            'Bdecl':p.mag[1]}
 
     getmulticam(p.flist,p.tstartstop,cpar,p.outdir,p.clist)

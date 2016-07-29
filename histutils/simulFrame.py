@@ -87,7 +87,7 @@ def HSTsync(sim,cam,verbose):
                           bounds_error=False)
 
             ind = around(ft(treq))
-            ind = ind[isfinite(ind)]
+            ind = ind[isfinite(ind)] #discard requests outside of file bounds
             C.pbInd = ind.astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
 
     sim.nTimeSlice = treq.size
