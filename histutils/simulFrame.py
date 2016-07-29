@@ -10,7 +10,7 @@ from datetime import datetime
 from time import time
 from pytz import UTC
 import h5py
-from numpy import arange, unique,atleast_1d,around,array
+from numpy import arange, unique,atleast_1d,around,array,isfinite
 from scipy.interpolate import interp1d
 # local
 from .get1Dcut import get1Dcut
@@ -83,9 +83,12 @@ def HSTsync(sim,cam,verbose):
         if C.usecam:
             ft = interp1d(C.ut1unix,
                           arange(C.ut1unix.size,dtype=int),
-                          kind='nearest')
+                          kind='nearest',
+                          bounds_error=False)
 
-            C.pbInd = around(ft(treq)).astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
+            ind = around(ft(treq))
+            ind = ind[isfinite(ind)]
+            C.pbInd = ind.astype(int) #these are the indices for each time (the slower camera will use some frames twice in a row)
 
     sim.nTimeSlice = treq.size
 
