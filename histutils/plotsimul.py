@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from numpy import sqrt
-from matplotlib.pyplot import figure,draw,subplots,close
+from numpy import sqrt,atleast_1d
+from matplotlib.pyplot import figure,subplots,close
 #from matplotlib.colors import LogNorm
-from datetime import datetime,timedelta
+from datetime import datetime
 from pytz import UTC
 from histfeas.nans import nans
 #
@@ -12,15 +12,14 @@ from themisasi.plots import overlayrowcol
 
 dpi = 100
 
-def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,odir):
+def plotPlainImg(sim,cam,rawdata,t,odir):
     """
     No subplots, just a plan
 
     http://stackoverflow.com/questions/22408237/named-colors-in-matplotlib
     """
     for R,C in zip(rawdata,cam):
-        figure(figh).clf()
-        fg = figure(figh)
+        fg = figure()
         ax = fg.gca()
         ax.set_axis_off() #no ticks
         ax.imshow(R[t,:,:],
@@ -36,11 +35,9 @@ def plotPlainImg(sim,cam,rawdata,t,makeplot,figh,odir):
                      size=24
                     )
 
-        draw() #Must have this here or plot doesn't update in animation multiplot mode!
-        if 'png' in makeplot:
-            writeplots(fg,'cam{}rawFrame'.format(C.name),t,odir)
+        writeplots(fg,'cam{}rawFrame'.format(C.name),t,odir)
 #%%
-def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
+def plotRealImg(sim,cam,rawdata,t,odir=None):
     """
     sim: histfeas/simclass.py
     cam: histfeas/camclass.py
@@ -53,6 +50,7 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
     and 1 degree radar beam red circle centered on magnetic zenith
     """
     ncols = len(cam)
+    print('using {} cameras'.format(ncols))
     T=nans(ncols,dtype=datetime)
 
 #    if asi is not None:
@@ -65,10 +63,12 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
 #                asi=list(asi.glob('*.FITS'))
 
     fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi,facecolor='black')
+    axs = atleast_1d(axs) #in case only 1
     #fg.set_size_inches(15,5) #clips off
-    #for i,(R,C,ax) in enumerate(zip(rawdata,cam,axm)):
+
     for i,C in enumerate(cam):
         if C.usecam: #HiST2 cameras
+            print('frame {}'.format(t))
             T[i] = updateframe(t,rawdata[i],None,cam[i],axs[i],fg) #hold times for all cameras at this time step
         elif C.name=='asi': #ASI
             (opt,_,_,times) = readDASC(C.fn, None,None, treq=T[sim.useCamBool][0])
@@ -85,10 +85,8 @@ def plotRealImg(sim,cam,rawdata,t,makeplot,odir=None):
             #fg.text(0.5,0.15,datetime.strftime(T[0],'%x'))#, va='top',ha='center') #bug too
             #fg.tight_layout()
             #fg.subplots_adjust(top=0.95)
-   # draw()
 
-    if 'png' in makeplot:
-        writeplots(fg,'rawFrame',T[0],makeplot,odir) #FIXME: T[0] is fastest cam now, but needs generalization
+    writeplots(fg,'rawFrame',T[0],odir) #FIXME: T[0] is fastest cam now, but needs generalization
 
     close(fg)
 

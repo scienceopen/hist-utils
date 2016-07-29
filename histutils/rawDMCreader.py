@@ -329,12 +329,14 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
 
                 Ld = f.create_dataset('/sensorloc',data=lparam) #cannot use fletcher32 here, typeerror
                 Ld.attrs['units'] = 'WGS-84 lat (deg),lon (deg), altitude (meters)'
+            except TypeError:
+                pass
             except Exception as e:
                 logging.error('sensorloc  {}'.format(e))
 
             if isinstance(cmdlog,(tuple,list)):
-                cmdlog = [' '.join(cmdlog)]
-            f.create_dataset('/cmdlog',data=cmdlog) #cannot use fletcher32 here, typeerror
+                cmdlog = ' '.join(cmdlog)
+            f.create_dataset('/cmdlog',data=str(cmdlog)) #cannot use fletcher32 here, typeerror
 
     elif outfn.suffix == '.fits':
         from astropy.io import fits
