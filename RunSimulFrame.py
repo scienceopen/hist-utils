@@ -7,7 +7,7 @@ Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 examples:
 ./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 ./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
-./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1050 --cmax 200 1150 -m 77.5 19.9
+./RunSimulFrame.py  -i d:/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 d:/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
 """
 import matplotlib
 matplotlib.use('Agg')

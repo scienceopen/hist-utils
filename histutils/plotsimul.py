@@ -111,7 +111,10 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
                      vmin=cam.clim[0], vmax=cam.clim[1],
                      cmap='gray',)
                      #norm=LogNorm())
- #   ax.autoscale(False) # False for case where we put plots on top of image
+
+    # autoscale(False) for case where we put plots on top of image
+    # yet still reduces blank space between subplots
+    ax.autoscale(False)
 
     if showcb: #showing the colorbar makes the plotting go 5-10x more slowly
         hc = fg.colorbar(hi, ax=ax) #not cax!
