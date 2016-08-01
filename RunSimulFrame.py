@@ -19,7 +19,7 @@ examples:
 RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 --cmin 1090 --cmax 1140  -f 0 17998 20 -s 0
 
 #apr14 824
-
+RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 --cmax 1350  -t 2013-04-14T08:25:45Z 2013-04-14T08:26:30Z
 
 """
 import matplotlib
@@ -78,7 +78,7 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
         for t in range(sim.nTimeSlice):
             plotRealImg(sim,cam,rawdata,t,odir=None,fg=fg) #odir=None stops png writing
             writer.grab_frame(facecolor='k')
-            if not t % 200: print('{}/{}'.format(t,sim.nTimeSlice))
+            if not t % 100: print('{}/{}'.format(t,sim.nTimeSlice))
 #%% classdef
 class Sim:
     def __init__(self,dpath,fn0,tstartstop,framereq):
