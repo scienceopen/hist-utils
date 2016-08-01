@@ -8,7 +8,7 @@ from pytz import UTC
 import skimage.restoration as skres
 from scipy.signal import wiener,medfilt2d
 #
-from histfeas.nans import nans
+from .nans import nans
 from dascutils.readDASCfits import readDASC
 from gridaurora.plots import writeplots
 from themisasi.plots import overlayrowcol

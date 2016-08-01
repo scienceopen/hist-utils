@@ -20,6 +20,7 @@ from astropy.io import fits
 from dmcutils.h5imgwriter import setupimgh5,imgwriteincr
 from .timedmc import frame2ut1,ut12frame
 from . import getRawInd as gri
+from .common import req2frame
 #
 try:
     import tifffile
@@ -209,15 +210,8 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
     FrameIndRel = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
 
     if FrameIndRel is None or len(FrameIndRel)==0: #NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
-        if isinstance(FrameIndReq,int): #the user is specifying a step size
-            FrameIndRel = arange(0,nFrame,FrameIndReq,dtype=int64)
-        elif FrameIndReq and len(FrameIndReq) == 3: #catch is None
-            # this is -1 because user is specifying one-based index
-            FrameIndRel =arange(FrameIndReq[0],FrameIndReq[1],FrameIndReq[2],dtype=int64)-1 #keep -1 !
-        else: #catch all
-            FrameIndRel = arange(nFrame,dtype=int64) # has to be numpy.arange for > comparison
-            if verbose>0:
-                print('automatically selected all frames in file')
+        FrameIndRel = req2frame(FrameIndReq, nFrame)
+
     badReqInd = (FrameIndRel>nFrame) | (FrameIndRel<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():

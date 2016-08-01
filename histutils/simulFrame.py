@@ -101,10 +101,8 @@ def HSTframeHandler(sim,cam,odir=None,verbose=0):
 #%% load 1D cut coord
     try:
         cam = get1Dcut(cam,odir,verbose)
-    except AttributeError:
+    except (AttributeError,OSError):
         pass
-    except OSError as e:
-        print(e)
 #%% use 1D cut coord
     logging.info('frameHandler: Loading and 1-D cutting data...')
     tic = time()
@@ -113,6 +111,7 @@ def HSTframeHandler(sim,cam,odir=None,verbose=0):
         if not C.usecam: continue
         #40 time faster to read at once, even with this indexing trick than frame by frame
         ind = unique(C.pbInd)
+        if len(ind) < 1: continue
         # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing
         # IOError: Can't read data (Src and dest data spaces have different sizes)
         # if you have repeated index in fancy indexing
