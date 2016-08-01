@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from numpy import sqrt,atleast_1d
-from matplotlib.pyplot import figure,subplots,close
+from matplotlib.pyplot import figure,subplots
 #from matplotlib.colors import LogNorm
 from datetime import datetime
 from pytz import UTC
@@ -95,7 +95,6 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
 
     if odir is not None: # don't close if writer
         writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi,facecolor='k') #FIXME: T[0] is fastest cam now, but needs generalization
-        close(fg)
 
 
 def updateframe(t,raw,wavelen,cam,ax,fg):
