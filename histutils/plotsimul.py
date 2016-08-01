@@ -1,11 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from numpy import sqrt,atleast_1d
 from matplotlib.pyplot import figure,subplots,close
 #from matplotlib.colors import LogNorm
 from datetime import datetime
 from pytz import UTC
-from histfeas.nans import nans
 #
+import skimage.restoration as skres
+from scipy.signal import wiener,medfilt2d
+#
+from histfeas.nans import nans
 from dascutils.readDASCfits import readDASC
 from gridaurora.plots import writeplots
 from themisasi.plots import overlayrowcol
@@ -41,8 +44,8 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
     """
     sim: histfeas/simclass.py
     cam: histfeas/camclass.py
-    t:
-    makeplot: list/tuple of requested plots
+    rawdata: nframe x ny x nx ndarray
+    t: integer index to read
     odir: output directory (where to write results)
 
     plots both cameras together,
@@ -108,7 +111,24 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
         frame = raw.reshape((sqrt(raw.size),-1))
     else:
         raise ValueError('ndim==3 or 2')
-    #plotting raw uint16 data
+#%% filtering (optional) # FIXME provide noise estimate
+    """
+    http://scikit-image.org/docs/dev/api/skimage.restoration.html?highlight=denoise
+    """
+    if 'wiener' in cam.cp:
+        #psf = ones((cam.wiener, cam.wiener)) / cam.wiener**2
+        frame = wiener(frame, cam.cp['wiener'])
+
+    if 'medfilt2d' in cam.cp:
+        frame = medfilt2d(frame.astype(float), cam.cp['medfilt2d'])
+
+    if 'denoise_bilateral' in cam.cp:
+        frame = skres.denoise_bilateral(((frame-cam.clim[0])/(cam.clim[1]-cam.clim[0])).clip(0.,1.),
+                                        sigma_color=0.05, sigma_spatial=15, multichannel=False)
+    if 'denoise_tv_chambolle' in cam.cp:
+        frame = skres.denoise_tv_chambolle(((frame-cam.clim[0])/(cam.clim[1]-cam.clim[0])).clip(0.,1.),
+                                           )
+#%% plotting raw uint16 data
     hi = ax.imshow(frame,
                      origin='lower',interpolation='none',
                      #aspect='equal',

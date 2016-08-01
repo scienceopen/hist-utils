@@ -107,7 +107,10 @@ if __name__ == '__main__':
     p.add_argument('--cmax',help='max data values per camera',nargs='+',type=int,default=(1200,1200))
     p = p.parse_args()
 
-    cpar = {'nCutPix':'512,512',
+    cpar = {#'wiener': 3,
+            'medfilt2d': 3,
+            #'denoise_bilateral': True,
+            'nCutPix':'512,512',
             'timeShiftSec':p.toffs,
             'Bincl':p.mag[0],
             'Bdecl':p.mag[1],
