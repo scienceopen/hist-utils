@@ -94,7 +94,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
             #fg.subplots_adjust(top=0.95)
 
     if odir is not None: # don't close if writer
-        writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi) #FIXME: T[0] is fastest cam now, but needs generalization
+        writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi,facecolor='k') #FIXME: T[0] is fastest cam now, but needs generalization
         close(fg)
 
 

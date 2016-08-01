@@ -68,7 +68,7 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
     else:
         cam,rawdata,sim = getSimulData(sim,cam)
 #%% make movie
-    ofn = Path(odir).expanduser() / flist[0].with_suffix('.mkv').name
+    ofn = Path(odir).expanduser() / flist[0].with_suffix('.avi').name
     print('writing {}'.format(ofn))
 
     fg = figure()
@@ -76,7 +76,7 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
     writer = Writer(fps=15, codec='ffv1') # ffv1 is lossless codec. Omitting makes smeared video
     with writer.saving(fg,str(ofn),DPI):
         for t in range(sim.nTimeSlice):
-            plotRealImg(sim,cam,rawdata,t,odir=None,fg=fg) #odir=None stops png writing
+            plotRealImg(sim,cam,rawdata,t,odir=odir,fg=fg) #odir=None stops png writing
             writer.grab_frame(facecolor='k')
             if not t % 100: print('{}/{}'.format(t,sim.nTimeSlice))
 #%% classdef
