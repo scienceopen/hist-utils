@@ -27,6 +27,7 @@ matplotlib.use('Agg')
 import matplotlib.animation as anim
 from matplotlib.pyplot import figure
 #
+from os import devnull
 from six import string_types
 from datetime import datetime
 import h5py
@@ -68,21 +69,24 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
     else:
         cam,rawdata,sim = getSimulData(sim,cam)
 #%% make movie
-    ofn = Path(odir).expanduser() / flist[0].with_suffix('.avi').name
-    print('writing {}'.format(ofn))
 
     fg = figure()
     Writer = anim.writers['ffmpeg']
     writer = Writer(fps=15, codec='ffv1') # ffv1 is lossless codec. Omitting makes smeared video
     if not cpar['png']:
         pngdir=None
+        ofn = Path(odir).expanduser() / flist[0].with_suffix('.avi').name
+        print('writing {}'.format(ofn))
     else:
+        ofn = devnull
         pngdir = odir
+
     with writer.saving(fg,str(ofn),DPI):
         for t in range(sim.nTimeSlice):
             plotRealImg(sim,cam,rawdata,t,odir=pngdir,fg=fg)
             #pause(0.1) # avoid random crashes
-            #writer.grab_frame(facecolor='k')
+            if not cpar['png']:
+                writer.grab_frame(facecolor='k')
             if not t % 100:
                 print('{}/{}'.format(t,sim.nTimeSlice))
 #%% classdef
