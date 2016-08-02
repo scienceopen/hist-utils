@@ -15,7 +15,7 @@ examples:
 ./RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
 
 #apr14 925
-./RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 -c cal/hst1cal.h5 --cmin 1025 --cmax 1130 -t 2013-04-14T09:27Z 2013-04-14T09:30Z -s 0
+./RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 -c cal/hst1cal.h5 --cmin 1090 --cmax 1140 -t 2013-04-14T09:27Z 2013-04-14T09:30Z
 RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 --cmin 1090 --cmax 1140  -f 0 17998 20 -s 0
 
 #apr14 824
@@ -25,7 +25,7 @@ RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 -
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.animation as anim
-from matplotlib.pyplot import figure,pause
+from matplotlib.pyplot import figure
 #
 from six import string_types
 from datetime import datetime
@@ -74,9 +74,13 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
     fg = figure()
     Writer = anim.writers['ffmpeg']
     writer = Writer(fps=15, codec='ffv1') # ffv1 is lossless codec. Omitting makes smeared video
+    if not cpar['png']:
+        pngdir=None
+    else:
+        pngdir = odir
     with writer.saving(fg,str(ofn),DPI):
         for t in range(sim.nTimeSlice):
-            plotRealImg(sim,cam,rawdata,t,odir=odir,fg=fg) #odir=None stops png writing
+            plotRealImg(sim,cam,rawdata,t,odir=pngdir,fg=fg)
             #pause(0.1) # avoid random crashes
             #writer.grab_frame(facecolor='k')
             if not t % 100:
@@ -115,6 +119,7 @@ if __name__ == '__main__':
     p.add_argument('-m','--mag',help='inclination, declination',nargs=2,type=float,default=(None,None))
     p.add_argument('--cmin',help='min data values per camera',nargs='+',type=int,default=(100,100))
     p.add_argument('--cmax',help='max data values per camera',nargs='+',type=int,default=(1200,1200))
+    p.add_argument('--png',help='write large numbers of PNGs instead of AVI',action='store_true')
     p = p.parse_args()
 
     cpar = {#'wiener': 3,
@@ -126,6 +131,7 @@ if __name__ == '__main__':
             'Bdecl':p.mag[1],
             'plotMinVal':p.cmin,
             'plotMaxVal':p.cmax,
-            'Bepoch':datetime(2013,4,14,8,54)}
+            'Bepoch':datetime(2013,4,14,8,54),
+            'png':p.png}
 
     getmulticam(p.flist,p.tstartstop, p.frames, cpar, p.outdir,p.clist)
