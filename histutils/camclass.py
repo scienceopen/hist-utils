@@ -1,5 +1,5 @@
 from . import Path
-from configparser import ConfigParser
+from six.moves.configparser import ConfigParser
 from six import string_types
 import logging
 from numpy import (linspace, fliplr, flipud, rot90, arange,
