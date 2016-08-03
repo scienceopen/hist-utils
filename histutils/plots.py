@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from pathlib import Path
+from . import Path
 from numpy import uint16
 from datetime import datetime
 from pytz import UTC
