@@ -25,7 +25,7 @@ RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 -
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.animation as anim
-from matplotlib.pyplot import figure
+from matplotlib.pyplot import figure, pause
 #
 from os import devnull
 from six import string_types
@@ -84,7 +84,8 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
     with writer.saving(fg,str(ofn),DPI):
         for t in range(sim.nTimeSlice):
             plotRealImg(sim,cam,rawdata,t,odir=pngdir,fg=fg)
-            #pause(0.1) # avoid random crashes
+            pause(0.1) # avoid random crashes
+            #print('grab {}'.format(t))
             if not cpar['png']:
                 writer.grab_frame(facecolor='k')
             if not t % 100:
