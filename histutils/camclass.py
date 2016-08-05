@@ -1,5 +1,5 @@
 from . import Path
-from six.moves.configparser import ConfigParser
+from six.moves.configparser import ConfigParser,SectionProxy
 from six import string_types
 import logging
 from numpy import (linspace, fliplr, flipud, rot90, arange,
@@ -447,7 +447,7 @@ class Cam: #use this like an advanced version of Matlab struct
             ax.set_ylim([0,self.az.shape[0]])
 
 def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
-    if isinstance(conf, ConfigParser):
+    if isinstance(conf, (ConfigParser,SectionProxy)):
         pass
     elif isinstance(conf,dict):
         try:
