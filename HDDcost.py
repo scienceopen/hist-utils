@@ -19,12 +19,26 @@ class Cam():
 
         self.hourstorage= self.hddTB/(self.bytehour/1e12)
 
-Zyla = Cam(2560*2160,100,2,705)
-print('Zyla MByte/sec: {:.1f}'.format(Zyla.bytesec/1e6))
-print('Zyla full-frame SSD cost per hour: ${:.2f}'.format(Zyla.HDDcosthour))
-print('Zyla {}TB SSD fills in {:.2f} hours'.format(Zyla.hddTB,Zyla.hourstorage))
+print('quantities are for full data rate')
 
-Ultra = Cam(512*512,56,8,258)
-print('Ultra MByte/sec: {:.1f}'.format(Ultra.bytesec/1e6))
-print('Ultra full-frame HDD cost per hour: ${:.2f}'.format(Ultra.HDDcosthour))
-print('Ultra {}TB HDD fills in {:.1f} hours'.format(Ultra.hddTB,Ultra.hourstorage))
+Zyla = Cam(2560*2160,100,4,1500)
+print('\n--------------------------')
+print('Zyla')
+print('MB/sec: {:.1f}    GB/hour: {:.0f}'.format(Zyla.bytesec/1e6, Zyla.bytehour/1e9))
+print('SSD: ${:.2f}/hour'.format(Zyla.HDDcosthour))
+print('{} TB SSD fills in {:.2f} hours'.format(Zyla.hddTB,Zyla.hourstorage))
+
+U897 = Cam(512*512,56,8,220)
+print('\n--------------------------')
+print('Ultra 897')
+print('MB/sec: {:.1f}    GB/hour: {:.0f}'.format(U897.bytesec/1e6, U897.bytehour/1e9))
+print('HDD: ${:.2f}/hour'.format(U897.HDDcosthour))
+print('{} TB HDD fills in {:.1f} hours'.format(U897.hddTB, U897.hourstorage))
+
+U888 = Cam(1024*1024,26,8,220)
+print('\n--------------------------')
+print('Ultra 888')
+print('MB/sec: {:.1f}    GB/hour: {:.0f}'.format(U888.bytesec/1e6, U888.bytehour/1e9))
+print('HDD: ${:.2f}/hour'.format(U888.HDDcosthour))
+print('{} TB HDD fills in {:.1f} hours'.format(U888.hddTB, U888.hourstorage))
+
