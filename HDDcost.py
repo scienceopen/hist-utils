@@ -5,7 +5,13 @@ computes cost of storing camera data
 from __future__ import division
 
 class Cam():
-    def __init__(self,npix,fps,hddTB,cost,nbit=16):
+    def __init__(self,npix,fps,hddTB,cost,nbit=16,goodfrac=0.05):
+        self.goodfrac = goodfrac
+        hoursrecday = 8 #avg hours per night cameras on
+        self.monthsseason = 8 # months of year recording
+        dayspermonth = 30
+        self.hoursperseason = self.monthsseason * dayspermonth * hoursrecday
+        
         self.npix=npix
         self.fps=fps
         self.nbit=nbit
@@ -18,7 +24,11 @@ class Cam():
         self.HDDcosthour = self.costTB * self.bytehour/1e12
 
         self.hourstorage= self.hddTB/(self.bytehour/1e12)
+        
+        self.TBseason = self.hoursperseason * self.bytehour/1e12 * self.goodfrac
 
+
+#%%
 print('quantities are for full data rate')
 
 Zyla = Cam(2560*2160,100,4,1500)
@@ -41,4 +51,9 @@ print('Ultra 888')
 print('MB/sec: {:.1f}    GB/hour: {:.0f}'.format(U888.bytesec/1e6, U888.bytehour/1e9))
 print('HDD: ${:.2f}/hour'.format(U888.HDDcosthour))
 print('{} TB HDD fills in {:.1f} hours'.format(U888.hddTB, U888.hourstorage))
+#%%
+
+print('{} month season {} % retained: {:.1f} TB'.format(U888.monthsseason, U888.goodfrac*100, U888.TBseason))
+
+
 
