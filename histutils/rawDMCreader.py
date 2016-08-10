@@ -256,6 +256,7 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
         return
 
     outfn = Path(outfn).expanduser()
+    print('writing {}'.format(outfn))
     #%% saving
     if outfn.suffix == '.h5':
         """
@@ -265,7 +266,6 @@ def dmcconvert(data,ut1,rawind,outfn,params,cmdlog=''):
         other conforming readers to easily play images stacks as video.
         * the string_() calls are necessary to make fixed length strings per HDF5 spec
         """
-
         import h5py
         #NOTE write mode r+ to not overwrite incremental images
         with h5py.File(str(outfn),'r+',libver='latest') as f:
