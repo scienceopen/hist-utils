@@ -2,7 +2,8 @@
 from sys import argv
 from numpy import int64
 #
-from histutils.rawDMCreader import goRead,dmcconvert
+from histutils.rawDMCreader import goRead
+from histutils.vid2h5 import vid2h5
 from histutils.plots import doPlayMovie,doplotsave
 
 if __name__ == "__main__":
