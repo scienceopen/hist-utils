@@ -27,14 +27,17 @@ except:
 #
 bpp = 16
 
-def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC=None,cmosinit=None,verbose=0,outfn=None):
+def goRead(fn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC=None,cmosinit=None,verbose=0,outfn=None,nHeadBytes=4):
 
-    bigfn = Path(bigfn).expanduser()
-    ext = bigfn.suffix
+    fn = Path(fn).expanduser()
+    ext = fn.suffix
+
+    if outfn:
+        outfn = Path(outfn).expanduser()
 #%% setup data parameters
-    if ext == '.DMCdata':
+    if ext in ('.DMCdata','.dat'):
         # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
-        finf = getDMCparam(bigfn,xyPix,xyBin,FrameIndReq,ut1Req,kineticraw,startUTC,verbose)
+        finf = getDMCparam(fn,xyPix,xyBin,FrameIndReq,ut1Req,kineticraw,startUTC,nHeadBytes,verbose)
         rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
 #%% output (variable or file)
         if outfn:
@@ -44,7 +47,7 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,start
             data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=uint16, order='C')
 #%% read
-        with open(str(bigfn),'rb') as fid: #NOTE: not pathlib due to Python 2.7, Numpy 1.11 incompat. Py3.5 OK
+        with open(str(fn),'rb') as fid: #NOTE: not pathlib due to Python 2.7, Numpy 1.11 incompat. Py3.5 OK
             for j,i in enumerate(finf['frameindrel']): #j and i are NOT the same in general when not starting from beginning of file!
                 D, rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
                 if outfn:
@@ -56,7 +59,7 @@ def goRead(bigfn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,start
 
 
     elif ext[:4] == '.tif':
-        finf,data = getNeoParam(bigfn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
+        finf,data = getNeoParam(fn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
         rawFrameInd = finf['frameind'] #FIXME this is for individual file, not start of night.
 
 
@@ -79,8 +82,11 @@ def getserialnum(flist):
         sn.append(ser)
     return sn
 
-def getDMCparam(fn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,verbose=0):
-    nHeadBytes = 4 #FIXME for 2011-2014 data
+def getDMCparam(fn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,nHeadBytes=4,verbose=0):
+    """
+    nHeadBytes=4 for 2013-2016 data
+    nHeadBytes=0 for 2011 data
+    """
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
 
     fn = Path(fn).expanduser()
@@ -234,7 +240,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     if verbose>0:
         print('seeking to byte ' + str(currByte))
 
-    assert isinstance(currByte,int64)
+    assert isinstance(currByte,int64),'int32 will fail on files > 2GB'
     try:
         f.seek(currByte,0) #no return value
     except IOError as e:
@@ -249,4 +255,8 @@ def getDMCframe(f,iFrm,finf,verbose=0):
         raise ValueError('we may have read past end of file?  {}'.format(e))
 
     rawFrameInd = gri.meta2rawInd(f,finf['nmetadata'])
+
+    if rawFrameInd is None: #2011 no metadata file
+        rawFrameInd = iFrm+1 #fallback
+
     return currFrame,rawFrameInd

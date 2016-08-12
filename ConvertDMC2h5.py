@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+"""
+Converts 2011 Poker/Ester and 2013-2016 HiST raw data files to HDF5 for easy consumption
+
+full command example with metadata:
+./ConvertDMC2h5.py ~/U/irs_archive3/HSTdata/2013-04-14-HST0/2013-04-14T07-00-CamSer7196.DMCdata \
+  -s 2013-04-14T06:59:55Z -k 0.018867924528301886 -t 2013-04-14T11:30:00Z 2013-04-14T11:30:02Z \
+  -o /tmp/2013-04-14T113000_hst0.h5 -l 65.1186367 -147.432975 500
+
+simple command example w/o full metadata (can append metadata later):
+./ConvertDMC2h5.py 2011-03-01T1000/010311.100608.000.dat -o /tmp/2013-03-11T1006.h5 --headerbytes 0
+"""
+
 from sys import argv
 from numpy import int64
 #
@@ -29,6 +41,7 @@ if __name__ == "__main__":
     p.add_argument('--cmos',help='start stop raw frame of CMOS file',nargs=2,metavar=('firstrawind','lastrawind'),type=int,default=(None,)*2)
     p.add_argument('--fire',help='fire filename')
     p.add_argument('-l','--loc',help='lat lon alt_m of sensor',type=float,nargs=3)
+    p.add_argument('--headerbytes',help='number of header bytes: 2013-2016: 4  2011: 0',type=int,default=4)
     p = p.parse_args()
 
     cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}
@@ -36,9 +49,10 @@ if __name__ == "__main__":
     params = {'kineticsec':p.kineticsec,'rotccw':p.rotccw,'transpose':p.transpose,
               'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire,'sensorloc':p.loc}
 
-    rawImgData,rawind,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,p.kineticsec,p.startutc,cmosinit,p.verbose,p.output)
+    rawImgData,rawind,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,
+                                    p.kineticsec,p.startutc,cmosinit,p.verbose,p.output,p.headerbytes)
 #%% convert
-    dmcconvert(None,finf['ut1'],rawind,p.output,params,argv)
+    vid2h5(None,finf['ut1'],rawind,p.output,params,argv)
 #%% plots and save
     try:
         from matplotlib.pyplot import show
