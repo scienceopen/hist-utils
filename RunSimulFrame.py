@@ -10,6 +10,8 @@ uses data converted from raw .DMCdata format by a command like
 
 
 examples:
+./RunSimulFrame.py  ~/data/2007-03-23/optical/2007-03-23T11-20.h5 -o /tmp --cmin 0 --cmax 255
+
 ./RunSimulFrame.py ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 
 ./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
