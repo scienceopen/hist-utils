@@ -135,8 +135,8 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
         v = vis.HistEqStretch(frame)
         NORM = ImageNormalize(stretch=v)
 
-    #NORM = LogNorm()
-    NORM = ImageNormalize(stretch=vis.LogStretch())
+    NORM = LogNorm()
+  # NORM = ImageNormalize(stretch=vis.LogStretch())
 
     hi = ax.imshow(frame,
                      origin='lower', interpolation='none',
