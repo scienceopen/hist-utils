@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 from numpy import sqrt,atleast_1d
 from matplotlib.pyplot import figure,subplots
-#from matplotlib.colors import LogNorm
+from matplotlib.colors import LogNorm
 from datetime import datetime
 from pytz import UTC
+#
+from astropy.visualization.mpl_normalize import ImageNormalize
+import astropy.visualization as vis
 #
 import skimage.restoration as skres
 from scipy.signal import wiener,medfilt2d
@@ -13,7 +16,7 @@ from dascutils.readDASCfits import readDASC
 from gridaurora.plots import writeplots
 from themisasi.plots import overlayrowcol
 
-dpi = 100
+DPI = 100
 
 def plotPlainImg(sim,cam,rawdata,t,odir):
     """
@@ -65,7 +68,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
 #            if asi.is_dir():
 #                asi=list(asi.glob('*.FITS'))
     if fg is None:
-        fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12),dpi=dpi,facecolor='black')
+        fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12), dpi=DPI, facecolor='black')
         axs = atleast_1d(axs) #in case only 1
         #fg.set_size_inches(15,5) #clips off
     else: # maintain original figure handle for anim.writer
@@ -128,13 +131,19 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
         frame = skres.denoise_tv_chambolle(((frame-cam.clim[0])/(cam.clim[1]-cam.clim[0])).clip(0.,1.),
                                            )
 #%% plotting raw uint16 data
+    if False:
+        v = vis.HistEqStretch(frame)
+        NORM = ImageNormalize(stretch=v)
+
+    #NORM = LogNorm()
+    NORM = ImageNormalize(stretch=vis.LogStretch())
+
     hi = ax.imshow(frame,
-                     origin='lower',interpolation='none',
+                     origin='lower', interpolation='none',
                      #aspect='equal',
                      #extent=(0,C.superx,0,C.supery),
                      vmin=cam.clim[0], vmax=cam.clim[1],
-                     cmap='gray',)
-                     #norm=LogNorm())
+                     cmap = 'gray', norm = NORM)
 
     # autoscale(False) for case where we put plots on top of image
     # yet still reduces blank space between subplots
