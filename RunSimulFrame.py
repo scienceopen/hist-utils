@@ -48,7 +48,7 @@ from histutils.common import req2frame
 
 DPI = 100
 
-def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
+def getmulticam(flist,tstartstop, framereq, cpar,odir,cals,cmdlog=''):
 #%%
     flist = [Path(f).expanduser() for f in flist]
     dpath = flist[0].parent
@@ -77,7 +77,8 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
 
     fg = figure()
     Writer = anim.writers['ffmpeg']
-    writer = Writer(fps=15)#, codec='ffv1') # ffv1 is lossless codec. Omitting makes lossy compressed video
+    writer = Writer(fps=15,codec='mpeg4',bitrate=1e6,
+                    metadata={'artist':cmdlog})
     if not cpar['png']:
         pngdir=None
         ofn = Path(odir).expanduser() / flist[0].with_suffix('.avi').name
@@ -123,6 +124,7 @@ class Sim:
         self.dpi = 60
 
 if __name__ == '__main__':
+    from sys import argv
     from argparse import ArgumentParser
     p = ArgumentParser(description='plays two or more cameras at the same time')
     p.add_argument('flist',help='list of files to play at the same time',nargs='+')
@@ -137,8 +139,9 @@ if __name__ == '__main__':
     p.add_argument('--png',help='write large numbers of PNGs instead of AVI',action='store_true')
     p = p.parse_args()
 
-    cpar = {#'wiener': 3,
-            'medfilt2d': 3,
+    cpar = {
+            #'wiener': 3,
+            #'medfilt2d': 3,
             #'denoise_bilateral': True,
             'nCutPix':'512,512',
             'timeShiftSec':p.toffs,
@@ -149,4 +152,4 @@ if __name__ == '__main__':
             'Bepoch':datetime(2013,4,14,8,54),
             'png':p.png}
 
-    getmulticam(p.flist,p.tstartstop, p.frames, cpar, p.outdir,p.clist)
+    getmulticam(p.flist,p.tstartstop, p.frames, cpar, p.outdir,p.clist,' '.join(argv))
