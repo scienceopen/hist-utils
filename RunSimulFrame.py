@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Plays two or more camera files simultaneously
+Plays two or more HDF5 camera files simultaneously
+IF YOU HAVE FITS use ConvertSolisFits2h5 first!
 Michael Hirsch
 Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 
@@ -9,17 +10,17 @@ uses data converted from raw .DMCdata format by a command like
 
 
 examples:
-./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
+./RunSimulFrame.py ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 
-./RunSimulFrame.py -i ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
-./RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
+./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
+./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
 
 #apr14 925
-./RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 -c cal/hst1cal.h5 --cmin 1090 --cmax 1140 -t 2013-04-14T09:27Z 2013-04-14T09:30Z
-RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 --cmin 1090 --cmax 1140  -f 0 17998 20 -s 0
+./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 -c cal/hst1cal.h5 --cmin 1090 --cmax 1140 -t 2013-04-14T09:27Z 2013-04-14T09:30Z
+RunSimulFrame.py   ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 --cmin 1090 --cmax 1140  -f 0 17998 20 -s 0
 
 #apr14 824
-RunSimulFrame.py  -i ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 --cmax 1350  -t 2013-04-14T08:25:45Z 2013-04-14T08:26:30Z
+RunSimulFrame.py   ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 --cmax 1350  -t 2013-04-14T08:25:45Z 2013-04-14T08:26:30Z
 
 """
 import matplotlib
@@ -34,6 +35,7 @@ import h5py
 import logging
 logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
+from astropy.io import fits
 #
 from histutils import Path
 from histutils.camclass import Cam
@@ -93,18 +95,23 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals):
 #%% classdef
 class Sim:
     def __init__(self,dpath,fn0,tstartstop,framereq):
-        try:
-            if isinstance(tstartstop[0],string_types):
-                self.startutc = parse(tstartstop[0])
-                self.stoputc  = parse(tstartstop[1])
-            else:
-                with h5py.File(str(fn0),'r',libver='latest') as f:
-                    nFrame = f['/rawimg'].shape[0]
-                self.pbInd = req2frame(framereq, nFrame)
-                self.nTimeSlice = self.pbInd.size
+        if isinstance(tstartstop[0],string_types):
+            self.startutc = parse(tstartstop[0])
+            self.stoputc  = parse(tstartstop[1])
+        else: # whole file
+            try:
+                if fn0.suffix == '.h5':
+                    with h5py.File(str(fn0),'r',libver='latest') as f:
+                        Nframe = f['/rawimg'].shape[0]
+                elif fn0.suffix == '.fits':
+                    with fits.open(str(fn0),'readonly') as f:
+                        Nframe = f[0].shape[0]
 
-        except (TypeError,AttributeError): #no specified time
-            print('loading all frames')
+            except (TypeError,AttributeError): #no specified time
+                print('loading all frames')
+
+        self.pbInd = req2frame(framereq, Nframe)
+        self.nTimeSlice = self.pbInd.size
 
         self.raymap = 'astrometry'
         self.realdata = True
@@ -115,7 +122,7 @@ class Sim:
 if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='plays two or more cameras at the same time')
-    p.add_argument('-i','--flist',help='list of files to play at the same time',nargs='+',required=True)
+    p.add_argument('flist',help='list of files to play at the same time',nargs='+')
     p.add_argument('-t','--tstartstop',metavar=('start','stop'),help='start stop time to play yyyy-mm-ddTHH:MM:SSZ',nargs=2,default=[None])
     p.add_argument('-f','--frames',help='start stop step frame indices to play',nargs='+',type=int)
     p.add_argument('-o','--outdir',help='output directory',default='.')

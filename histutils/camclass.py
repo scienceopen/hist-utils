@@ -142,6 +142,9 @@ class Cam: #use this like an advanced version of Matlab struct
         if sim.realdata:
             self.fn = (sim.realdatapath / cp['fn'].split(',')[ci]).expanduser()
 
+            if not self.fn.suffix == '.h5':
+                raise TypeError('I can only work with HDF5 files, not FITS. Use ConvertSolisFITSh5 if you have FITS')
+
             with h5py.File(str(self.fn),'r',libver='latest') as f:
                 self.filestartutc = f['/ut1_unix'][0]
                 self.filestoputc  = f['/ut1_unix'][-1]

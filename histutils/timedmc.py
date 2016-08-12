@@ -79,7 +79,7 @@ def datetime2unix(T):
                 continue
             except ValueError:
                 t = parse(t) #datetime in a string
-        elif isinstance(t,(float,int)): #assuming ut1_unix already
+        elif isinstance(t,(float,int)): #assuming ALL are ut1_unix already
             return T
         else:
             raise TypeError('I only accept datetime or parseable date string')

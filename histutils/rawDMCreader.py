@@ -124,7 +124,7 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
         #FIXME didn't the 2011 TIFFs have headers? maybe not.
         with tifffile.TiffFile(str(fn)) as f:
             data = f.asarray()
-            SuperX,SuperY,nframe = data.shape[2], data.shape[1],data.shape[0]
+            Y,X = data.shape[-2:]
     elif fn.suffix.lower() in '.fits':
         with fits.open(str(fn),mode='readonly',memmap=False) as f:
             data = None #f[0].data  #NOTE You can read the data if you want, I didn't need it here.
@@ -132,23 +132,25 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
             kineticsec = f[0].header['KCT']
             startseries = parse(f[0].header['DATE'] + 'Z') #TODO start of night's recording (with some Solis versionss)
 
-            #TODO this is terrible to have to do this, shame on Andor Solis authors.
-            frametxt = f[0].header['USERTXT1']
-            m = re.search('(?<=Images\:)\d+-\d+(?=\.)',frametxt)
-            o = m.group(0).split('-')
+            #TODO wish there was a better way
+            try:
+                frametxt = f[0].header['USERTXT1']
+                m = re.search('(?<=Images\:)\d+-\d+(?=\.)',frametxt)
+                inds = m.group(0).split('-')
+            except KeyError: # just a single file?
+                inds = [1,f[0].shape[0]] #yes start with 1, end without adding 1 for Andor Solis
 
-            cmosinit={'firstrawind':int(o[0]),
-                      'lastrawind':int(o[1])}
+            cmosinit={'firstrawind':int(inds[0]),
+                      'lastrawind':int(inds[1])}
 
             #start = parse(f[0].header['FRAME']+'Z') No, incorrect by several hours with some 2015 Solis versions!
 
-            nframe = f[0].header['NUMKIN']
-            SuperX,SuperY = f[0].header['NAXIS1'],f[0].header['NAXIS2']
+            Y,X = f[0].shape[-2:]
 
         startUTC = startseries.timestamp()
 
 #%% FrameInd relative to this file
-    PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
+    PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(X,Y,nHeadBytes)
 
     FrameIndRel = whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,
                               cmosinit['firstrawind'],cmosinit['lastrawind'],
@@ -157,10 +159,10 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
     assert isinstance(FrameIndReq,int) or FrameIndReq is None, 'TODO: add multi-frame request case'
     rawFrameInd = arange(cmosinit['firstrawind'],cmosinit['lastrawind']+1,FrameIndReq,dtype=int64)
 
-    finf = {'superx':SuperX,
-            'supery':SuperY,
-            'nframeextract':nframe,
-            'nframe':nframe,
+    finf = {'superx':X,
+            'supery':Y,
+            'nframeextract':FrameIndRel.size,
+            'nframe':rawFrameInd.size,
             'frameindrel':FrameIndRel,
             'frameind':rawFrameInd,
             'kineticsec':kineticsec}
