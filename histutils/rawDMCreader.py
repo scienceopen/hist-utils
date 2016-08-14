@@ -15,10 +15,15 @@ from numpy import int64,uint16,zeros,arange,fromfile
 from re import search
 from astropy.io import fits
 #
+try:
+    from shutil import disk_usage
+except ImportError: #Python 2
+    from psutil import disk_usage
+#
 from dmcutils.h5imgwriter import setupimgh5,imgwriteincr
 from .timedmc import frame2ut1,ut12frame
 from . import getRawInd as gri
-from .common import req2frame
+from .common import req2frame,dir2fn
 #
 try:
     import tifffile
@@ -32,8 +37,11 @@ def goRead(fn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC
     fn = Path(fn).expanduser()
     ext = fn.suffix
 
-    if outfn:
-        outfn = Path(outfn).expanduser()
+    outfn = dir2fn(outfn,fn,'.h5')
+
+    freeout =  disk_usage(str(outfn.parent)).free
+    if freeout < 10e9 or freeout < 10*fn.stat().st_size:
+        raise RuntimeError('out of disk space on {}'.format(outfn.parent))
 #%% setup data parameters
     if ext in ('.DMCdata','.dat'):
         # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
@@ -47,7 +55,7 @@ def goRead(fn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC
             data = zeros((finf['nframeextract'],finf['supery'],finf['superx']),
                     dtype=uint16, order='C')
 #%% read
-        with open(str(fn),'rb') as fid: #NOTE: not pathlib due to Python 2.7, Numpy 1.11 incompat. Py3.5 OK
+        with fn.open('rb') as fid: #NOTE: not pathlib due to Python 2.7, Numpy 1.11 incompat. Py3.5 OK
             for j,i in enumerate(finf['frameindrel']): #j and i are NOT the same in general when not starting from beginning of file!
                 D, rawFrameInd[j] = getDMCframe(fid,i,finf,verbose)
                 if outfn:
@@ -61,8 +69,8 @@ def goRead(fn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC
     elif ext[:4] == '.tif':
         finf,data = getNeoParam(fn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
         rawFrameInd = finf['frameind'] #FIXME this is for individual file, not start of night.
-
-
+    else:
+        raise ValueError('not sure to do with file {}'.format(fn))
 
     return data, rawFrameInd,finf#,ut1_unix
 #%% workers
@@ -92,6 +100,8 @@ def getDMCparam(fn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,star
     fn = Path(fn).expanduser()
     if not fn.is_file(): #leave this here, getsize() doesn't fail on directory
         raise ValueError('{} is not a file!'.format(fn))
+
+    print('reading {}'.format(fn))
 
     #np.int64() in case we are fed a float or int
     SuperX = int64(xyPix[0]) // int64(xyBin[0]) # "//" keeps as integer

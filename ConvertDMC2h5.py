@@ -8,15 +8,59 @@ full command example with metadata:
   -o /tmp/2013-04-14T113000_hst0.h5 -l 65.1186367 -147.432975 500
 
 simple command example w/o full metadata (can append metadata later):
-./ConvertDMC2h5.py 2011-03-01T1000/010311.100608.000.dat -o /tmp/2013-03-11T1006.h5 --headerbytes 0
+./ConvertDMC2h5.py ~/extdrive/2011-03-01T1000/ -o ~/data/2011-03-01 --headerbytes 0
 """
-
+from histutils import Path
 from sys import argv
 from numpy import int64
 #
 from histutils.rawDMCreader import goRead
 from histutils.vid2h5 import vid2h5
 from histutils.plots import doPlayMovie,doplotsave
+from histutils.common import dir2fn
+
+def dmclooper(p):
+    cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}
+
+    params = {'kineticsec':p.kineticsec,'rotccw':p.rotccw,'transpose':p.transpose,
+              'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire,'sensorloc':p.loc}
+
+    infn = Path(p.infile).expanduser()
+    if infn.is_file():
+        flist = [infn]
+    elif infn.is_dir():
+        flist = sorted(infn.glob('*.DMCdata')) + sorted(infn.glob('*.dat'))
+    else:
+        raise ValueError('Not sure what {} is'.format(infn))
+
+    N = len(flist)
+
+    for i,f in enumerate(flist):
+        ofn = dir2fn(p.output,f,'.h5')
+        if ofn.is_file():
+            print('\nskipping {} {}'.format(ofn,f))
+            continue
+
+        print('\n file {} / {}   {:.1f} % done with {}'.format(i, N, i/N*100., flist[0].parent ))
+
+        rawImgData,rawind,finf = goRead(f, p.pix,p.bin,p.frames,p.ut1,
+                                    p.kineticsec,p.startutc,cmosinit,p.verbose,ofn,p.headerbytes)
+#%% convert
+        vid2h5(None,finf['ut1'],rawind, ofn,params,argv)
+#%% optional plot
+        if p.movie:
+            plots(rawImgData,rawind,finf)
+
+
+
+def plots(rawImgData,rawind,finf):
+    try:
+        doPlayMovie(rawImgData,p.movie, ut1_unix=finf['ut1'],clim=p.clim)
+        doplotsave(p.infile,rawImgData,rawind,p.clim,p.hist,p.avg)
+    except Exception:
+        pass
+
+
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -34,7 +78,7 @@ if __name__ == "__main__":
     p.add_argument('--fliplr',help='horizontal flip',action='store_true')
     p.add_argument('-s','--startutc',help='utc time of nights recording')
     p.add_argument('-t','--ut1',help='UT1 times (seconds since Jan 1 1970) to request (parseable string, int, or float)',metavar=('start','stop'),nargs=2)
-    p.add_argument('-o','--output',help='extract raw data into this file [h5,fits,mat]')
+    p.add_argument('-o','--output',help='extract raw data into this path')
     p.add_argument('--avg',help='return the average of the requested frames, as a single image',action='store_true')
     p.add_argument('--hist',help='makes a histogram of all data frames',action='store_true')
     p.add_argument('-v','--verbose',help='debugging',action='count',default=0)
@@ -44,20 +88,4 @@ if __name__ == "__main__":
     p.add_argument('--headerbytes',help='number of header bytes: 2013-2016: 4  2011: 0',type=int,default=4)
     p = p.parse_args()
 
-    cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}
-
-    params = {'kineticsec':p.kineticsec,'rotccw':p.rotccw,'transpose':p.transpose,
-              'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire,'sensorloc':p.loc}
-
-    rawImgData,rawind,finf = goRead(p.infile, p.pix,p.bin,p.frames,p.ut1,
-                                    p.kineticsec,p.startutc,cmosinit,p.verbose,p.output,p.headerbytes)
-#%% convert
-    vid2h5(None,finf['ut1'],rawind,p.output,params,argv)
-#%% plots and save
-    try:
-        from matplotlib.pyplot import show
-        doPlayMovie(rawImgData,p.movie, ut1_unix=finf['ut1'],clim=p.clim)
-        doplotsave(p.infile,rawImgData,rawind,p.clim,p.hist,p.avg)
-        show()
-    except Exception as e:
-        print('skipped plotting  {}'.format(e))
+    rawImgData,rawind,finf = dmclooper(p)

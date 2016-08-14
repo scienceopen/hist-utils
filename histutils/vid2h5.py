@@ -104,3 +104,5 @@ def vid2h5(data,ut1,rawind,outfn,params,cmdlog=''):
         from scipy.io import savemat
         matdata = {'imgdata':data.transpose(1,2,0)} #matlab is fortran order
         savemat(outfn,matdata,oned_as='column')
+    else:
+        raise ValueError('what kind of file is {}'.format(outfn))

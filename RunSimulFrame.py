@@ -74,7 +74,6 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals,cmdlog=''):
     else:
         cam,rawdata,sim = getSimulData(sim,cam)
 #%% make movie
-
     fg = figure()
     Writer = anim.writers['ffmpeg']
     writer = Writer(fps=15,codec='mpeg4',bitrate=1e6,
