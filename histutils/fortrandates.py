@@ -25,6 +25,21 @@ def datetime2yd(T):
 
     return yd,utsec
 
+def yd2datetime(yd):
+    """
+    Inputs:
+    yd: yyyyddd four digit year, 3 digit day of year (INTEGER 7 digits)
+
+    outputs:
+    t: datetime
+
+    http://stackoverflow.com/questions/2427555/python-question-year-and-day-of-year-to-date
+    """
+    yd = str(yd)
+    assert len(yd)==7,'yyyyddd expected'
+
+    return forceutc(datetime(int(yd[:4]), 1, 1) + timedelta(int(yd[4:]) - 1))
+
 
 def datetime2gtd(T,glon=nan):
     """
