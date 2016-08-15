@@ -19,12 +19,6 @@ def datetime2yd(T):
     utsec=empty_like(T,dtype=float)
     yd = empty_like(T,dtype=int)
     for i,t in enumerate(T):
-        if isinstance(t,string_types):
-            t = parse(t)
-
-        assert isinstance(t,datetime)
-
-        t=forceutc(t)
         utsec[i] = dt2utsec(t)
         yd[i] = t.year*1000 + int(t.strftime('%j'))
 
@@ -48,23 +42,19 @@ def datetime2gtd(T,glon=nan):
     stl = empty((T.size,glon.shape[0],glon.shape[1]))
 
     for i,t in enumerate(T):
-        if isinstance(t,string_types):
-            t = parse(t)
-
-        assert isinstance(t,datetime)
-
         t = forceutc(t)
         iyd[i] = int(t.strftime('%j'))
         #seconds since utc midnight
         utsec[i] = dt2utsec(t)
 
         stl[i,...] = utsec[i]/3600 + glon/15 #FIXME let's be sure this is appropriate
+
     return iyd,utsec,stl
 
 #def dt2utsec(t: datetime) -> float:
 def dt2utsec(t):
     """ seconds since utc midnight"""
-    assert isinstance(t,datetime)
+    t = forceutc(t)
 
     return timedelta.total_seconds(t-datetime.combine(t.date(),time(0,tzinfo=UTC)))
 
@@ -76,7 +66,10 @@ def forceutc(t):
     input: python datetime (naive, utc, non-utc) or Numpy datetime64  #FIXME add Pandas and AstroPy time classes
     output: utc datetime
     """
-    if isinstance(t,datetime64):
+#%% polymorph to datetime
+    if isinstance(t,string_types):
+        t = parse(t)
+    elif isinstance(t,datetime64):
         t=t.astype('M8[ms]').astype('O') #for Numpy 1.10 at least...
     elif isinstance(t,datetime):
         pass
@@ -84,7 +77,7 @@ def forceutc(t):
         return array([forceutc(T) for T in t])
     else:
         raise TypeError('datetime only input')
-
+#%% enforce UTC on datetime
     if t.tzinfo == None: #datetime-naive
         t = t.replace(tzinfo = UTC)
     else: #datetime-aware
@@ -102,7 +95,7 @@ and from datetime to decimal year.
 def yeardec2datetime(atime):
     """
     Convert atime (a float) to DT.datetime
-    This is the inverse of dt2t.
+    This is the inverse of datetime2yeardec.
     assert dt2t(t2dt(atime)) == atime
     """
     assert isinstance(atime,(float,integer_types)) #typically a float
