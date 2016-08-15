@@ -14,6 +14,7 @@ def datetime2yd(T):
     yd: yyyyddd four digit year, 3 digit day of year (INTEGER)
     utsec: seconds from midnight utc
     """
+    T = forceutc(T)
     T = atleast_1d(T)
 
     utsec=empty_like(T,dtype=float)

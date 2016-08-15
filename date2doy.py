@@ -5,7 +5,7 @@ command-line utility to convert date to day of year
 from histutils.fortrandates import datetime2yd
 
 def date2doy(t):
-    yd = str(datetime2yd(t))
+    yd = str(datetime2yd(t)[0][0])
 
     year = int(yd[:4])
     doy = int(yd[4:])
