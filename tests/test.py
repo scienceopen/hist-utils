@@ -1,29 +1,24 @@
 #!/usr/bin/env python
 from histutils import Path
-from numpy import nan,uint16,int64
+from numpy import uint16,int64
 from numpy.testing import assert_allclose,assert_almost_equal,assert_array_equal,run_module_suite
 from datetime import datetime
 from pytz import timezone
 #
-from histutils.airMass import airmass
 from histutils.rawDMCreader import goRead
-from histutils.compsolar import compsolar
 from histutils.diric import diric
 from histutils.findnearest import find_nearest
 from histutils import fortrandates
 
 tdir  = Path(__file__).parent
 
+def test_diric():
+    assert_allclose(diric(3.,2),0.0707372)
+
 def test_findnearest():
     indf,xf = find_nearest([10,15,12,20,14,33],[32,12.01])
     assert_almost_equal(indf,[5,2])
     assert_almost_equal(xf,[33.,12.])
-
-def test_airmass():
-    theta=[-1.,38.]
-    Irr,M,I0 = airmass(theta,datetime(2015,7,1,0,0,0))
-    assert_allclose(Irr,[nan, 805.13538427])
-    assert_allclose(M,[nan,  1.62045712])
 
 def test_rawread():
     bigfn = tdir / 'testframes.DMCdata'
@@ -43,14 +38,6 @@ def test_rawread():
     assert_array_equal(testframe[0,:5,0],  [ 956,  700, 1031,  730,  732])
     assert_array_equal(testframe[0,-5:,-1],[1939, 1981, 1828, 1752, 1966])
 
-def test_plotsolar():
-    Irr,sunel,Whr = compsolar('pfisr',(None,None,None),
-                          datetime(2015,7,1,0,0,0),5., 1, False)
-    assert_allclose(Irr[[16,14,6],[105,155,174]], [ 437.853895,  412.637988,  414.4017],rtol=0.1) #astropy changes with revisions..
-    assert_allclose(sunel[[6,14,6],[2,125,174]], [-33.154661, 4.35271 ,   9.325113],rtol=0.05) #py27 differes from py35
-
-def test_diric():
-    assert_allclose(diric(3.,2),0.0707372)
 #%% dates
 #%% fortrandates
 def test_fortrandates():
