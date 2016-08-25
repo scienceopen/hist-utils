@@ -33,8 +33,14 @@ class Cam: #use this like an advanced version of Matlab struct
 
         self.cp = cp # in case you want custom options w/o clogging up camclass.py
 
-        if not self.usecam and sim.realdata and name.lower().startswith('asi'):
-            self.fn = list(Path(cp['fn'].split(',')[ci]).expanduser().glob('*.FITS'))
+        if not self.usecam and sim.realdata and 'asi' in name.lower():
+            fn = Path(cp['fn'].split(',')[ci].strip()).expanduser()
+            self.fn = sorted(fn.glob('*.FITS'))
+            if not self.fn:
+                logging.error('no files found under {}'.format(fn))
+                self.name=None
+                return
+
             self.name = name
 
             self.clim = [None]*2
@@ -139,11 +145,14 @@ class Cam: #use this like an advanced version of Matlab struct
         """ expects an HDF5 .h5 file"""
 
         # data file name
-        if sim.realdata:
-            self.fn = (sim.realdatapath / cp['fn'].split(',')[ci]).expanduser()
+        if sim.realdata and self.usecam:
+            #.strip() needed in case of multi-line ini
+            self.fn = (sim.realdatapath / cp['fn'].split(',')[ci].strip()).expanduser()
 
             if not self.fn.suffix == '.h5':
                 raise TypeError('I can only work with HDF5 files, not FITS. Use ConvertSolisFITSh5 if you have FITS')
+
+            assert self.fn.is_file(),'{} does not exist'.format(self.fn)
 
             with h5py.File(str(self.fn),'r',libver='latest') as f:
                 self.filestartutc = f['/ut1_unix'][0]
@@ -169,7 +178,7 @@ class Cam: #use this like an advanced version of Matlab struct
                 self.lat   = c['lat']
                 self.lon   = c['lon']
                 self.alt_m = c['alt_m']
-        else: #sim
+        elif not sim.realdata: #sim ONLY
             self.kineticsec = splitconf(cp,'kineticsec',ci) #simulation
             self.alt_m =      splitconf(cp,'zkm',ci)*1000 # no fallback, must specify z-location of each cam
             self.x_km =       splitconf(cp,'xkm',ci) # no fallback, must specify x-location of each cam
@@ -200,7 +209,7 @@ class Cam: #use this like an advanced version of Matlab struct
         except TypeError: #this will give tiny ver and flux
             self.intens2dn = self.dn2intens = 1.
 #%% summary
-        if sim.realdata:
+        if sim.realdata and self.usecam:
             logging.info('cam{} timeshift: {} seconds'.format(self.name,self.timeShiftSec))
 
             logging.info('Camera {} start/stop UTC: {} / {}, {} frames.'.format(
@@ -450,6 +459,9 @@ class Cam: #use this like an advanced version of Matlab struct
             ax.set_ylim([0,self.az.shape[0]])
 
 def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
+    if conf is None:
+        return fallback
+
     if isinstance(conf, (ConfigParser,SectionProxy)):
         pass
     elif isinstance(conf,dict):
@@ -458,9 +470,9 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
         except TypeError:
             return conf[key]
         except KeyError:
-            return
+            return fallback
     else:
-        raise TypeError('expecting dict or configparseer')
+        raise TypeError('expecting dict or configparser')
 
 
     if i is not None:

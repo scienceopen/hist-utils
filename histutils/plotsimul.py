@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 from numpy import sqrt,atleast_1d
 from matplotlib.pyplot import figure,subplots
 from matplotlib.colors import LogNorm
@@ -87,7 +88,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
             updateframe(0,opt['image'],opt['lambda'],C,axs[i],fg)
             overlayrowcol(axs[i],C.hlrows,C.hlcols)
         else:
-            raise TypeError('unknown camera {} index {}'.format(C.name,i))
+            logging.error('unknown camera {} index {}'.format(C.name,i))
 
         if i==0:
             axs[0].set_ylabel(datetime.strftime(T[0],'%x')).set_color('limegreen')
