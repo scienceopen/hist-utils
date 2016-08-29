@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 This acts like bash cp --parents in Python
 inspiration from
