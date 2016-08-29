@@ -98,7 +98,7 @@ def HSTsync(sim,cam,verbose):
     return cam,sim
 
 def HSTframeHandler(sim,cam,odir=None,verbose=0):
-#%% load 1D cut coord
+#%% load 1D cut coord (only for histfeas)
     try:
         cam = get1Dcut(cam,odir,verbose)
     except (AttributeError,OSError):
@@ -108,14 +108,19 @@ def HSTframeHandler(sim,cam,odir=None,verbose=0):
     tic = time()
     rawdata = [] # one list element for each camera, of varying number of frames
     for C in cam:
-        if not C.usecam: continue
-        #40 time faster to read at once, even with this indexing trick than frame by frame
+        if not C.usecam: 
+            continue
+        """
+        This two-step indexing if repeated frames is 40 times faster to read at once, 
+        even with this indexing trick than frame by frame
+        """
         ind = unique(C.pbInd)
-        if len(ind) < 1: continue
+        if len(ind) < 1: 
+            continue
         # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing
         # IOError: Can't read data (Src and dest data spaces have different sizes)
         # if you have repeated index in fancy indexing
-        with h5py.File(str(C.fn),'r',libver='latest') as f:
+        with h5py.File(str(C.fn), 'r', libver='latest') as f:
             I = f['/rawimg'][ind,...]
             if ind.size != C.pbInd.size: # in case repeated frames selected, which h5py 2.5 can't handle (fancy indexing, non-increasing)
                 I = I[C.pbInd-ind[0],...] #FIXME allows repeated indexes which h5py 2.5 does not for mmap
@@ -132,9 +137,9 @@ def HSTframeHandler(sim,cam,odir=None,verbose=0):
                     C.keo = I[C.cutrow, C.cutcol].T
                 else:
                     raise ValueError('ndim==2 or 3')
-            except AttributeError as e:
-                logging.debug('skipped extracting 1-D cut {}'.format(e))
+            except AttributeError:
+                pass
 
-    logging.debug('done extracting frames in {:.2f} seconds.'.format(time() - tic))
+    logging.debug('Loaded all image frames in {:.2f} sec.'.format(time() - tic))
 
     return cam,rawdata

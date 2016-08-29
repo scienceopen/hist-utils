@@ -375,7 +375,7 @@ class Cam: #use this like an advanced version of Matlab struct
     def findLSQ(self,nearrow,nearcol):
         polycoeff = polyfit(nearcol,nearrow,deg=1,full=False)
         #columns (x)  to cut from picture
-        cutcol = arange(self.superx,dtype=int) #not range
+        cutcol = arange(self.superx, int) #not range
         #rows (y) to cut from picture
         cutrow = rint(polyval(polycoeff,cutcol)).astype(int)
         assert (cutrow>=0).all() and (cutrow<self.supery).all(),'impossible least squares fit for 1-D cut\n is your video orientation correct? check the params of video hdf5 file'
@@ -387,10 +387,12 @@ class Cam: #use this like an advanced version of Matlab struct
         raMagzen,decMagzen = azel2radec(self.Baz,self.Bel,self.lat,self.lon,self.Bepoch)
         logging.info('mag. zen. ra/dec {} {}'.format(raMagzen,decMagzen))
 
-        angledist = angular_separation(raMagzen*u.deg,decMagzen*u.deg,rapix*u.deg,decpix*u.deg)
+        angledist = angular_separation(raMagzen*u.deg, decMagzen*u.deg, 
+                                       rapix*u.deg,    decpix*u.deg)
         angledist = angledist.to(u.deg).value
+
         # put distances into a 90-degree fan beam
-        angle_deg = empty(self.superx,dtype=float)
+        angle_deg = empty(self.superx, float)
         MagZenInd = angledist.argmin() # whether minimum angle distance from MZ is slightly positive or slightly negative, this should be OK
 
         angle_deg[MagZenInd:] = 90. + angledist[MagZenInd:]
@@ -417,15 +419,15 @@ class Cam: #use this like an advanced version of Matlab struct
             ax.legend()
             ax.set_xlabel('x-pixel'); ax.set_ylabel('$\theta$ [deg.]')
             ax.set_title('angle from magnetic zenith $\theta$')
-
-    def findClosestAzel(self,discardEdgepix):
+            
+    def findClosestAzel(self):
         assert self.az.shape ==  self.el.shape
         assert self.az2pts.shape == self.el2pts.shape
         assert self.az.ndim == 2
 
         npts = self.az2pts.size  #numel
-        nearRow = empty(npts,dtype=int)
-        nearCol = empty(npts,dtype=int)
+        nearRow = empty(npts,int)
+        nearCol = empty(npts,int)
         # can be FAR FAR faster than scipy.spatial.distance.cdist()
         for i in range(npts):
             #we do this point by point because we need to know the closest pixel for each point
@@ -437,14 +439,14 @@ class Cam: #use this like an advanced version of Matlab struct
             nearRow[i],nearCol[i] = unravel_index(errdist.argmin(), self.az.shape, order='C')
     #************************************************
 
+#%% dicard edge pixels
+        mask = ~(((nearCol==0) | (nearCol == self.az.shape[1]-1)) |
+                 ((nearRow==0) | (nearRow == self.az.shape[0]-1)))
 
-        if discardEdgepix:
-            mask = ~(((nearCol==0) | (nearCol == self.az.shape[1]-1)) |
-                               ((nearRow==0) | (nearRow == self.az.shape[0]-1)))
-            nearRow = nearRow[mask]
-            nearCol = nearCol[mask]
+        nearRow = nearRow[mask]
+        nearCol = nearCol[mask]
 
-            self.findLSQ(nearRow, nearCol)
+        self.findLSQ(nearRow, nearCol)
 
         if self.verbose>0:
             from matplotlib.pyplot import figure

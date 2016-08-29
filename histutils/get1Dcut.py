@@ -7,10 +7,16 @@ from mpl_toolkits.mplot3d import Axes3D #needed for this file
 from pymap3d.coordconv3d import ecef2aer, ecef2geodetic
 
 def get1Dcut(cam,odir,verbose):
-    discardEdgepix = True #gets rid of duplicates beyond FOV of image that cause lsq estimation error
 #%% determine slant range between other camera and magnetic zenith to evaluate at
     srpts = logspace(4.3,6.9,25) #4.5 had zero discards for hst0 #6.8 didn't quite get to zenith
-#%% (0) load az/el data from Astrometry.net
+#%% (1) load az/el data from Astrometry.net
+    """
+    i.   get az/el of each pixel
+    ii.  get cartesian ECEF of each pixel end, a point outside the grid (to create rays to check intersections with grid)
+    iii. put cameras in same frame, getting az/el to each other's pixel ends
+    iv.  find the indices corresponding to those angles
+    now the cameras are geographically registered to pixel indices
+    """
     for C in cam:
         if C.usecam:
             with h5py.File(str(C.cal1Dfn),'r',libver='latest') as f:
@@ -30,8 +36,7 @@ def get1Dcut(cam,odir,verbose):
         # and Least squares fit line to nearest points found in step 3
     for C in cam:
         if C.usecam:
-            C.findClosestAzel(discardEdgepix)
-
+            C.findClosestAzel()
 #%%
     if verbose>2 and odir:
         dbgfn = odir / 'debugLSQ.h5'
