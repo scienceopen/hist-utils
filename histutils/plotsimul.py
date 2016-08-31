@@ -69,16 +69,18 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
 #            if asi.is_dir():
 #                asi=list(asi.glob('*.FITS'))
     if fg is None:
+        doclose=True
         fg,axs = subplots(nrows=1,ncols=ncols, figsize=(15,12), dpi=DPI, facecolor='black')
         axs = atleast_1d(axs) #in case only 1
         #fg.set_size_inches(15,5) #clips off
     else: # maintain original figure handle for anim.writer
+        doclose=False
         fg.clf()
         axs = [fg.add_subplot(1,ncols,i+1) for i in range(ncols)]
 
 
     for i,C in enumerate(cam):
-        if C.usecam: #HiST2 cameras
+        if C.usecam: #HiST cameras
            # print('frame {}'.format(t))
             T[i] = updateframe(t,rawdata[i],None,cam[i],axs[i],fg) #hold times for all cameras at this time step
         elif C.name=='asi': #ASI
@@ -97,8 +99,8 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
             #fg.tight_layout()
             #fg.subplots_adjust(top=0.95)
 
-    if odir is not None: # don't close if writer
-        writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi,facecolor='k') #FIXME: T[0] is fastest cam now, but needs generalization
+    #TODO: T[0] is fastest cam now, but needs generalization
+    writeplots(fg,'rawFrame',T[0],odir=odir,dpi=sim.dpi,facecolor='k',doclose=doclose)
 
 
 def updateframe(t,raw,wavelen,cam,ax,fg):
@@ -185,8 +187,8 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
             ax.set_ylabel('y-pixel')
 #%% plotting 1D cut line
     try:
-       ax.plot(cam.cutcol,cam.cutrow,
-             marker='.',linestyle='none',color='blue',markersize=1)
+       ax.plot(cam.cutcol[cam.Lcind], cam.cutrow[cam.Lcind],
+               marker='.',linestyle='none',color='blue',markersize=1)
         #plot magnetic zenith
        ax.scatter(x=cam.cutcol[cam.angleMagzenind],
                y=cam.cutrow[cam.angleMagzenind],

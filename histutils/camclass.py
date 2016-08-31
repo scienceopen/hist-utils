@@ -375,7 +375,7 @@ class Cam: #use this like an advanced version of Matlab struct
     def findLSQ(self,nearrow,nearcol):
         polycoeff = polyfit(nearcol,nearrow,deg=1,full=False)
         #columns (x)  to cut from picture
-        cutcol = arange(self.superx, int) #not range
+        cutcol = arange(self.superx, dtype=int) #not range, NEED dtype= for arange api
         #rows (y) to cut from picture
         cutrow = rint(polyval(polycoeff,cutcol)).astype(int)
         assert (cutrow>=0).all() and (cutrow<self.supery).all(),'impossible least squares fit for 1-D cut\n is your video orientation correct? check the params of video hdf5 file'
@@ -387,7 +387,7 @@ class Cam: #use this like an advanced version of Matlab struct
         raMagzen,decMagzen = azel2radec(self.Baz,self.Bel,self.lat,self.lon,self.Bepoch)
         logging.info('mag. zen. ra/dec {} {}'.format(raMagzen,decMagzen))
 
-        angledist = angular_separation(raMagzen*u.deg, decMagzen*u.deg, 
+        angledist = angular_separation(raMagzen*u.deg, decMagzen*u.deg,
                                        rapix*u.deg,    decpix*u.deg)
         angledist = angledist.to(u.deg).value
 
@@ -419,7 +419,7 @@ class Cam: #use this like an advanced version of Matlab struct
             ax.legend()
             ax.set_xlabel('x-pixel'); ax.set_ylabel('$\theta$ [deg.]')
             ax.set_title('angle from magnetic zenith $\theta$')
-            
+
     def findClosestAzel(self):
         assert self.az.shape ==  self.el.shape
         assert self.az2pts.shape == self.el2pts.shape
