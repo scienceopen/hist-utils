@@ -94,14 +94,13 @@ class Cam: #use this like an advanced version of Matlab struct
 
         self.timeShiftSec = splitconf(cp,'timeShiftSec',ci,fallback=0.)
 
-
+#%% image contrast set
         self.clim = [None]*2
         self.clim[0] = splitconf(cp,'plotMinVal',ci)
         self.clim[1] = splitconf(cp,'plotMaxVal',ci)
 
         self.intensityScaleFactor = splitconf(cp,'intensityScaleFactor',ci,fallback=1.)
         self.lowerthres = splitconf(cp,'lowerthres',ci)
-
 #%% check FOV and 1D cut sizes for sanity
         self.fovmaxlen = splitconf(cp,'FOVmaxLengthKM',ci,fallback=nan)
 
