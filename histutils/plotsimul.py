@@ -47,7 +47,7 @@ def plotPlainImg(sim,cam,rawdata,t,odir):
 def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
     """
     sim: histfeas/simclass.py
-    cam: histfeas/camclass.py
+    cam: camclass.py
     rawdata: nframe x ny x nx ndarray
     t: integer index to read
     odir: output directory (where to write results)
@@ -94,6 +94,8 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
 
         if i==0:
             axs[0].set_ylabel(datetime.strftime(T[0],'%x')).set_color('limegreen')
+
+            # NOTE: commented out due to Matplotlib 1.x bugs
             #fg.suptitle(datetime.strftime(T[0],'%x')) #makes giant margins that tight_layout doesn't help, bug
             #fg.text(0.5,0.15,datetime.strftime(T[0],'%x'))#, va='top',ha='center') #bug too
             #fg.tight_layout()
