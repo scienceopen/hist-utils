@@ -14,6 +14,7 @@ from histutils import Path
 from sys import argv
 from numpy import int64
 #
+from histutils import dir2fn
 from histutils.rawDMCreader import goRead
 from histutils.vid2h5 import vid2h5
 from histutils.plots import doPlayMovie,doplotsave
@@ -87,4 +88,4 @@ if __name__ == "__main__":
     p.add_argument('--headerbytes',help='number of header bytes: 2013-2016: 4  2011: 0',type=int,default=4)
     p = p.parse_args()
 
-    rawImgData,rawind,finf = dmclooper(p)
+    dmclooper(p)
