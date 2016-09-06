@@ -19,7 +19,7 @@ try:
 except ImportError: #Python 2
     from psutil import disk_usage
 #
-from . import Path,req2frame,dir2fn,getRawInd
+from . import Path,req2frame,dir2fn,getRawInd,meta2rawInd
 from dmcutils.h5imgwriter import setupimgh5,imgwriteincr
 from .timedmc import frame2ut1,ut12frame
 #
@@ -34,12 +34,12 @@ def goRead(fn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC
 
     fn = Path(fn).expanduser()
     ext = fn.suffix
-
+#%% optional output file setup
     outfn = dir2fn(outfn,fn,'.h5')
-
-    freeout =  disk_usage(str(outfn.parent)).free
-    if freeout < 10e9 or freeout < 10*fn.stat().st_size:
-        raise RuntimeError('out of disk space on {}'.format(outfn.parent))
+    if outfn:
+        freeout =  disk_usage(str(outfn.parent)).free
+        if freeout < 10e9 or freeout < 10*fn.stat().st_size:
+            raise RuntimeError('out of disk space on {}'.format(outfn.parent))
 #%% setup data parameters
     if ext in ('.DMCdata','.dat'):
         # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
@@ -262,7 +262,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     except ValueError as e:
         raise ValueError('we may have read past end of file?  {}'.format(e))
 
-    rawFrameInd = gri.meta2rawInd(f,finf['nmetadata'])
+    rawFrameInd = meta2rawInd(f,finf['nmetadata'])
 
     if rawFrameInd is None: #2011 no metadata file
         rawFrameInd = iFrm+1 #fallback
