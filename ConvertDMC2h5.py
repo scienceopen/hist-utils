@@ -17,7 +17,6 @@ from numpy import int64
 from histutils.rawDMCreader import goRead
 from histutils.vid2h5 import vid2h5
 from histutils.plots import doPlayMovie,doplotsave
-from histutils.common import dir2fn
 
 def dmclooper(p):
     cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}

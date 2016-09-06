@@ -10,7 +10,6 @@ except Exception as e:
 setup(name='histutils',
       packages=['histutils'],
 	  description='utilities for the HiST auroral tomography system',
-	  author='Michael Hirsch',
 	  url='https://github.com/scienceopen/histutils',
 	  install_requires=['tifffile','pathvalidate',
 			            'pymap3d','dmcutils'],

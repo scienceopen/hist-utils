@@ -9,7 +9,6 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
  """
 import logging
 import re
-from . import Path
 from dateutil.parser import parse
 from numpy import int64,uint16,zeros,arange,fromfile
 from re import search
@@ -20,10 +19,9 @@ try:
 except ImportError: #Python 2
     from psutil import disk_usage
 #
+from . import Path,req2frame,dir2fn,getRawInd
 from dmcutils.h5imgwriter import setupimgh5,imgwriteincr
 from .timedmc import frame2ut1,ut12frame
-from . import getRawInd as gri
-from .common import req2frame,dir2fn
 #
 try:
     import tifffile
@@ -110,7 +108,7 @@ def getDMCparam(fn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,star
 
     PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
 
-    (firstRawInd,lastRawInd) = gri.getRawInd(fn,BytesPerImage,nHeadBytes,Nmetadata)
+    (firstRawInd,lastRawInd) = getRawInd(fn,BytesPerImage,nHeadBytes,Nmetadata)
 
     FrameIndRel = whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd,
                               BytesPerImage,BytesPerFrame,verbose)
