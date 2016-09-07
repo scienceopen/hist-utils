@@ -17,7 +17,6 @@ Michael Hirsch
 GPLv3+
 """
 from __future__ import division,absolute_import
-import logging
 from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty,
                    unravel_index,ma,nanargmin)
 #from bisect import bisect
@@ -25,11 +24,13 @@ from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty,
 from pymap3d.haversine import angledist
 
 def find_nearest(x,x0):
+    """
+    x can also be an h5py dataset
+    """
     x = asanyarray(x) #for indexing upon return
     x0 = atleast_1d(x0)
     if x.size==0 or x0.size==0:
-        logging.error('empty input(s)')
-        return None, None
+        raise RuntimeError('empty input(s)')
 
     ind = empty_like(x0,dtype=int)
 
@@ -53,6 +54,7 @@ def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
     nearRow = []; nearCol=[]
     # can be FAR FAR faster than scipy.spatial.distance.cdist()
     for apts,epts in zip(azpts,elpts): #list of arrays or 2-D array
+        apts = atleast_1d(apts); epts = atleast_1d(epts) # needed
         assert apts.size==epts.size
         r = empty(apts.size,dtype=int); c = empty(apts.size,dtype=int)
         for i,(apt,ept) in enumerate(zip(apts,epts)):
