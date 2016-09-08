@@ -15,7 +15,7 @@ from pymap3d.azel2radec import azel2radec
 from pymap3d.coordconv3d import aer2ecef
 from dascutils.readDASCfits import readDASC
 from themisasi.fov import mergefov
-from .plots import plotnear_rc
+from .plots import plotnear_rc, plotlsq_rc
 
 class Cam: #use this like an advanced version of Matlab struct
     """
@@ -283,6 +283,8 @@ class Cam: #use this like an advanced version of Matlab struct
         with h5py.File(str(self.cal1Dfn),'r',libver='latest') as f:
             az = f['az'][()]
             el = f['el'][()]
+            ra = f['ra'][()]
+            dec= f['dec'][()]
 
         assert az.ndim == el.ndim == 2
         assert az.shape == el.shape
@@ -291,21 +293,31 @@ class Cam: #use this like an advanced version of Matlab struct
             logging.debug('tranposing cam #{} az/el data. '.format(self.name))
             az  = az.T
             el  = el.T
+            ra  = ra.T
+            dec = dec.T
         if self.fliplr:
             logging.debug('flipping horizontally cam #{} az/el data.'.format(self.name))
             az  = fliplr(az)
             el  = fliplr(el)
+            ra  = fliplr(ra)
+            dec = fliplr(dec)
         if self.flipud:
             logging.debug('flipping vertically cam #{} az/el data.'.format(self.name))
             az  = flipud(az)
             el  = flipud(el)
+            ra  = flipud(ra)
+            dec = flipud(dec)
         if self.rotccw != 0:
             logging.debug('rotating cam #{} az/el data.'.format(self.name))
             az  = rot90(az, k = self.rotccw)
             el  = rot90(el, k = self.rotccw)
+            ra  = rot90(ra, k = self.rotccw)
+            dec = rot90(dec,k = self.rotccw)
 
         self.az = az
         self.el = el
+        self.ra = ra
+        self.dec= dec
 
 
     def debias(self,data):
@@ -374,16 +386,16 @@ class Cam: #use this like an advanced version of Matlab struct
 
         return data
 
-    def findLSQ(self,nearrow,nearcol):
+    def findLSQ(self,nearrow,nearcol,odir):
         polycoeff = polyfit(nearcol,nearrow,deg=1,full=False)
-        #columns (x)  to cut from picture
-        cutcol = arange(self.superx, dtype=int) #not range, NEED dtype= for arange api
-        #rows (y) to cut from picture
+#%% columns (x)  to cut from picture
+        # NOT range, NEED dtype= for arange api
+        cutcol = arange(self.superx, dtype=int)
+#%% rows (y) to cut from picture
         cutrow = rint(polyval(polycoeff,cutcol)).astype(int)
         assert (cutrow>=0).all() and (cutrow<self.supery).all(),'impossible least squares fit for 1-D cut\n is your video orientation correct? check the params of video hdf5 file'
         # DONT DO THIS: cutrow.clip(0,self.supery,cutrow)
-
-        #angle from magnetic zenith corresponding to those pixels
+#%% angle from magnetic zenith corresponding to those pixels
         rapix =  self.ra[cutrow, cutcol]
         decpix = self.dec[cutrow, cutcol]
         raMagzen,decMagzen = azel2radec(self.Baz,self.Bel,self.lat,self.lon,self.Bepoch)
@@ -392,8 +404,7 @@ class Cam: #use this like an advanced version of Matlab struct
         angledist = angular_separation(raMagzen*u.deg, decMagzen*u.deg,
                                        rapix*u.deg,    decpix*u.deg)
         angledist = angledist.to(u.deg).value
-
-        # put distances into a 90-degree fan beam
+#%% put distances into a 90-degree fan beam
         angle_deg = empty(self.superx, float)
         MagZenInd = angledist.argmin() # whether minimum angle distance from MZ is slightly positive or slightly negative, this should be OK
 
@@ -406,23 +417,9 @@ class Cam: #use this like an advanced version of Matlab struct
         self.cutcol = cutcol
 
         if self.verbose:
-            from matplotlib.pyplot import figure
-            clr = ['b','r','g','m']
-            ax=figure().gca()
-            ax.plot(cutcol,cutrow,color=clr[self.name],
-                    label=self.name, linestyle='-')
-            ax.legend()
-            ax.set_xlabel('x'); ax.set_ylabel('y')
-            ax.set_title('polyfit with computed ray points')
+            plotlsq_rc(cutrow,cutcol,angle_deg,self.name,odir)
 
-            ax =figure().gca()
-            ax.plot(angle_deg,color=clr[self.name],label='cam {}'.format(self.name),
-                    linestyle='None',marker='.')
-            ax.legend()
-            ax.set_xlabel('x-pixel'); ax.set_ylabel('$\theta$ [deg.]')
-            ax.set_title('angle from magnetic zenith $\theta$')
-
-    def findClosestAzel(self):
+    def findClosestAzel(self,odir=None):
         assert self.az.shape ==  self.el.shape
         assert self.az2pts.shape == self.el2pts.shape
         assert self.az.ndim == 2
@@ -450,8 +447,8 @@ class Cam: #use this like an advanced version of Matlab struct
         C = C[mask]
 #%%
         if self.verbose:
-            plotnear_rc(R,C,self.name,self.az.shape)
+            plotnear_rc(R,C,self.name,self.az.shape,odir)
 #%% least squares fit 1-D line
-        self.findLSQ(R, C)
+        self.findLSQ(R, C,odir)
 
 

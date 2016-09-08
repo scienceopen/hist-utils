@@ -156,16 +156,46 @@ def plotLOSecef(cam,odir):
         print('saving {}'.format(kmlfn))
         kml1d.savekmz(str(kmlfn))
 
-def plotnear_rc(R,C,name,shape):
-
-    clr = ['b','r','g','m']
-    ax = figure().gca()
+def plotnear_rc(R,C,name,shape,odir):
+    fg = figure()
+    ax = fg.gca()
     ax.plot(C, R,
-            color=clr[name],
-            label='cam{} preLSQ'.format(name),
+            label='cam{}'.format(name),
             linestyle='None',marker='.')
     ax.legend()
     ax.set_xlabel('x'); ax.set_ylabel('y')
     #ax.set_title('pixel indices (pre-least squares)')
     ax.set_xlim([0, shape[1]])
     ax.set_ylim([0, shape[0]])
+    ax.set_title('pre-LSQ fit indices to extract')
+
+    if odir:
+        ofn = odir / 'prelsq_cam{}'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+
+def plotlsq_rc(R,C,angle,name,odir):
+#%% indices
+    fg = figure()
+    ax = fg.gca()
+    ax.plot(C, R,
+            label='cam{}'.format(name),
+            linestyle='-')
+    ax.legend()
+    ax.set_xlabel('x'); ax.set_ylabel('y')
+    ax.set_title('polyfit with computed ray points')
+#%% angles
+    ax =figure().gca()
+    ax.plot(angle,
+            label='cam{}'.format(name),
+            linestyle='None',
+            marker='.')
+    ax.legend()
+    ax.set_xlabel('x-pixel')
+    ax.set_ylabel('$\theta$ [deg.]')
+    ax.set_title('angle from magnetic zenith $\theta$')
+#%%
+    if odir:
+        ofn = odir / 'lsq_cam{}'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')

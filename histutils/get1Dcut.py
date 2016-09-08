@@ -32,7 +32,7 @@ def get1Dcut(cam,odir,verbose):
         # and Least squares fit line to nearest points found in step 3
     for C in cam:
         if C.usecam:
-            C.findClosestAzel()
+            C.findClosestAzel(odir)
 #%%
     if verbose and odir:
         dbgfn = odir / 'debugLSQ.h5'
