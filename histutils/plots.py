@@ -3,10 +3,18 @@ from . import Path
 from numpy import uint16
 from datetime import datetime
 from pytz import UTC
+try:
+    import simplekml as skml
+except ImportError:
+    skml = None
+#
+from mpl_toolkits.mplot3d import Axes3D #needed for this file
 from matplotlib.pyplot import figure, hist, draw, pause
 from matplotlib.colors import LogNorm
 #from matplotlib.ticker import ScalarFormatter
 #import matplotlib.animation as anim
+#
+from pymap3d.coordconv3d import ecef2geodetic
 
 def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
     if not playMovie or data is None:
@@ -104,3 +112,43 @@ def animate(i,data,himg,ht):
     #plt.pause(0.01)
     #plt.show(False) #breaks (won't play)
     return himg,ht
+
+def plotLOSecef(cam,odir):
+
+    fg = figure()
+    clr = ['b','r','g','m']
+
+    if odir and skml is not None:
+        kml1d = skml.Kml()
+
+    for c in cam:
+        ax = fg.gca(projection='3d')
+        ax.plot(xs=c.x2mz, ys=c.y2mz, zs=c.z2mz, zdir='z',
+                    color=clr[c.name], label=str(c.name))
+        ax.set_title('LOS to magnetic zenith')
+
+        if odir and skml is not None: #Write KML
+            #convert LOS ECEF -> LLA
+            loslat,loslon,losalt = ecef2geodetic(c.x2mz, c.y2mz, c.z2mz)
+            kclr = ['ff5c5ccd','ffff0000']
+            #camera location points
+            bpnt = kml1d.newpoint(name='HST {}'.format(c.name),
+                                  description='camera {} location'.format(c),
+                                  coords=[(c.lon, c.lat)])
+            bpnt.altitudemode = skml.AltitudeMode.clamptoground
+            bpnt.style.iconstyle.icon.href = 'http://maps.google.com/mapfiles/kml/paddle/pink-blank.png'
+            bpnt.style.iconstyle.scale = 2.0
+            #show cam to mag zenith los
+            linestr = kml1d.newlinestring(name='')
+            #TODO this is only first and last point without middle!
+            linestr.coords = [(loslon[0],   loslat[0],  losalt[0]),
+                              (loslon[-1], loslat[-1], losalt[-1])]
+            linestr.altitudemode = skml.AltitudeMode.relativetoground
+            linestr.style.linestyle.color = kclr[c.name]
+
+
+    ax.legend()
+    if odir and skml is not None:
+        kmlfn = odir / 'debug1dcut.kmz'
+        print('saving {}'.format(kmlfn))
+        kml1d.savekmz(str(kmlfn))

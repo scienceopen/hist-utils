@@ -275,35 +275,38 @@ class Cam: #use this like an advanced version of Matlab struct
                 raise ValueError('ndim==2 or 3')
         return frame
 
-    def doorient(self,az,el,ra,dec):
+    def doorient(self):
+        """
+        NOTE: we need to retrieve values in case no modifications are done.
+        (since we'd get a closed h5py handle)
+        """
+        with h5py.File(str(self.cal1Dfn),'r',libver='latest') as f:
+            az = f['az'][()]
+            el = f['el'][()]
+
+        assert az.ndim == el.ndim == 2
+        assert az.shape == el.shape
+
         if self.transpose:
-            logging.debug('tranposing cam #{} az/el/ra/dec data. '.format(self.name))
+            logging.debug('tranposing cam #{} az/el data. '.format(self.name))
             az  = az.T
             el  = el.T
-            ra  = ra.T
-            dec = dec.T
         if self.fliplr:
-            logging.debug('flipping horizontally cam #{} az/el/ra/dec data.'.format(self.name))
+            logging.debug('flipping horizontally cam #{} az/el data.'.format(self.name))
             az  = fliplr(az)
             el  = fliplr(el)
-            ra  = fliplr(ra)
-            dec = fliplr(dec)
         if self.flipud:
-            logging.debug('flipping vertically cam #{} az/el/ra/dec data.'.format(self.name))
+            logging.debug('flipping vertically cam #{} az/el data.'.format(self.name))
             az  = flipud(az)
             el  = flipud(el)
-            ra  = flipud(ra)
-            dec = flipud(dec)
         if self.rotccw != 0:
-            logging.debug('rotating cam #{} az/el/ra/dec data.'.format(self.name))
+            logging.debug('rotating cam #{} az/el data.'.format(self.name))
             az  = rot90(az, k = self.rotccw)
             el  = rot90(el, k = self.rotccw)
-            ra  = rot90(ra, k = self.rotccw)
-            dec = rot90(dec,k = self.rotccw)
+
         self.az = az
         self.el = el
-        self.ra = ra
-        self.dec = dec
+
 
     def debias(self,data):
         if hasattr(self,'debiasData') and self.debiasData is not None and isfinite(self.debiasData):
