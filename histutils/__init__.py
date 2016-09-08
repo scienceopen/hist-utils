@@ -4,8 +4,8 @@ try:
 except (ImportError,AttributeError):
     from pathlib2 import Path
 #
-from . import Path
-from six import integer_types
+from six.moves.configparser import ConfigParser,SectionProxy
+from six import string_types, integer_types
 from numpy import arange,int64,fromfile,uint16
 import logging
 from struct import pack,unpack
@@ -91,3 +91,46 @@ def dir2fn(ofn,ifn,suffix):
         pass
 
     return ofn
+
+def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
+    if conf is None:
+        return fallback
+
+    if isinstance(conf, (ConfigParser,SectionProxy)):
+        pass
+    elif isinstance(conf,dict):
+        try:
+            return conf[key][i]
+        except TypeError:
+            return conf[key]
+        except KeyError:
+            return fallback
+    else:
+        raise TypeError('expecting dict or configparser')
+
+
+    if i is not None:
+        assert isinstance(i,(int,slice)),'single integer index only'
+
+    if isinstance(key,(tuple,list)):
+        if len(key)>1: #drilldown
+            return splitconf(conf[key[0]],key[1:],i,dtype,fallback,sep)
+        else:
+            return splitconf(conf,key[0],i,dtype,fallback,sep)
+    elif isinstance(key,string_types):
+        val = conf.get(key,fallback=fallback)
+    else:
+        raise TypeError('invalid key type {}'.format(type(key)))
+
+    try:
+        return dtype(val.split(sep)[i])
+    except (ValueError,AttributeError,IndexError):
+        return fallback
+    except TypeError:
+        if i is None:
+            try:
+                return [dtype(v) for v in val.split(sep)] #return list of all values instead of just one
+            except ValueError:
+                return fallback
+        else:
+            return fallback

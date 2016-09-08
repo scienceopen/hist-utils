@@ -1,6 +1,4 @@
 from . import Path
-from six.moves.configparser import ConfigParser,SectionProxy
-from six import string_types
 import logging
 from numpy import (linspace, fliplr, flipud, rot90, arange,
                    polyfit,polyval,rint,empty, isfinite, isclose,
@@ -12,10 +10,12 @@ import h5py
 from astropy.coordinates.angle_utilities import angular_separation
 from astropy import units as u
 #
+from . import splitconf
 from pymap3d.azel2radec import azel2radec
 from pymap3d.coordconv3d import aer2ecef
 from dascutils.readDASCfits import readDASC
 from themisasi.fov import mergefov
+from .plots import plotnear_rc
 
 class Cam: #use this like an advanced version of Matlab struct
     """
@@ -405,7 +405,7 @@ class Cam: #use this like an advanced version of Matlab struct
         self.cutrow = cutrow
         self.cutcol = cutcol
 
-        if self.verbose>0:
+        if self.verbose:
             from matplotlib.pyplot import figure
             clr = ['b','r','g','m']
             ax=figure().gca()
@@ -428,79 +428,30 @@ class Cam: #use this like an advanced version of Matlab struct
         assert self.az.ndim == 2
 
         npts = self.az2pts.size  #numel
-        nearRow = empty(npts,int)
-        nearCol = empty(npts,int)
+        R = empty(npts,int)
+        C = empty(npts,int)
         # can be FAR FAR faster than scipy.spatial.distance.cdist()
         for i in range(npts):
             #we do this point by point because we need to know the closest pixel for each point
             errdist = absolute( hypot(self.az - self.az2pts[i],
                                       self.el - self.el2pts[i]) )
 
-    # ********************************************
-    # THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
-            nearRow[i],nearCol[i] = unravel_index(errdist.argmin(), self.az.shape, order='C')
-    #************************************************
+            """
+            THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
+            .argmin() has flattened output
+            """
+            R[i], C[i] = unravel_index(errdist.argmin(), self.az.shape, order='C')
 
 #%% dicard edge pixels
-        mask = ~(((nearCol==0) | (nearCol == self.az.shape[1]-1)) |
-                 ((nearRow==0) | (nearRow == self.az.shape[0]-1)))
+        mask = ~(((C==0) | (C == self.az.shape[1]-1)) |
+                 ((R==0) | (R == self.az.shape[0]-1)))
 
-        nearRow = nearRow[mask]
-        nearCol = nearCol[mask]
-
-        self.findLSQ(nearRow, nearCol)
-
-        if self.verbose>0:
-            from matplotlib.pyplot import figure
-            clr = ['b','r','g','m']
-            ax = figure().gca()
-            ax.plot(nearCol,nearRow,color=clr[int(self.name)],label='cam{}preLSQ'.format(self.name),
-                    linestyle='None',marker='.')
-            ax.legend()
-            ax.set_xlabel('x'); ax.set_ylabel('y')
-            #ax.set_title('pixel indices (pre-least squares)')
-            ax.set_xlim([0,self.az.shape[1]])
-            ax.set_ylim([0,self.az.shape[0]])
-
-def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
-    if conf is None:
-        return fallback
-
-    if isinstance(conf, (ConfigParser,SectionProxy)):
-        pass
-    elif isinstance(conf,dict):
-        try:
-            return conf[key][i]
-        except TypeError:
-            return conf[key]
-        except KeyError:
-            return fallback
-    else:
-        raise TypeError('expecting dict or configparser')
+        R = R[mask]
+        C = C[mask]
+#%%
+        if self.verbose:
+            plotnear_rc(R,C,self.name,self.az.shape)
+#%% least squares fit 1-D line
+        self.findLSQ(R, C)
 
 
-    if i is not None:
-        assert isinstance(i,(int,slice)),'single integer index only'
-
-    if isinstance(key,(tuple,list)):
-        if len(key)>1: #drilldown
-            return splitconf(conf[key[0]],key[1:],i,dtype,fallback,sep)
-        else:
-            return splitconf(conf,key[0],i,dtype,fallback,sep)
-    elif isinstance(key,string_types):
-        val = conf.get(key,fallback=fallback)
-    else:
-        raise TypeError('invalid key type {}'.format(type(key)))
-
-    try:
-        return dtype(val.split(sep)[i])
-    except (ValueError,AttributeError,IndexError):
-        return fallback
-    except TypeError:
-        if i is None:
-            try:
-                return [dtype(v) for v in val.split(sep)] #return list of all values instead of just one
-            except ValueError:
-                return fallback
-        else:
-            return fallback

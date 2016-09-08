@@ -121,20 +121,23 @@ def plotLOSecef(cam,odir):
     if odir and skml is not None:
         kml1d = skml.Kml()
 
-    for c in cam:
+    for C in cam:
+        if not C.usecam:
+            continue
+
         ax = fg.gca(projection='3d')
-        ax.plot(xs=c.x2mz, ys=c.y2mz, zs=c.z2mz, zdir='z',
-                    color=clr[c.name], label=str(c.name))
+        ax.plot(xs=C.x2mz, ys=C.y2mz, zs=C.z2mz, zdir='z',
+                    color=clr[C.name], label=str(C.name))
         ax.set_title('LOS to magnetic zenith')
 
         if odir and skml is not None: #Write KML
             #convert LOS ECEF -> LLA
-            loslat,loslon,losalt = ecef2geodetic(c.x2mz, c.y2mz, c.z2mz)
+            loslat,loslon,losalt = ecef2geodetic(C.x2mz, C.y2mz, C.z2mz)
             kclr = ['ff5c5ccd','ffff0000']
             #camera location points
-            bpnt = kml1d.newpoint(name='HST {}'.format(c.name),
-                                  description='camera {} location'.format(c),
-                                  coords=[(c.lon, c.lat)])
+            bpnt = kml1d.newpoint(name='HST {}'.format(C.name),
+                                  description='camera {} location'.format(C.name),
+                                  coords=[(C.lon, C.lat)])
             bpnt.altitudemode = skml.AltitudeMode.clamptoground
             bpnt.style.iconstyle.icon.href = 'http://maps.google.com/mapfiles/kml/paddle/pink-blank.png'
             bpnt.style.iconstyle.scale = 2.0
@@ -144,7 +147,7 @@ def plotLOSecef(cam,odir):
             linestr.coords = [(loslon[0],   loslat[0],  losalt[0]),
                               (loslon[-1], loslat[-1], losalt[-1])]
             linestr.altitudemode = skml.AltitudeMode.relativetoground
-            linestr.style.linestyle.color = kclr[c.name]
+            linestr.style.linestyle.color = kclr[C.name]
 
 
     ax.legend()
@@ -152,3 +155,17 @@ def plotLOSecef(cam,odir):
         kmlfn = odir / 'debug1dcut.kmz'
         print('saving {}'.format(kmlfn))
         kml1d.savekmz(str(kmlfn))
+
+def plotnear_rc(R,C,name,shape):
+
+    clr = ['b','r','g','m']
+    ax = figure().gca()
+    ax.plot(C, R,
+            color=clr[name],
+            label='cam{} preLSQ'.format(name),
+            linestyle='None',marker='.')
+    ax.legend()
+    ax.set_xlabel('x'); ax.set_ylabel('y')
+    #ax.set_title('pixel indices (pre-least squares)')
+    ax.set_xlim([0, shape[1]])
+    ax.set_ylim([0, shape[0]])

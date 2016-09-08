@@ -34,14 +34,14 @@ def get1Dcut(cam,odir,verbose):
         if C.usecam:
             C.findClosestAzel()
 #%%
-    if verbose>2 and odir:
+    if verbose and odir:
         dbgfn = odir / 'debugLSQ.h5'
         print('writing', dbgfn)
-        with h5py.File(str(dbgfn),'w',libver='latest') as fid:
+        with h5py.File(str(dbgfn),'w',libver='latest') as f:
             for C in cam:
-                fid.create_dataset('/cam{}/cutrow'.format(C.name), data= C.cutrow)
-                fid.create_dataset('/cam{}/cutcol'.format(C.name), data= C.cutcol)
-                fid.create_dataset('/cam{}/xpix'.format(C.name),   data= C.xpix)
+                f['/cam{}/cutrow'.format(C.name)] = C.cutrow
+                f['/cam{}/cutcol'.format(C.name)] = C.cutcol
+                f['/cam{}/xpix'.format(C.name)]   = C.xpix
     return cam
 
 
