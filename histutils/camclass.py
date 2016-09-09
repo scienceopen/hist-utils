@@ -2,7 +2,8 @@ from . import Path
 import logging
 from numpy import (linspace, fliplr, flipud, rot90, arange,
                    polyfit,polyval,rint,empty, isfinite, isclose,
-                   absolute, hypot, unravel_index,array,nan)
+                   absolute, hypot, unravel_index,array,nan,diff)
+from numpy.testing import assert_allclose
 from dateutil.parser import parse
 from scipy.signal import savgol_filter
 from numpy.random import poisson
@@ -415,6 +416,13 @@ class Cam: #use this like an advanced version of Matlab struct
         self.angleMagzenind = MagZenInd
         self.cutrow = cutrow
         self.cutcol = cutcol
+#%% meager self-check of result
+        if self.arbfox is not None:
+            expect_diffang = self.arbfov / self.ncutpix
+            diffang = diff(angle_deg)
+            diffoutlier = max(abs(expect_diffang-diffang.min()),abs(expect_diffang-diffang.max()))
+            assert_allclose(expect_diffang, diffang.mean(), rtol=0.01),'large bias in camera angle vector detected'
+            assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
 
         if self.verbose:
             plotlsq_rc(cutrow,cutcol,angle_deg,self.name,odir)

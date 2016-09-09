@@ -170,7 +170,7 @@ def plotnear_rc(R,C,name,shape,odir):
     ax.set_title('pre-LSQ fit indices to extract')
 
     if odir:
-        ofn = odir / 'prelsq_cam{}'.format(name)
+        ofn = odir / 'prelsq_cam{}.eps'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
 
@@ -184,20 +184,23 @@ def plotlsq_rc(R,C,angle,name,odir):
     ax.legend()
     ax.set_xlabel('x'); ax.set_ylabel('y')
     ax.set_title('polyfit with computed ray points')
+    ax.autoscale(True,'x',True)
 
     if odir:
-        ofn = odir / 'lsq_cam{}'.format(name)
+        ofn = odir / 'lsq_cam{}.eps'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
 #%% angles
     fg,axs = subplots(2,1)
+    fg.suptitle('camera {}'.format(name))
     ax = axs[0]
 
     ax.plot(angle)
 
     ax.set_xlabel('x-pixel')
     ax.set_ylabel(r'$\theta$ [deg.]')
-    ax.set_title('angle from magnetic zenith $\theta$')
+    ax.set_title(r'angle from magnetic zenith $\theta$')
+    ax.autoscale(True,'x',True)
 
     ax = axs[1]
 
@@ -205,9 +208,10 @@ def plotlsq_rc(R,C,angle,name,odir):
 
     ax.set_xlabel('x-pixel')
     ax.set_ylabel(r'$\theta$ [deg.]')
-    ax.set_title('angle from magnetic zenith $\theta$')
+    ax.set_title(r'angle from magnetic zenith $\theta$')
+    ax.autoscale(True,'x',True)
 
     if odir:
-        ofn = odir / 'angles_cam{}'.format(name)
+        ofn = odir / 'angles_cam{}.eps'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
