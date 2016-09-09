@@ -1,7 +1,7 @@
 from numpy import logspace
 import h5py
 #
-from pymap3d.coordconv3d import ecef2aer
+from pymap3d import ecef2aer
 from .plots import plotLOSecef
 
 def get1Dcut(cam,odir,verbose):

@@ -14,7 +14,7 @@ from matplotlib.colors import LogNorm
 #from matplotlib.ticker import ScalarFormatter
 #import matplotlib.animation as anim
 #
-from pymap3d.coordconv3d import ecef2geodetic
+from pymap3d import ecef2geodetic
 
 def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
     if not playMovie or data is None:

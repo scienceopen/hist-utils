@@ -12,8 +12,7 @@ from astropy.coordinates.angle_utilities import angular_separation
 from astropy import units as u
 #
 from . import splitconf
-from pymap3d.azel2radec import azel2radec
-from pymap3d.coordconv3d import aer2ecef
+from pymap3d import azel2radec, aer2ecef
 from dascutils.readDASCfits import readDASC
 from themisasi.fov import mergefov
 from .plots import plotnear_rc, plotlsq_rc
@@ -397,13 +396,12 @@ class Cam: #use this like an advanced version of Matlab struct
         assert (cutrow>=0).all() and (cutrow<self.supery).all(),'impossible least squares fit for 1-D cut\n is your video orientation correct? check the params of video hdf5 file'
         # DONT DO THIS: cutrow.clip(0,self.supery,cutrow)
 #%% angle from magnetic zenith corresponding to those pixels
-        rapix =  self.ra[cutrow, cutcol]
-        decpix = self.dec[cutrow, cutcol]
-        raMagzen,decMagzen = azel2radec(self.Baz,self.Bel,self.lat,self.lon,self.Bepoch)
-        logging.info('mag. zen. ra/dec {} {}'.format(raMagzen,decMagzen))
+        radecMagzen = azel2radec(self.Baz,self.Bel,self.lat,self.lon,self.Bepoch)
+        assert len(radecMagzen) == 2
+        logging.info('mag. zen. ra,dec {}'.format(radecMagzen))
 
-        angledist = angular_separation(raMagzen*u.deg, decMagzen*u.deg,
-                                       rapix*u.deg,    decpix*u.deg)
+        angledist = angular_separation(radecMagzen[0]*u.deg,                radecMagzen[1]*u.deg,
+                                       self.ra[cutrow, cutcol]*u.deg, self.dec[cutrow, cutcol])
         angledist = angledist.to(u.deg).value
 #%% put distances into a 90-degree fan beam
         angle_deg = empty(self.superx, float)
@@ -420,7 +418,8 @@ class Cam: #use this like an advanced version of Matlab struct
         if self.arbfox is not None:
             expect_diffang = self.arbfov / self.ncutpix
             diffang = diff(angle_deg)
-            diffoutlier = max(abs(expect_diffang-diffang.min()),abs(expect_diffang-diffang.max()))
+            diffoutlier = max(abs(expect_diffang-diffang.min()),
+                              abs(expect_diffang-diffang.max()))
             assert_allclose(expect_diffang, diffang.mean(), rtol=0.01),'large bias in camera angle vector detected'
             assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
 
@@ -428,7 +427,7 @@ class Cam: #use this like an advanced version of Matlab struct
             plotlsq_rc(cutrow,cutcol,angle_deg,self.name,odir)
 
     def findClosestAzel(self,odir=None):
-        assert self.az.shape ==  self.el.shape
+        assert self.az.shape     == self.el.shape
         assert self.az2pts.shape == self.el2pts.shape
         assert self.az.ndim == 2
 
