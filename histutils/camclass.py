@@ -400,8 +400,8 @@ class Cam: #use this like an advanced version of Matlab struct
         assert len(radecMagzen) == 2
         logging.info('mag. zen. ra,dec {}'.format(radecMagzen))
 
-        angledist = angular_separation(radecMagzen[0]*u.deg,                radecMagzen[1]*u.deg,
-                                       self.ra[cutrow, cutcol]*u.deg, self.dec[cutrow, cutcol])
+        angledist = angular_separation(radecMagzen[0]         *u.deg,           radecMagzen[1]*u.deg,
+                                       self.ra[cutrow, cutcol]*u.deg, self.dec[cutrow, cutcol]*u.deg)
         angledist = angledist.to(u.deg).value
 #%% put distances into a 90-degree fan beam
         angle_deg = empty(self.superx, float)
@@ -415,16 +415,19 @@ class Cam: #use this like an advanced version of Matlab struct
         self.cutrow = cutrow
         self.cutcol = cutcol
 #%% meager self-check of result
-        if self.arbfox is not None:
+        if self.arbfov is not None:
             expect_diffang = self.arbfov / self.ncutpix
             diffang = diff(angle_deg)
             diffoutlier = max(abs(expect_diffang-diffang.min()),
                               abs(expect_diffang-diffang.max()))
             assert_allclose(expect_diffang, diffang.mean(), rtol=0.01),'large bias in camera angle vector detected'
-            assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
+            #assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
 
         if self.verbose:
-            plotlsq_rc(cutrow,cutcol,angle_deg,self.name,odir)
+            plotlsq_rc(cutrow,cutcol,
+                       self.ra[cutrow, cutcol],
+                       self.dec[cutrow,cutcol],
+                       angle_deg,self.name,odir)
 
     def findClosestAzel(self,odir=None):
         assert self.az.shape     == self.el.shape

@@ -160,21 +160,20 @@ def plotnear_rc(R,C,name,shape,odir):
     fg = figure()
     ax = fg.gca()
     ax.plot(C, R,
-            label='cam{}'.format(name),
             linestyle='None',marker='.')
-    ax.legend()
+
     ax.set_xlabel('x'); ax.set_ylabel('y')
     #ax.set_title('pixel indices (pre-least squares)')
     ax.set_xlim([0, shape[1]])
     ax.set_ylim([0, shape[0]])
-    ax.set_title('pre-LSQ fit indices to extract')
+    ax.set_title('camera {} pre-LSQ fit indices to extract'.format(name))
 
     if odir:
         ofn = odir / 'prelsq_cam{}.eps'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
 
-def plotlsq_rc(R,C,angle,name,odir):
+def plotlsq_rc(R,C,ra,dec,angle,name,odir):
 #%% indices
     fg = figure()
     ax = fg.gca()
@@ -190,25 +189,54 @@ def plotlsq_rc(R,C,angle,name,odir):
         ofn = odir / 'lsq_cam{}.eps'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
-#%% angles
-    fg,axs = subplots(2,1)
-    fg.suptitle('camera {}'.format(name))
-    ax = axs[0]
+#%% ra/dec
+    fg,axs = subplots(2,1,sharex=True)
+    fg.suptitle('camera {} ra/dec extracted'.format(name))
 
+    ax = axs[0]
+    ax.plot(ra)
+    ax.set_ylabel('right asc.')
+    ax.autoscale(True,'x',True)
+
+    ax2 = ax.twinx()
+    ax2.plot(diff(ra),color='r')
+    ax2.set_ylabel('diff(ra)', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+
+    ax = axs[1]
+    ax.plot(dec)
+    ax.set_ylabel('decl.')
+
+    ax2 = ax.twinx()
+    ax2.plot(diff(dec),color='r')
+    ax2.set_ylabel('diff(dec)', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+
+    if odir:
+        ofn = odir / 'radec_cam{}.eps'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+#%% angles
+    fg,axs = subplots(2,1,sharex=True)
+    fg.suptitle('camera {} angle from '.format(name))
+
+    ax = axs[0]
     ax.plot(angle)
 
-    ax.set_xlabel('x-pixel')
+#    ax.set_xlabel('x-pixel')
     ax.set_ylabel(r'$\theta$ [deg.]')
     ax.set_title(r'angle from magnetic zenith $\theta$')
-    ax.autoscale(True,'x',True)
+
 
     ax = axs[1]
 
     ax.plot(diff(angle))
 
     ax.set_xlabel('x-pixel')
-    ax.set_ylabel(r'$\theta$ [deg.]')
-    ax.set_title(r'angle from magnetic zenith $\theta$')
+    ax.set_ylabel(r'$\frac{d}{d\theta}$ [deg.]')
+    ax.set_title(r'$\frac{d}{d\theta}$')
     ax.autoscale(True,'x',True)
 
     if odir:
