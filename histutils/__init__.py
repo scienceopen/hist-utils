@@ -96,9 +96,9 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
     if conf is None:
         return fallback
 
-    if isinstance(conf, (ConfigParser,SectionProxy)):
-        pass
-    elif isinstance(conf,dict):
+    #if isinstance(conf, (ConfigParser,SectionProxy)):
+   #     pass
+    if isinstance(conf,dict):
         try:
             return conf[key][i]
         except TypeError:
@@ -106,7 +106,8 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
         except KeyError:
             return fallback
     else:
-        raise TypeError('expecting dict or configparser')
+        pass
+        #raise TypeError('expecting dict or configparser')
 
 
     if i is not None:
