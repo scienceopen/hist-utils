@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from . import Path
-from numpy import uint16
+from numpy import uint16,diff
 from datetime import datetime
 from pytz import UTC
 try:
@@ -9,7 +9,7 @@ except ImportError:
     skml = None
 #
 from mpl_toolkits.mplot3d import Axes3D #needed for this file
-from matplotlib.pyplot import figure, hist, draw, pause
+from matplotlib.pyplot import figure, subplots, hist, draw, pause
 from matplotlib.colors import LogNorm
 #from matplotlib.ticker import ScalarFormatter
 #import matplotlib.animation as anim
@@ -184,18 +184,30 @@ def plotlsq_rc(R,C,angle,name,odir):
     ax.legend()
     ax.set_xlabel('x'); ax.set_ylabel('y')
     ax.set_title('polyfit with computed ray points')
-#%% angles
-    ax =figure().gca()
-    ax.plot(angle,
-            label='cam{}'.format(name),
-            linestyle='None',
-            marker='.')
-    ax.legend()
-    ax.set_xlabel('x-pixel')
-    ax.set_ylabel('$\theta$ [deg.]')
-    ax.set_title('angle from magnetic zenith $\theta$')
-#%%
+
     if odir:
         ofn = odir / 'lsq_cam{}'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+#%% angles
+    fg,axs = subplots(2,1)
+    ax = axs[0]
+    ax.plot(angle,
+            label='cam{}'.format(name))
+    ax.legend()
+    ax.set_xlabel('x-pixel')
+    ax.set_ylabel(r'$\theta$ [deg.]')
+    ax.set_title('angle from magnetic zenith $\theta$')
+
+    ax = axs[1]
+    ax.plot(diff(angle),
+            label='cam{}'.format(name))
+    ax.legend()
+    ax.set_xlabel('x-pixel')
+    ax.set_ylabel(r'$\theta$ [deg.]')
+    ax.set_title('angle from magnetic zenith $\theta$')
+
+    if odir:
+        ofn = odir / 'angles_cam{}'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
