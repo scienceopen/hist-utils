@@ -192,17 +192,17 @@ def plotlsq_rc(R,C,angle,name,odir):
 #%% angles
     fg,axs = subplots(2,1)
     ax = axs[0]
-    ax.plot(angle,
-            label='cam{}'.format(name))
-    ax.legend()
+
+    ax.plot(angle)
+
     ax.set_xlabel('x-pixel')
     ax.set_ylabel(r'$\theta$ [deg.]')
     ax.set_title('angle from magnetic zenith $\theta$')
 
     ax = axs[1]
-    ax.plot(diff(angle),
-            label='cam{}'.format(name))
-    ax.legend()
+
+    ax.plot(diff(angle))
+
     ax.set_xlabel('x-pixel')
     ax.set_ylabel(r'$\theta$ [deg.]')
     ax.set_title('angle from magnetic zenith $\theta$')
