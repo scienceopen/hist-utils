@@ -4,7 +4,7 @@ try:
 except (ImportError,AttributeError):
     from pathlib2 import Path
 #
-from six.moves.configparser import ConfigParser,SectionProxy
+from six.moves.configparser import ConfigParser
 from six import string_types, integer_types
 from numpy import arange,int64,fromfile,uint16
 import logging
