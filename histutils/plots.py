@@ -214,30 +214,30 @@ def plotlsq_rc(R,C,ra,dec,angle,name,odir):
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
 
+    ax2.autoscale(True,'x',True)
+
     if odir:
         ofn = odir / 'radec_cam{}.eps'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
 #%% angles
-    fg,axs = subplots(2,1,sharex=True)
-    fg.suptitle('camera {} angle from '.format(name))
+    fg = figure()
+    ax = fg.gca()
 
-    ax = axs[0]
     ax.plot(angle)
-
-#    ax.set_xlabel('x-pixel')
+    ax.set_xlabel('x-pixel')
     ax.set_ylabel(r'$\theta$ [deg.]')
     ax.set_title(r'angle from magnetic zenith $\theta$')
-
-
-    ax = axs[1]
-
-    ax.plot(diff(angle))
-
-    ax.set_xlabel('x-pixel')
-    ax.set_ylabel(r'$\frac{d}{d\theta}$ [deg.]')
-    ax.set_title(r'$\frac{d}{d\theta}$')
     ax.autoscale(True,'x',True)
+
+
+    ax2 = ax.twinx()
+    ax2.plot(diff(angle),color='r')
+    ax2.set_ylabel(r'$\frac{d}{d\theta}$ [deg.]',color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+
+    ax2.autoscale(True,'x',True)
 
     if odir:
         ofn = odir / 'angles_cam{}.eps'.format(name)

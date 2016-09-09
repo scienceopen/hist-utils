@@ -8,11 +8,10 @@ from dateutil.parser import parse
 from scipy.signal import savgol_filter
 from numpy.random import poisson
 import h5py
-from astropy.coordinates.angle_utilities import angular_separation
-from astropy import units as u
 #
 from . import splitconf
 from pymap3d import azel2radec, aer2ecef
+from pymap3d.haversine import angledist,angledist_meeus
 from dascutils.readDASCfits import readDASC
 from themisasi.fov import mergefov
 from .plots import plotnear_rc, plotlsq_rc
@@ -400,15 +399,16 @@ class Cam: #use this like an advanced version of Matlab struct
         assert len(radecMagzen) == 2
         logging.info('mag. zen. ra,dec {}'.format(radecMagzen))
 
-        angledist = angular_separation(radecMagzen[0]         *u.deg,           radecMagzen[1]*u.deg,
-                                       self.ra[cutrow, cutcol]*u.deg, self.dec[cutrow, cutcol]*u.deg)
-        angledist = angledist.to(u.deg).value
+        if False:
+            angledist_deg = angledist(      radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
+        else:
+            angledist_deg = angledist_meeus(radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
 #%% put distances into a 90-degree fan beam
         angle_deg = empty(self.superx, float)
-        MagZenInd = angledist.argmin() # whether minimum angle distance from MZ is slightly positive or slightly negative, this should be OK
+        MagZenInd = angledist_deg.argmin() # whether minimum angle distance from MZ is slightly positive or slightly negative, this should be OK
 
-        angle_deg[MagZenInd:] = 90. + angledist[MagZenInd:]
-        angle_deg[:MagZenInd] = 90. - angledist[:MagZenInd]
+        angle_deg[MagZenInd:] = 90. + angledist_deg[MagZenInd:]
+        angle_deg[:MagZenInd] = 90. - angledist_deg[:MagZenInd]
 
         self.angle_deg = angle_deg
         self.angleMagzenind = MagZenInd
@@ -427,7 +427,7 @@ class Cam: #use this like an advanced version of Matlab struct
             plotlsq_rc(cutrow,cutcol,
                        self.ra[cutrow, cutcol],
                        self.dec[cutrow,cutcol],
-                       angle_deg,self.name,odir)
+                       angledist_deg,self.name,odir)
 
     def findClosestAzel(self,odir=None):
         assert self.az.shape     == self.el.shape
