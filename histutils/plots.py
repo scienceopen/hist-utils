@@ -173,7 +173,7 @@ def plotnear_rc(R,C,name,shape,odir):
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
 
-def plotlsq_rc(R,C,ra,dec,angle,name,odir):
+def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
 #%% indices
     fg = figure()
     ax = fg.gca()
@@ -184,6 +184,9 @@ def plotlsq_rc(R,C,ra,dec,angle,name,odir):
     ax.set_xlabel('x'); ax.set_ylabel('y')
     ax.set_title('polyfit with computed ray points')
     ax.autoscale(True,'x',True)
+
+    ax2 = ax.twinx()
+    ax2.plot(nC,nR,color='r',linestyle='none',marker='.')
 
     if odir:
         ofn = odir / 'lsq_cam{}.eps'.format(name)

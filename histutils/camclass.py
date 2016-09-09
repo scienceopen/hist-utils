@@ -399,9 +399,9 @@ class Cam: #use this like an advanced version of Matlab struct
         assert len(radecMagzen) == 2
         logging.info('mag. zen. ra,dec {}'.format(radecMagzen))
 
-        if False:
+        if False: #astropy
             angledist_deg = angledist(      radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
-        else:
+        else: #meeus
             angledist_deg = angledist_meeus(radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
 #%% put distances into a 90-degree fan beam
         angle_deg = empty(self.superx, float)
@@ -424,7 +424,7 @@ class Cam: #use this like an advanced version of Matlab struct
             #assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
 
         if self.verbose:
-            plotlsq_rc(cutrow,cutcol,
+            plotlsq_rc(nearrow,nearcol,cutrow,cutcol,
                        self.ra[cutrow, cutcol],
                        self.dec[cutrow,cutcol],
                        angledist_deg,self.name,odir)
