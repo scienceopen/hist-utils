@@ -403,31 +403,39 @@ class Cam: #use this like an advanced version of Matlab struct
             angledist_deg = angledist(      radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
         else: #meeus
             angledist_deg = angledist_meeus(radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
-#%% put distances into a 90-degree fan beam
-        angle_deg = empty(self.superx, float)
-        MagZenInd = angledist_deg.argmin() # whether minimum angle distance from MZ is slightly positive or slightly negative, this should be OK
+#%% assemble angular distances
+        self.angle_deg,self.angleMagzenind = self.sky2beam(angledist_deg)
 
-        angle_deg[MagZenInd:] = 90. + angledist_deg[MagZenInd:]
-        angle_deg[:MagZenInd] = 90. - angledist_deg[:MagZenInd]
-
-        self.angle_deg = angle_deg
-        self.angleMagzenind = MagZenInd
         self.cutrow = cutrow
         self.cutcol = cutcol
 #%% meager self-check of result
         if self.arbfov is not None:
             expect_diffang = self.arbfov / self.ncutpix
-            diffang = diff(angle_deg)
+            diffang = diff(self.angle_deg)
             diffoutlier = max(abs(expect_diffang-diffang.min()),
                               abs(expect_diffang-diffang.max()))
             assert_allclose(expect_diffang, diffang.mean(), rtol=0.01),'large bias in camera angle vector detected'
-            #assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
+#            assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
 
         if self.verbose:
             plotlsq_rc(nearrow,nearcol,cutrow,cutcol,
                        self.ra[cutrow, cutcol],
                        self.dec[cutrow,cutcol],
-                       angledist_deg,self.name,odir)
+                       #angledist_deg,
+                       self.angle_deg,
+                       self.name,odir)
+
+    def sky2beam(self,angledist_deg):
+        angle_deg = empty(self.superx, float)
+        MagZenInd = angledist_deg.argmin() # whether minimum angle distance from MZ is slightly positive or slightly negative, this should be OK
+
+        angle_deg[MagZenInd:] = 90. + angledist_deg[MagZenInd:]
+        angle_deg[:MagZenInd] = 90. - angledist_deg[:MagZenInd]
+#%% LSQ
+        col = arange(self.superx, dtype=int)
+        polycoeff = polyfit(col,angle_deg,deg=1,full=False)
+
+        return polyval(polycoeff,col), MagZenInd
 
     def findClosestAzel(self,odir=None):
         assert self.az.shape     == self.el.shape

@@ -235,32 +235,25 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')
 #%% angles
-    fg = figure()
-    ax = fg.gca()
+    fg,axs = subplots(3,1,sharex=True)
 
-    p0 = ax.plot(angle)[0]
-
-    ax.set_xlabel('x-pixel')
+    ax = axs[0]
+    ax.plot(angle)
     ax.set_ylabel(r'$\theta$ [deg.]')
     ax.set_title(r'angle from magnetic zenith $\theta$')
-    ax.autoscale(True,'x',True)
 
+    ax = axs[1]
     dAngle = gradient(angle)
-    ax2 = ax.twinx()
+    ax.plot(dAngle,color='r',label=r'$\frac{d^1}{d\theta^1}$')
+    ax.set_ylabel(r'$\frac{d^n}{d\theta^n}$ [deg.]')
 
-    p1 = ax2.plot(dAngle,color='r',label=r'$\frac{d^1}{d\theta^1}$')[0]
-
-    ax2.set_ylabel(r'$\frac{d^n}{d\theta^n}$ [deg.]')
-#    for tl in ax2.get_yticklabels():
-#        tl.set_color('r')
-    ax2.autoscale(True,'x',True)
-
+    ax = axs[2]
     d2Angle = gradient(dAngle)
+    ax.plot(d2Angle,color='m',label=r'$\frac{d^2}{d\theta^2}$')
 
-    p2 = ax2.plot(d2Angle,color='m',label=r'$\frac{d^2}{d\theta^2}$')[0]
-
-#    ax.legend()
-    ax2.legend()
+    ax.autoscale(True,'x',True)
+    ax.legend()
+    ax.set_xlabel('x-pixel')
 
     if odir:
         ofn = odir / 'angles_cam{}.eps'.format(name)
@@ -274,7 +267,6 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
 #        p.set_linestyle('')
 #        p.set_marker('.')
 
-    ax.set_ylim((0,0.8))
 
     if odir:
         ofn = odir / 'angles_zoom_cam{}.eps'.format(name)
