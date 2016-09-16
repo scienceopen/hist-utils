@@ -133,7 +133,7 @@ class Cam: #use this like an advanced version of Matlab struct
 #        else:
 #            exit('*** unknown ray mapping method ' + self.raymap)
 #%% pixel noise/bias
-        self.noiselam = splitconf(cp,'noiseLam',ci,fallback=0.)
+        self.noiselam = splitconf(cp,'noiseLam',ci)
         self.ccdbias =  splitconf(cp,'CCDBias',ci)
 
         self.debiasData = splitconf(cp,'debiasData',ci)
@@ -328,21 +328,19 @@ class Cam: #use this like an advanced version of Matlab struct
     def donoise(self,data):
          noisy = data.copy()
 
-         logging.info('adding Poisson noise with $\lambda={}$ to camera #{}'.format(self.noiselam,self.name))
-         dnoise = poisson(lam=self.noiselam,size=self.ncutpix)
-         noisy += dnoise
+         if self.noiselam:
+             logging.info('adding Poisson noise with $$\lambda={}$$ to camera #{}'.format(self.noiselam,self.name))
+             dnoise = poisson(lam=self.noiselam,size=self.ncutpix)
+             noisy += dnoise
+             self.dnoise = dnoise #diagnostic
 
-         try:
+         if self.ccdbias:
              logging.info('adding bias {:.1f} to camera #{}'.format(self.ccdbias,self.name))
              noisy += self.ccdbias
-         except TypeError:
-             pass
 
-         # kept for diagnostic purposes
+#%% diagnostic quantities
 #         self.raw = data #these are untouched pixel intensities
-         self.dnoise = dnoise
          self.noisy = noisy
-
          return noisy
 
     def dosmooth(self,data):
