@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from . import Path
-from numpy import uint16,diff
+from numpy import uint16,diff,gradient
 from datetime import datetime
 from pytz import UTC
 try:
@@ -9,7 +9,7 @@ except ImportError:
     skml = None
 #
 from mpl_toolkits.mplot3d import Axes3D #needed for this file
-from matplotlib.pyplot import figure, subplots, hist, draw, pause
+from matplotlib.pyplot import figure, subplots, hist, draw, pause,show
 from matplotlib.colors import LogNorm
 #from matplotlib.ticker import ScalarFormatter
 #import matplotlib.animation as anim
@@ -114,9 +114,7 @@ def animate(i,data,himg,ht):
     return himg,ht
 
 def plotLOSecef(cam,odir):
-
     fg = figure()
-    clr = ['b','r','g','m']
 
     if odir and skml is not None:
         kml1d = skml.Kml()
@@ -126,9 +124,11 @@ def plotLOSecef(cam,odir):
             continue
 
         ax = fg.gca(projection='3d')
-        ax.plot(xs=C.x2mz, ys=C.y2mz, zs=C.z2mz, zdir='z',
-                    color=clr[C.name], label=str(C.name))
-        ax.set_title('LOS to magnetic zenith')
+        ax.plot(xs=C.x2mz, ys=C.y2mz, zs=C.z2mz, zdir='z', label=str(C.name))
+        ax.set_title('LOS to magnetic zenith in ECEF')
+        ax.set_xlabel('x [m]')
+        ax.set_ylabel('y [m]')
+        ax.set_zlabel('z [m]')
 
         if odir and skml is not None: #Write KML
             #convert LOS ECEF -> LLA
@@ -149,12 +149,20 @@ def plotLOSecef(cam,odir):
             linestr.altitudemode = skml.AltitudeMode.relativetoground
             linestr.style.linestyle.color = kclr[C.name]
 
-
     ax.legend()
+    if C.verbose:
+        show()
+
     if odir and skml is not None:
         kmlfn = odir / 'debug1dcut.kmz'
         print('saving {}'.format(kmlfn))
         kml1d.savekmz(str(kmlfn))
+
+    if odir:
+        ofn = odir / 'ecef_cameras.eps'
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+
 
 def plotnear_rc(R,C,name,shape,odir):
     fg = figure()
@@ -177,16 +185,19 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
 #%% indices
     fg = figure()
     ax = fg.gca()
+    # NOTE do NOT use twinax() here, leads to incorrect conclusion based on different axes limits
+    ax.plot(nC,nR,
+            label='cam{} data'.format(name),
+            color='r',linestyle='none',marker='.')
     ax.plot(C, R,
-            label='cam{}'.format(name),
+            label='cam{} fit'.format(name),
             linestyle='-')
+
     ax.legend()
-    ax.set_xlabel('x'); ax.set_ylabel('y')
+    ax.set_xlabel('x-pixel')
+    ax.set_ylabel('y-pixel')
     ax.set_title('polyfit with computed ray points')
     ax.autoscale(True,'x',True)
-
-    ax2 = ax.twinx()
-    ax2.plot(nC,nR,color='r',linestyle='none',marker='.')
 
     if odir:
         ofn = odir / 'lsq_cam{}.eps'.format(name)
@@ -227,22 +238,45 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
     fg = figure()
     ax = fg.gca()
 
-    ax.plot(angle)
+    p0 = ax.plot(angle)[0]
+
     ax.set_xlabel('x-pixel')
     ax.set_ylabel(r'$\theta$ [deg.]')
     ax.set_title(r'angle from magnetic zenith $\theta$')
     ax.autoscale(True,'x',True)
 
-
+    dAngle = gradient(angle)
     ax2 = ax.twinx()
-    ax2.plot(diff(angle),color='r')
-    ax2.set_ylabel(r'$\frac{d}{d\theta}$ [deg.]',color='r')
-    for tl in ax2.get_yticklabels():
-        tl.set_color('r')
 
+    p1 = ax2.plot(dAngle,color='r',label=r'$\frac{d^1}{d\theta^1}$')[0]
+
+    ax2.set_ylabel(r'$\frac{d^n}{d\theta^n}$ [deg.]')
+#    for tl in ax2.get_yticklabels():
+#        tl.set_color('r')
     ax2.autoscale(True,'x',True)
+
+    d2Angle = gradient(dAngle)
+
+    p2 = ax2.plot(d2Angle,color='m',label=r'$\frac{d^2}{d\theta^2}$')[0]
+
+#    ax.legend()
+    ax2.legend()
 
     if odir:
         ofn = odir / 'angles_cam{}.eps'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+#%% zoom angles
+    for a in (ax,ax2):
+        a.set_xlim((150,200))
+        #a.set_xlim((200,300))
+#    for p in (p0,p1,p2):
+#        p.set_linestyle('')
+#        p.set_marker('.')
+
+    ax.set_ylim((0,0.8))
+
+    if odir:
+        ofn = odir / 'angles_zoom_cam{}.eps'.format(name)
         print('saving {}'.format(ofn))
         fg.savefig(str(ofn),bbox_inches='tight')

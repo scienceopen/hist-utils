@@ -173,9 +173,9 @@ class Cam: #use this like an advanced version of Matlab struct
                 self.flipud       = p['flipud'] == 1
 
                 c = f['/sensorloc']
-                self.lat   = c['lat']
-                self.lon   = c['lon']
-                self.alt_m = c['alt_m']
+                self.lat   = c['lat'].squeeze() # must be float or 0-d
+                self.lon   = c['lon'].squeeze() # must be float or 0-d
+                self.alt_m = c['alt_m'].squeeze() # must be float or 0-d
         elif not sim.realdata: #sim ONLY
             self.kineticsec = splitconf(cp,'kineticsec',ci) #simulation
             self.alt_m =      splitconf(cp,'zkm',ci)*1000 # no fallback, must specify z-location of each cam
