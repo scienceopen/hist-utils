@@ -20,7 +20,7 @@ class Cam: #use this like an advanced version of Matlab struct
     """
     simple mode via try except attributeerror
     """
-    def __init__(self,sim,cp,name,zmax=None,makeplot=[],calfn=None,verbose=0):
+    def __init__(self,sim,cp,name,zmax=None,xreq=None,makeplot=[],calfn=None,verbose=0):
         self.verbose = verbose
 
         try:
