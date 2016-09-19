@@ -179,7 +179,12 @@ class Cam: #use this like an advanced version of Matlab struct
         elif not sim.realdata: #sim ONLY
             self.kineticsec = splitconf(cp,'kineticsec',ci) #simulation
             self.alt_m =      splitconf(cp,'zkm',ci)*1000 # no fallback, must specify z-location of each cam
-            self.x_km =       splitconf(cp,'xkm',ci) # no fallback, must specify x-location of each cam
+
+            if xreq is not None: #override
+                self.x_km = xreq
+            else: #normal
+                self.x_km =       splitconf(cp,'xkm',ci) # no fallback, must specify x-location of each cam
+
             self.transpose =  splitconf(cp,'transpose',ci)
             self.fliplr    =  splitconf(cp,'fliplr',ci)
             self.flipud    =  splitconf(cp,'flipud',ci)
