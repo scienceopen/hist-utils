@@ -9,6 +9,7 @@ from scipy.signal import savgol_filter
 from numpy.random import poisson
 import h5py
 #
+from geopy.distance import vincenty
 from . import splitconf
 from pymap3d import azel2radec, aer2ecef
 from pymap3d.haversine import angledist,angledist_meeus
@@ -32,6 +33,9 @@ class Cam: #use this like an advanced version of Matlab struct
 
         self.cp = cp # in case you want custom options w/o clogging up camclass.py
 
+        self.x_km  = None
+        self.alt_m = None
+
         if not self.usecam and sim.realdata and 'asi' in name.lower():
             fn = Path(cp['fn'].split(',')[ci].strip()).expanduser()
             self.fn = sorted(fn.glob('*.FITS'))
@@ -51,10 +55,6 @@ class Cam: #use this like an advanced version of Matlab struct
             _,(self.az,self.el),self.lla,_ = readDASC(self.fn[0],
                                                 cp['azcalfn'].split(',')[ci],
                                                 cp['elcalfn'].split(',')[ci])
-
-            self.x_km  = nan
-            self.alt_m = nan
-
 
             if 'realvid' in makeplot:
                 if 'h5' in makeplot:
@@ -77,12 +77,9 @@ class Cam: #use this like an advanced version of Matlab struct
 #%%
         self.ncutpix = int(cp['nCutPix'].split(',')[ci])
 
-        try:
-            self.Bincl =  splitconf(cp,'Bincl',ci)
-            self.Bdecl =  splitconf(cp,'Bdecl',ci)
-            self.Bepoch = splitconf(cp,'Bepoch',ci,parse)
-        except KeyError:
-            self.Bincl=self.Bdecl=self.Bepoch=None
+        self.Bincl =  splitconf(cp,'Bincl',ci)
+        self.Bdecl =  splitconf(cp,'Bdecl',ci)
+        self.Bepoch = splitconf(cp,'Bepoch',ci,parse)
 
         try:
             self.Baz = 180. + self.Bdecl
@@ -119,7 +116,7 @@ class Cam: #use this like an advanced version of Matlab struct
         else:
             try:
                 cal1Ddir = sim.rootdir/sim.cal1dpath
-                cal1Dname = cp['cal1Dname'].split(',')[ci]
+                cal1Dname = cp['cal1Dname'].split(',')[ci].strip()
                 self.cal1Dfn = (cal1Ddir / cal1Dname).expanduser()
             except (AttributeError,IndexError):
                 self.cal1Dfn = None
@@ -173,9 +170,9 @@ class Cam: #use this like an advanced version of Matlab struct
                 self.flipud       = p['flipud'] == 1
 
                 c = f['/sensorloc']
-                self.lat   = c['lat'].squeeze() # must be float or 0-d
-                self.lon   = c['lon'].squeeze() # must be float or 0-d
-                self.alt_m = c['alt_m'].squeeze() # must be float or 0-d
+                self.lat   = c['lat'].item()
+                self.lon   = c['lon'].item()
+                self.alt_m = c['alt_m'].item()
         elif not sim.realdata: #sim ONLY
             self.kineticsec = splitconf(cp,'kineticsec',ci) #simulation
             self.alt_m =      splitconf(cp,'zkm',ci)*1000 # no fallback, must specify z-location of each cam
@@ -183,12 +180,19 @@ class Cam: #use this like an advanced version of Matlab struct
             if xreq is not None: #override
                 self.x_km = xreq
             else: #normal
-                self.x_km =       splitconf(cp,'xkm',ci) # no fallback, must specify x-location of each cam
+                self.x_km =  splitconf(cp,'xkm',ci) # no fallback, must specify x-location of each cam
 
-            self.transpose =  splitconf(cp,'transpose',ci)
-            self.fliplr    =  splitconf(cp,'fliplr',ci)
-            self.flipud    =  splitconf(cp,'flipud',ci)
-            self.rotccw    =  splitconf(cp,'rotccw',ci,fallback=0.)
+            self.lat   = splitconf(cp,'latitude',ci)
+            self.lon   = splitconf(cp,'longitude',ci)
+
+            self.superx = self.supery = self.ncutpix
+
+            self.transpose = splitconf(cp,'transpose',ci)
+            self.fliplr    = splitconf(cp,'fliplr',ci)
+            self.flipud    = splitconf(cp,'flipud',ci)
+            self.rotccw    = splitconf(cp,'rotccw',ci,fallback=0.)
+
+
 
         self.pixarea_sqcm = splitconf(cp,'pixarea_sqcm',ci)
         self.pedn = splitconf(cp,'pedn',ci)
@@ -241,6 +245,8 @@ class Cam: #use this like an advanced version of Matlab struct
         #ModelRaySpacingDeg = np.mean( np.diff(pixAngleDeg[:,iCam],n=1) ) # for reference purposes
 
     def toecef(self,ranges):
+        assert isinstance(self.Baz,float), 'please specify [cam]Bincl, [cam]Bdecl for each camera in .ini file'
+        assert isinstance(self.lat,float), 'please specify [cam]latitude, [cam]longitude'
         self.x2mz, self.y2mz, self.z2mz = aer2ecef(self.Baz,self.Bel,ranges,
                                                    self.lat,self.lon,self.alt_m)
 
@@ -284,6 +290,8 @@ class Cam: #use this like an advanced version of Matlab struct
         NOTE: we need to retrieve values in case no modifications are done.
         (since we'd get a closed h5py handle)
         """
+        assert self.cal1Dfn.is_file(),'please specify filename for each camera under [cam]/cal1Dname: in .ini file  {}'.format(self.cal1Dfn)
+
         with h5py.File(str(self.cal1Dfn),'r',libver='latest') as f:
             az = f['az'][()]
             el = f['el'][()]
