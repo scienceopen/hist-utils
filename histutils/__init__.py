@@ -73,7 +73,7 @@ def dir2fn(ofn,ifn,suffix):
     suffix = desired file extension e.g. .h5
     """
     if not ofn: # no output file desired
-        return None
+        return
 
     ofn = Path(ofn).expanduser()
     ifn = Path(ifn).expanduser()
