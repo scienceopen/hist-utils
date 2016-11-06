@@ -1,6 +1,4 @@
 from . import Path
-from six.moves.configparser import ConfigParser,SectionProxy
-from six import string_types
 import logging
 from numpy import (linspace, fliplr, flipud, rot90, arange,
                    polyfit,polyval,rint,empty, isfinite, isclose,
@@ -11,7 +9,6 @@ from scipy.signal import savgol_filter
 from numpy.random import poisson
 import h5py
 #
-from geopy.distance import vincenty
 from . import splitconf
 from pymap3d import azel2radec, aer2ecef
 from pymap3d.haversine import angledist,angledist_meeus
@@ -353,8 +350,6 @@ class Cam: #use this like an advanced version of Matlab struct
          if self.ccdbias:
              logging.info('adding bias {:.1f} to camera #{}'.format(self.ccdbias,self.name))
              noisy += self.ccdbias
-         except TypeError:
-             pass
 
 #%% diagnostic quantities
 #         self.raw = data #these are untouched pixel intensities
@@ -487,13 +482,13 @@ class Cam: #use this like an advanced version of Matlab struct
 #%% least squares fit 1-D line
         self.findLSQ(R, C,odir)
 
-        self.findLSQ(nearRow, nearCol)
+        self.findLSQ(R, C)
 
         if self.verbose>0:
             from matplotlib.pyplot import figure
             clr = ['b','r','g','m']
             ax = figure().gca()
-            ax.plot(nearCol,nearRow,color=clr[int(self.name)],label='cam{}preLSQ'.format(self.name),
+            ax.plot(C,R,color=clr[int(self.name)],label='cam{}preLSQ'.format(self.name),
                     linestyle='None',marker='.')
             ax.legend()
             ax.set_xlabel('x'); ax.set_ylabel('y')
