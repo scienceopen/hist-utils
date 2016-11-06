@@ -69,7 +69,10 @@ def datetime2gtd(T,glon=nan):
 
 #def dt2utsec(t: datetime) -> float:
 def dt2utsec(t):
-    """ seconds since utc midnight"""
+    """
+    input: datetime
+    output: float utc seconds since THIS DAY'S MIDNIGHT
+    """
     t = forceutc(t)
 
     return timedelta.total_seconds(t-datetime.combine(t.date(),time(0,tzinfo=UTC)))

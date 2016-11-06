@@ -108,14 +108,14 @@ def HSTframeHandler(sim,cam,odir=None,verbose=0):
     tic = time()
     rawdata = [] # one list element for each camera, of varying number of frames
     for C in cam:
-        if not C.usecam: 
+        if not C.usecam:
             continue
         """
-        This two-step indexing if repeated frames is 40 times faster to read at once, 
+        This two-step indexing if repeated frames is 40 times faster to read at once,
         even with this indexing trick than frame by frame
         """
         ind = unique(C.pbInd)
-        if len(ind) < 1: 
+        if len(ind) < 1:
             continue
         # http://docs.h5py.org/en/latest/high/dataset.html#fancy-indexing
         # IOError: Can't read data (Src and dest data spaces have different sizes)
@@ -130,15 +130,18 @@ def HSTframeHandler(sim,cam,odir=None,verbose=0):
             #NOTE C.ut1unix is timeshift corrected, f['/ut1_unix'] is UNcorrected!
             C.tKeo = C.ut1unix[C.pbInd] #need value for non-Boolean indexing (as of h5py 2.5)
 
-            try: #C.cutrow, C.cutcol only exist if running from histfeas program, not used otherwise
+            """
+            C.cutrow, C.cutcol only exist if running from histfeas program, not used otherwise
+            DON'T use try-except AttributeError as that's too broad and causes confusion
+            """
+            if hasattr(C,'cutrow'):
                 if I.ndim   == 3:
                     C.keo = I[:,C.cutrow,C.cutcol].T # row = pix, col = time
                 elif I.ndim == 2:
                     C.keo = I[C.cutrow, C.cutcol].T
                 else:
                     raise ValueError('ndim==2 or 3')
-            except AttributeError:
-                pass
+
 
     logging.debug('Loaded all image frames in {:.2f} sec.'.format(time() - tic))
 

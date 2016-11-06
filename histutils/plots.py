@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 from . import Path
-from numpy import uint16
+from numpy import uint16,diff,gradient
 from datetime import datetime
 from pytz import UTC
-from matplotlib.pyplot import figure, hist, draw, pause
+try:
+    import simplekml as skml
+except ImportError:
+    skml = None
+#
+from mpl_toolkits.mplot3d import Axes3D #needed for this file
+from matplotlib.pyplot import figure, subplots, hist, draw, pause,show
 from matplotlib.colors import LogNorm
 #from matplotlib.ticker import ScalarFormatter
 #import matplotlib.animation as anim
+#
+from pymap3d import ecef2geodetic
 
 def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
     if not playMovie or data is None:
@@ -104,3 +112,163 @@ def animate(i,data,himg,ht):
     #plt.pause(0.01)
     #plt.show(False) #breaks (won't play)
     return himg,ht
+
+def plotLOSecef(cam,odir):
+    fg = figure()
+
+    if odir and skml is not None:
+        kml1d = skml.Kml()
+
+    for C in cam:
+        if not C.usecam:
+            continue
+
+        ax = fg.gca(projection='3d')
+        ax.plot(xs=C.x2mz, ys=C.y2mz, zs=C.z2mz, zdir='z', label=str(C.name))
+        ax.set_title('LOS to magnetic zenith in ECEF')
+        ax.set_xlabel('x [m]')
+        ax.set_ylabel('y [m]')
+        ax.set_zlabel('z [m]')
+
+        if odir and skml is not None: #Write KML
+            #convert LOS ECEF -> LLA
+            loslat,loslon,losalt = ecef2geodetic(C.x2mz, C.y2mz, C.z2mz)
+            kclr = ['ff5c5ccd','ffff0000']
+            #camera location points
+            bpnt = kml1d.newpoint(name='HST {}'.format(C.name),
+                                  description='camera {} location'.format(C.name),
+                                  coords=[(C.lon, C.lat)])
+            bpnt.altitudemode = skml.AltitudeMode.clamptoground
+            bpnt.style.iconstyle.icon.href = 'http://maps.google.com/mapfiles/kml/paddle/pink-blank.png'
+            bpnt.style.iconstyle.scale = 2.0
+            #show cam to mag zenith los
+            linestr = kml1d.newlinestring(name='')
+            #TODO this is only first and last point without middle!
+            linestr.coords = [(loslon[0],   loslat[0],  losalt[0]),
+                              (loslon[-1], loslat[-1], losalt[-1])]
+            linestr.altitudemode = skml.AltitudeMode.relativetoground
+            linestr.style.linestyle.color = kclr[C.name]
+
+    ax.legend()
+    if C.verbose:
+        show()
+
+    if odir and skml is not None:
+        kmlfn = odir / 'debug1dcut.kmz'
+        print('saving {}'.format(kmlfn))
+        kml1d.savekmz(str(kmlfn))
+
+    if odir:
+        ofn = odir / 'ecef_cameras.eps'
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+
+
+def plotnear_rc(R,C,name,shape,odir):
+    fg = figure()
+    ax = fg.gca()
+    ax.plot(C, R,
+            linestyle='None',marker='.')
+
+    ax.set_xlabel('x'); ax.set_ylabel('y')
+    #ax.set_title('pixel indices (pre-least squares)')
+    ax.set_xlim([0, shape[1]])
+    ax.set_ylim([0, shape[0]])
+    ax.set_title('camera {} pre-LSQ fit indices to extract'.format(name))
+
+    if odir:
+        ofn = odir / 'prelsq_cam{}.eps'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+
+def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
+#%% indices
+    fg = figure()
+    ax = fg.gca()
+    # NOTE do NOT use twinax() here, leads to incorrect conclusion based on different axes limits
+    ax.plot(nC,nR,
+            label='cam{} data'.format(name),
+            color='r',linestyle='none',marker='.')
+    ax.plot(C, R,
+            label='cam{} fit'.format(name),
+            linestyle='-')
+
+    ax.legend()
+    ax.set_xlabel('x-pixel')
+    ax.set_ylabel('y-pixel')
+    ax.set_title('polyfit with computed ray points')
+    ax.autoscale(True,'x',True)
+
+    if odir:
+        ofn = odir / 'lsq_cam{}.eps'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+#%% ra/dec
+    fg,axs = subplots(2,1,sharex=True)
+    fg.suptitle('camera {} ra/dec extracted'.format(name))
+
+    ax = axs[0]
+    ax.plot(ra)
+    ax.set_ylabel('right asc.')
+    ax.autoscale(True,'x',True)
+
+    ax2 = ax.twinx()
+    ax2.plot(diff(ra),color='r')
+    ax2.set_ylabel('diff(ra)', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+
+    ax = axs[1]
+    ax.plot(dec)
+    ax.set_ylabel('decl.')
+
+    ax2 = ax.twinx()
+    ax2.plot(diff(dec),color='r')
+    ax2.set_ylabel('diff(dec)', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+
+    ax2.autoscale(True,'x',True)
+
+    if odir:
+        ofn = odir / 'radec_cam{}.eps'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+#%% angles
+    fg,axs = subplots(3,1,sharex=True)
+
+    ax = axs[0]
+    ax.plot(angle)
+    ax.set_ylabel(r'$\theta$ [deg.]')
+    ax.set_title(r'angle from magnetic zenith $\theta$')
+
+    ax = axs[1]
+    dAngle = gradient(angle)
+    ax.plot(dAngle,color='r',label=r'$\frac{d^1}{d\theta^1}$')
+    ax.set_ylabel(r'$\frac{d^n}{d\theta^n}$ [deg.]')
+
+    ax = axs[2]
+    d2Angle = gradient(dAngle)
+    ax.plot(d2Angle,color='m',label=r'$\frac{d^2}{d\theta^2}$')
+
+    ax.autoscale(True,'x',True)
+    ax.legend()
+    ax.set_xlabel('x-pixel')
+
+    if odir:
+        ofn = odir / 'angles_cam{}.eps'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')
+#%% zoom angles
+    for a in (ax,ax2):
+        a.set_xlim((150,200))
+        #a.set_xlim((200,300))
+#    for p in (p0,p1,p2):
+#        p.set_linestyle('')
+#        p.set_marker('.')
+
+
+    if odir:
+        ofn = odir / 'angles_zoom_cam{}.eps'.format(name)
+        print('saving {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight')

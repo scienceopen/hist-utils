@@ -40,11 +40,10 @@ logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
 from astropy.io import fits
 #
-from histutils import Path
+from histutils import Path,req2frame
 from histutils.camclass import Cam
 from histutils.simulFrame import getSimulData,HSTframeHandler
 from histutils.plotsimul import plotRealImg
-from histutils.common import req2frame
 
 DPI = 100
 
