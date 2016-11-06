@@ -353,7 +353,6 @@ class Cam: #use this like an advanced version of Matlab struct
 
 #%% diagnostic quantities
 #         self.raw = data #these are untouched pixel intensities
-         self.dnoise = dnoise
          self.noisy = noisy
 
          return noisy
