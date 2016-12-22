@@ -20,7 +20,7 @@ except ImportError: #Python 2
     from psutil import disk_usage
 #
 from . import Path,req2frame,dir2fn,getRawInd,meta2rawInd
-from dmcutils.h5imgwriter import setupimgh5,imgwriteincr
+from .h5imgwriter import setupimgh5,imgwriteincr
 from .timedmc import frame2ut1,ut12frame
 #
 try:
