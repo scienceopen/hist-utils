@@ -117,14 +117,22 @@ def yeardec2datetime(atime):
     This is the inverse of datetime2yeardec.
     assert dt2t(t2dt(atime)) == atime
     """
-    assert isinstance(atime,(float,integer_types)) #typically a float
+    if isinstance(atime,(float,integer_types)): #typically a float
 
-    year = int(atime)
-    remainder = atime - year
-    boy = datetime(year, 1, 1)
-    eoy = datetime(year + 1, 1, 1)
-    seconds = remainder * (eoy - boy).total_seconds()
-    return boy + timedelta(seconds=seconds)
+        year = int(atime)
+        remainder = atime - year
+        boy = datetime(year, 1, 1)
+        eoy = datetime(year + 1, 1, 1)
+        seconds = remainder * (eoy - boy).total_seconds()
+
+        return forceutc(boy + timedelta(seconds=seconds))
+    elif isinstance(atime[0],float):
+        T = []
+        for t in atime:
+            T.append(yeardec2datetime(t))
+        return T
+    else:
+        raise TypeError('expecting float, not {}'.format(type(atime)))
 
 def datetime2yeardec(t):
     """
