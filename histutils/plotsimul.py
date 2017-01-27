@@ -193,11 +193,11 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
 #%% plotting 1D cut line
     try:
        ax.plot(cam.cutcol[cam.Lcind], cam.cutrow[cam.Lcind],
-               marker='.',linestyle='none',color='blue',markersize=1)
+               marker='.',linestyle='none',color='blue',markersize=1,alpha=0.5)
         #plot magnetic zenith
        ax.scatter(x=cam.cutcol[cam.angleMagzenind],
                y=cam.cutrow[cam.angleMagzenind],
-               marker='o',facecolors='none',color='red',s=500)
+               marker='o',facecolors='none',color='red',s=500,linewidth=2,alpha=0.5)
     except AttributeError: #asi
        pass
 #%% plot cleanup
