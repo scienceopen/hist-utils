@@ -88,7 +88,10 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
             C.tKeo = times[:,0]
 
             updateframe(0,opt['image'],opt['lambda'],C,axs[i],fg)
-            overlayrowcol(axs[i],C.hlrows,C.hlcols)
+            try:
+                overlayrowcol(axs[i],C.hlrows,C.hlcols)
+            except AttributeError:
+                pass # az/el were not registered
         else:
             logging.error('unknown camera {} index {}'.format(C.name,i))
 

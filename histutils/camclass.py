@@ -65,9 +65,10 @@ class Cam: #use this like an advanced version of Matlab struct
                         H['/rows'] = array(self.hlrows) # Ncam x 4 x Nx  (list,list,ndarray)
                         H['/cols'] = array(self.hlcols)
                 else:
-                    with h5py.File(sim.fovfn,'r',libver='latest') as H:
-                        self.hlrows = H['/rows'].value
-                        self.hlcols = H['/cols'].value
+                    if sim.fovfn and sim.fovfn.is_file():
+                        with h5py.File(sim.fovfn,'r',libver='latest') as H:
+                            self.hlrows = H['/rows'].value
+                            self.hlcols = H['/cols'].value
 
             return
 
