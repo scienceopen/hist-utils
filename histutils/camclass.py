@@ -481,8 +481,6 @@ class Cam: #use this like an advanced version of Matlab struct
 #%% least squares fit 1-D line
         self.findLSQ(R, C,odir)
 
-        self.findLSQ(R, C)
-
         if self.verbose>0:
             from matplotlib.pyplot import figure
             clr = ['b','r','g','m']
