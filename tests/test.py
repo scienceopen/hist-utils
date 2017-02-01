@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from histutils import Path
+from pathlib import Path
 from numpy import uint16,int64
 from numpy.testing import assert_allclose,assert_almost_equal,assert_array_equal,run_module_suite
 from datetime import datetime
-from pytz import timezone
+from pytz import timezone, UTC
 #
 from histutils.rawDMCreader import goRead
 from histutils.diric import diric
@@ -41,7 +41,7 @@ def test_rawread():
 #%% dates
 #%% fortrandates
 def test_fortrandates():
-    adatetime=datetime(2013,7,2,12,0,0)
+    adatetime=datetime(2013,7,2,12,0,0,tzinfo=UTC)
     yeardec = fortrandates.datetime2yeardec(adatetime)
     assert_allclose(yeardec,2013.5)
 
@@ -64,4 +64,5 @@ def test_datetimefortran():
 
 
 if __name__ == '__main__':
+    #test_fortrandates()
     run_module_suite()

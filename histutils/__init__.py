@@ -1,11 +1,4 @@
-try:
-    from pathlib import Path
-    Path().expanduser()
-except (ImportError,AttributeError):
-    from pathlib2 import Path
-#
-from six.moves.configparser import ConfigParser
-from six import string_types, integer_types
+from configparser import ConfigParser
 from numpy import arange,int64,fromfile,uint16
 import logging
 from struct import pack,unpack
@@ -52,7 +45,7 @@ def req2frame(req, N=0):
     """
     if req is None:
         frame = arange(N, dtype=int64)
-    elif isinstance(req,integer_types): #the user is specifying a step size
+    elif isinstance(req,int): #the user is specifying a step size
         frame = arange(0, N, req, dtype=int64)
     elif len(req) == 1:
         frame = arange(0, N, req[0], dtype=int64)
@@ -118,7 +111,7 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
             return splitconf(conf[key[0]],key[1:],i,dtype,fallback,sep)
         else:
             return splitconf(conf,key[0],i,dtype,fallback,sep)
-    elif isinstance(key,string_types):
+    elif isinstance(key,str):
         val = conf.get(key,fallback=fallback)
     else:
         raise TypeError('invalid key type {}'.format(type(key)))

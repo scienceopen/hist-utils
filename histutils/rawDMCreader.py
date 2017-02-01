@@ -7,6 +7,7 @@ reads .DMCdata files and displays them
 NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
    default to int32 instead of int64 like everyone else!
  """
+from pathlib import Path
 import logging
 import re
 from dateutil.parser import parse
@@ -19,7 +20,7 @@ try:
 except ImportError: #Python 2
     from psutil import disk_usage
 #
-from . import Path,req2frame,dir2fn,getRawInd,meta2rawInd
+from . import req2frame,dir2fn,getRawInd,meta2rawInd
 from .h5imgwriter import setupimgh5,imgwriteincr
 from .timedmc import frame2ut1,ut12frame
 #

@@ -6,7 +6,6 @@ INPUT FILE FORMAT: intended for use with "DMCdata" raw format, 4-byte
  "footer" containing frame index (must use typecast)
 """
 import logging
-from six import integer_types,string_types
 from datetime import datetime
 from time import time
 from pytz import UTC
@@ -30,7 +29,7 @@ def HSTsync(sim,cam,verbose):
         if isinstance(sim.startutc,datetime):
             reqStart = sim.startutc.timestamp()
             reqStop  = sim.stoputc.timestamp()
-        elif isinstance(sim.startutc,(float,integer_types)): #ut1_unix
+        elif isinstance(sim.startutc,(float,int)): #ut1_unix
             reqStart = sim.startutc
             reqStop  = sim.stoputc
         else:
@@ -40,9 +39,9 @@ def HSTsync(sim,cam,verbose):
             treqlist = atleast_1d(sim.treqlist)
             if isinstance(treqlist[0],datetime):
                 treqlist = array([t.timestamp() for t in treqlist])
-            elif isinstance(treqlist[0],(float,integer_types)):
+            elif isinstance(treqlist[0],(float,int)):
                 pass #already ut1_unix
-            elif isinstance(treqlist[0],string_types):
+            elif isinstance(treqlist[0],str):
                 raise TypeError('parse dates before passing them in here')
             else:
                 logging.error('I did not understand your time request, falling back to all times')

@@ -17,7 +17,6 @@ Michael Hirsch
 GPLv3+
 """
 from __future__ import division,absolute_import
-#from six import integer_types
 from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty,
                    unravel_index,ma,nanargmin)#,float32,float64,int32,int64)
 #
@@ -36,7 +35,7 @@ def find_nearest(x,x0):
     assert x0.ndim in (0,1),'2-D x0 not handled yet'
 
 # FIXME is datetime OK too?
-#    assert isinstance(x0[0],(float,integer_types,float32,float64,int32,int64)),'expecting a numeric type, not string or object'
+#    assert isinstance(x0[0],(float,int,float32,float64,int32,int64)),'expecting a numeric type, not string or object'
 #%%
     ind = empty_like(x0,dtype=int)
 

@@ -2,7 +2,7 @@
 writes HDF5 huge image files in increments
 
 """
-from . import Path
+from pathlib import Path
 import h5py
 from numpy import string_,uint8,int16
 

@@ -26,13 +26,13 @@ RunSimulFrame.py   ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 --cmin 1090 --c
 RunSimulFrame.py   ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 --cmax 1350  -t 2013-04-14T08:25:45Z 2013-04-14T08:26:30Z
 
 """
+from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.animation as anim
 from matplotlib.pyplot import figure, pause
 #
 from os import devnull
-from six import string_types
 from datetime import datetime
 import h5py
 import logging
@@ -40,7 +40,7 @@ logging.basicConfig(level=logging.WARN)
 from dateutil.parser import parse
 from astropy.io import fits
 #
-from histutils import Path,req2frame
+from histutils import req2frame
 from histutils.camclass import Cam
 from histutils.simulFrame import getSimulData,HSTframeHandler
 from histutils.plotsimul import plotRealImg
@@ -97,7 +97,7 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals,cmdlog=''):
 #%% classdef
 class Sim:
     def __init__(self,dpath,fn0,tstartstop,framereq):
-        if isinstance(tstartstop[0],string_types):
+        if isinstance(tstartstop[0],str):
             self.startutc = parse(tstartstop[0])
             self.stoputc  = parse(tstartstop[1])
         else: # whole file

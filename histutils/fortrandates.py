@@ -1,5 +1,4 @@
 from __future__ import division #needed for py2.7
-from six import string_types,integer_types
 from datetime import timedelta,datetime, time
 from pytz import UTC
 from numpy import atleast_1d, empty_like, atleast_2d,nan,empty,datetime64,ndarray,array
@@ -86,7 +85,7 @@ def forceutc(t):
     output: utc datetime
     """
 #%% polymorph to datetime
-    if isinstance(t,string_types):
+    if isinstance(t,str):
         t = parse(t)
     elif isinstance(t,datetime64):
         t=t.astype('M8[ms]').astype('O') #for Numpy 1.10 at least...
@@ -117,7 +116,7 @@ def yeardec2datetime(atime):
     This is the inverse of datetime2yeardec.
     assert dt2t(t2dt(atime)) == atime
     """
-    if isinstance(atime,(float,integer_types)): #typically a float
+    if isinstance(atime,(float,int)): #typically a float
 
         year = int(atime)
         remainder = atime - year
@@ -142,12 +141,14 @@ def datetime2yeardec(t):
     time distances should be preserved: If bdate-adate=ddate-cdate then
     dt2t(bdate)-dt2t(adate) = dt2t(ddate)-dt2t(cdate)
     """
-    if isinstance(t,string_types):
+    if isinstance(t,str):
         t = parse(t)
+        
+    t = forceutc(t)
 
     assert isinstance(t,datetime)
 
     year = t.year
-    boy = datetime(year, 1, 1)
-    eoy = datetime(year + 1, 1, 1)
+    boy = datetime(year, 1, 1,tzinfo=UTC)
+    eoy = datetime(year + 1, 1, 1, tzinfo=UTC)
     return year + ((t - boy).total_seconds() / ((eoy - boy).total_seconds()))
