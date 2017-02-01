@@ -10,7 +10,7 @@ dest: /tmp/a/b/c/d/
 result: /tmp/a/b/c/d/tmp/e/f
 
 """
-from . import Path
+from pathlib import Path
 from shutil import copy2
 
 def cp_parents(files,target_dir):

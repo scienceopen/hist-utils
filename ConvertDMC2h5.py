@@ -10,7 +10,7 @@ full command example with metadata:
 simple command example w/o full metadata (can append metadata later):
 ./ConvertDMC2h5.py ~/extdrive/2011-03-01T1000/ -o ~/data/2011-03-01 --headerbytes 0
 """
-from histutils import Path
+from pathlib import Path
 from sys import argv
 from numpy import int64
 #

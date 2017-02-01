@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from . import Path
+from pathlib import Path
 from numpy import uint16,diff,gradient
 from datetime import datetime
 from pytz import UTC

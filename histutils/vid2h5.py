@@ -1,4 +1,4 @@
-from . import Path
+from pathlib import Path
 import logging
 from numpy import array,string_,uint8
 from datetime import datetime
