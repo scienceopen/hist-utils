@@ -64,6 +64,6 @@ if __name__ == '__main__':
 
             plt.show()
         except Exception as e:
-            print('skipping plotting   '.format(e))
+            print(f'skipping plotting  {e} ')
             
 

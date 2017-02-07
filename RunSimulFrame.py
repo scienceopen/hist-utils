@@ -80,7 +80,7 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals,cmdlog=''):
     if not cpar['png']:
         pngdir=None
         ofn = Path(odir).expanduser() / flist[0].with_suffix('.avi').name
-        print('writing {}'.format(ofn))
+        print(f'writing {ofn}')
     else:
         ofn = devnull
         pngdir = odir
@@ -93,7 +93,7 @@ def getmulticam(flist,tstartstop, framereq, cpar,odir,cals,cmdlog=''):
             if not cpar['png']:
                 writer.grab_frame(facecolor='k')
             if not t % 100:
-                print('{}/{}'.format(t,sim.nTimeSlice))
+                print(f'{t}/{sim.nTimeSlice}')
 #%% classdef
 class Sim:
     def __init__(self,dpath,fn0,tstartstop,framereq):

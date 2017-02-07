@@ -98,7 +98,7 @@ def doplotsave(bigfn,data,rawind,clim,dohist,meanImg):
         fg.colorbar(hi)
 
         pngfn = bigfn.with_suffix('_mean.png')
-        print('writing mean PNG ' + pngfn)
+        print(f'writing mean PNG {pngfn}')
         fg.savefig(pngfn,dpi=150,bbox_inches='tight')
 
 
@@ -155,12 +155,12 @@ def plotLOSecef(cam,odir):
 
     if odir and skml is not None:
         kmlfn = odir / 'debug1dcut.kmz'
-        print('saving {}'.format(kmlfn))
+        print(f'saving {kmlfn}')
         kml1d.savekmz(str(kmlfn))
 
     if odir:
         ofn = odir / 'ecef_cameras.eps'
-        print('saving {}'.format(ofn))
+        print(f'saving {ofn}')
         fg.savefig(str(ofn),bbox_inches='tight')
 
 
@@ -178,7 +178,7 @@ def plotnear_rc(R,C,name,shape,odir):
 
     if odir:
         ofn = odir / 'prelsq_cam{}.eps'.format(name)
-        print('saving {}'.format(ofn))
+        print(f'saving {ofn}')
         fg.savefig(str(ofn),bbox_inches='tight')
 
 def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
@@ -201,7 +201,7 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
 
     if odir:
         ofn = odir / 'lsq_cam{}.eps'.format(name)
-        print('saving {}'.format(ofn))
+        print(f'saving {ofn}')
         fg.savefig(str(ofn),bbox_inches='tight')
 #%% ra/dec
     fg,axs = subplots(2,1,sharex=True)
@@ -232,7 +232,7 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
 
     if odir:
         ofn = odir / 'radec_cam{}.eps'.format(name)
-        print('saving {}'.format(ofn))
+        print(f'saving {ofn}')
         fg.savefig(str(ofn),bbox_inches='tight')
 #%% angles
     fg,axs = subplots(3,1,sharex=True)
@@ -257,7 +257,7 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
 
     if odir:
         ofn = odir / 'angles_cam{}.eps'.format(name)
-        print('saving {}'.format(ofn))
+        print(f'saving {ofn}')
         fg.savefig(str(ofn),bbox_inches='tight')
 #%% zoom angles
     for a in (ax,ax2):
@@ -270,5 +270,5 @@ def plotlsq_rc(nR,nC,R,C,ra,dec,angle,name,odir):
 
     if odir:
         ofn = odir / 'angles_zoom_cam{}.eps'.format(name)
-        print('saving {}'.format(ofn))
+        print(f'saving {ofn}')
         fg.savefig(str(ofn),bbox_inches='tight')

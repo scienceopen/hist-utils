@@ -39,9 +39,9 @@ def get1Dcut(cam,odir,verbose):
         print('writing', dbgfn)
         with h5py.File(str(dbgfn),'w',libver='latest') as f:
             for C in cam:
-                f['/cam{}/cutrow'.format(C.name)] = C.cutrow
-                f['/cam{}/cutcol'.format(C.name)] = C.cutcol
-                f['/cam{}/xpix'.format(C.name)]   = C.xpix
+                f[f'/cam{C.name}/cutrow'] = C.cutrow
+                f[f'/cam{C.name}/cutcol'] = C.cutcol
+                f['/cam{C.name}/xpix']   = C.xpix
     return cam
 
 

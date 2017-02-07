@@ -27,8 +27,8 @@ if p.xy and p.filesize:
     totalsec = nframes/p.fps
 
     tend = tstart + timedelta(seconds=totalsec)
-    print('tstart {}  tend {}'.format(tstart,tend))
+    print(f'tstart {tstart}  tend {tend}')
 #%% find times corresponding to frame #s
 if p.frameind:
     for k in p.frameind:
-        print('frame {}:  {}'.format(k,tstart + timedelta(seconds=(k-1)*1/p.fps)))
+        print(f'frame {k}:  {tstart + timedelta(seconds=(k-1)*1/p.fps}')

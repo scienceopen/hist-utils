@@ -9,7 +9,7 @@ def vid2h5(data,ut1,rawind,outfn,params,cmdlog=''):
         return
 
     outfn = Path(outfn).expanduser()
-    print('writing {}'.format(outfn))
+    print(f'writing {outfn}')
     #%% saving
     if outfn.suffix == '.h5':
         """
@@ -37,8 +37,7 @@ def vid2h5(data,ut1,rawind,outfn,params,cmdlog=''):
 
             if ut1 is not None: #needs is not None
                 try:
-                    print('writing from {} to {}'.format(datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC),
-                                                                   datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)))
+                    print(f'writing from {datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC)} to {datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)}')
                     fut1 = f.create_dataset('/ut1_unix',data=ut1,fletcher32=True)
                     fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
                 except Exception as e:

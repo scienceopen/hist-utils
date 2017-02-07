@@ -200,20 +200,20 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
         raise ValueError('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
 
     if ext=='.DMCdata' and fileSizeBytes % BytesPerFrame:
-        logging.error("Looks like I am not reading this file correctly, with BPF: {:d}".format(BytesPerFrame))
+        logging.error(f"Looks like I am not reading this file correctly, with BPF: {BytesPerFrame:d}")
 
     if ext=='.DMCdata':
         nFrame = fileSizeBytes // BytesPerFrame
-        logging.info('{} frames, Bytes: {} in file {}'.format(nFrame,fileSizeBytes, fn))
+        logging.info(f'{nFrame} frames, Bytes: {fileSizeBytes} in file {fn}')
 
         nFrameRaw = (lastRawInd-firstRawInd+1)
         if nFrameRaw != nFrame:
-             logging.warning('there may be missed frames: nFrameRaw {}   nFrameBytes {}'.format(nFrameRaw,nFrame))
+             logging.warning(f'there may be missed frames: nFrameRaw {nFrameRow}   nFrame {nFrame}')
     else:
         nFrame = lastRawInd-firstRawInd+1
 
     allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
-    logging.info("first / last raw frame #'s: {}  / {} ".format(firstRawInd,lastRawInd))
+    logging.info(f"first / last raw frame #'s: {firstRawInd}  / {lastRawInd} ")
 #%% absolute time estimate
     ut1_unix_all = frame2ut1(startUTC,kineticsec,allrawframe)
 #%% setup frame indices
@@ -247,7 +247,7 @@ def getDMCframe(f,iFrm,finf,verbose=0):
     currByte = iFrm * finf['bytesperframe']
 #%% advance to start of frame in bytes
     if verbose>0:
-        print('seeking to byte ' + str(currByte))
+        print(f'seeking to byte {currByte}')
 
     assert isinstance(currByte,int64),'int32 will fail on files > 2GB'
     try:
