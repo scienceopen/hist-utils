@@ -22,6 +22,6 @@ setup(name='histutils',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
-	  install_requires=['tifffile','pathvalidate','pymap3d'],
+	  install_requires=['tifffile','pathvalidate','pymap3d','sciencedates'],
 	  )
 

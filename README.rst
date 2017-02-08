@@ -83,8 +83,6 @@ of these can also be used from the Terminal directly.
   plotSolarElev           Computes solar elevation angle and solar irradience vs. time/date for a given location on Earth
   h5lister                recursively list paths and variables in HDF5 file
 
-  fortrandates.py         conversions between oddball date formats used by classical aeronomy programs in FORTRAN to Python datetime
-
   diric                   Computes Dirichlet function
 
   imageconv               convert directory of images to multi-page TIFF

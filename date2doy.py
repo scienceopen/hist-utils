@@ -2,7 +2,7 @@
 """
 command-line utility to convert date to day of year
 """
-from histutils.fortrandates import datetime2yd
+from sciencedates import datetime2yd
 
 def date2doy(t):
     yd = str(datetime2yd(t)[0][0])

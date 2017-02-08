@@ -1,49 +1,6 @@
-"""
-This find_nearest function does NOT assume sorted input
-
-inputs:
-x: array (float, int, datetime) within which to search for x0
-x0: singleton or array of values to search for in x
-
-outputs:
-idx: index of flattened x nearest to x0  (i.e. works with higher than 1-D arrays also)
-xidx: x[idx]
-
-Observe how bisect.bisect() gives the incorrect result!
-
-idea based on http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
-
-Michael Hirsch
-GPLv3+
-"""
-from __future__ import division,absolute_import
-from numpy import (empty_like,absolute,atleast_1d,asanyarray,empty,
-                   unravel_index,ma,nanargmin)#,float32,float64,int32,int64)
+from numpy import unravel_index,ma,atleast_1d,empty
 #
 from pymap3d.haversine import angledist
-
-def find_nearest(x,x0):
-    """
-    x can also be an h5py dataset
-    """
-    x = asanyarray(x) #for indexing upon return
-    x0 = atleast_1d(x0)
-#%%
-    if x.size==0 or x0.size==0:
-        raise ValueError('empty input(s)')
-
-    assert x0.ndim in (0,1),'2-D x0 not handled yet'
-
-# FIXME is datetime OK too?
-#    assert isinstance(x0[0],(float,int,float32,float64,int32,int64)),'expecting a numeric type, not string or object'
-#%%
-    ind = empty_like(x0,dtype=int)
-
-    # NOTE: not trapping IndexError (all-nan) becaues returning None can surprise with slice indexing
-    for i,xi in enumerate(x0):
-        ind[i] = nanargmin(absolute(x-xi))
-
-    return ind.squeeze()[()], x[ind].squeeze()[()]   # [()] to pop scalar from 0d array while being OK with ndim>0
 
 def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
     """
@@ -81,18 +38,3 @@ def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
         nearCol.append(ma.array(c,mask=mask))
 
     return nearRow,nearCol
-
-def INCORRECTRESULT_using_bisect(x,X0): #pragma: no cover
-    X0 = atleast_1d(X0)
-    x.sort()
-    ind = [bisect(x,x0) for x0 in X0]
-
-    x = asanyarray(x)
-    return asanyarray(ind),x[ind]
-
-if __name__ == '__main__':
-    from bisect import bisect
-
-    print(find_nearest([10,15,12,20,14,33],[32,12.01]))
-
-    print(INCORRECTRESULT_using_bisect([10,15,12,20,14,33],[32,12.01]))

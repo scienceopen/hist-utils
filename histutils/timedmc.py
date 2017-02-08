@@ -16,7 +16,7 @@ from dateutil.parser import parse
 from numpy import atleast_1d,int64,empty,datetime64
 from scipy.interpolate import interp1d
 #
-from .fortrandates import forceutc
+from sciencedates import forceutc
 
 
 def frame2ut1(tstart,kineticsec,rawind):
