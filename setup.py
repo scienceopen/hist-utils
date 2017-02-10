@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-req= ['tifffile','pathvalidate','pymap3d','sciencedates'j,
+req= ['tifffile','pathvalidate','pymap3d','sciencedates',
       'psutil','python-dateutil','pytz','nose','numpy','scipy','pandas','h5py','astropy','matplotlib','seaborn']
 
 
