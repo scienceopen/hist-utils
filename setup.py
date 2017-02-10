@@ -18,6 +18,7 @@ setup(name='histutils',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
+      setup_requires=['numpy'], #due to tifffile
 	  install_requires=req,
 	  )
 
