@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-try:
-    import conda.cli
-    conda.cli.main('install','--file','requirements.txt')
-except Exception as e:
-    print(e)
-    import pip
-    pip.main(['install','-r','requirements.txt'])
+req= ['tifffile','pathvalidate','pymap3d','sciencedates'j,
+      'psutil','python-dateutil','pytz','nose','numpy','scipy','pandas','h5py','astropy','matplotlib','seaborn']
 
 
 setup(name='histutils',
@@ -15,7 +10,7 @@ setup(name='histutils',
       author='Michael Hirsch, Ph.D.',
       url='https://github.com/scienceopen/histutils',
       description='Utilities for reading HiST data, etc.',
-      version='0.9',
+      version='0.9.1',
       classifiers=[
       'Intended Audience :: Science/Research',
       'Development Status :: 4 - Beta',
@@ -23,6 +18,6 @@ setup(name='histutils',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
-	  install_requires=['tifffile','pathvalidate','pymap3d','sciencedates'],
+	  install_requires=req,
 	  )
 
