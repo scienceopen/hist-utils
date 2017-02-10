@@ -15,6 +15,7 @@ setup(name='histutils',
       author='Michael Hirsch, Ph.D.',
       url='https://github.com/scienceopen/histutils',
       description='Utilities for reading HiST data, etc.',
+      version='0.9',
       classifiers=[
       'Intended Audience :: Science/Research',
       'Development Status :: 4 - Beta',

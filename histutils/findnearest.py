@@ -5,7 +5,10 @@ from pymap3d.haversine import angledist
 def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
     """
     assumes that azpts, elpts are each list of 1-D arrays or 2-D arrays
-
+    az: 2-D Numpy array of azimuths in the image
+    el: 2-D Numpy array of elevations in the image
+    azpts: 1-D or 2-D Numpy array of azimuth points to see where nearest neighbor index is
+    elpts: 1-D or 2-D Numpy array of azimuth points to see where nearest neighbor index is
     """
     assert az.ndim     == 2
     assert az.shape    == el.shape
