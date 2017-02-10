@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-req= ['tifffile','pathvalidate','pymap3d','sciencedates',
+req= ['pathvalidate','pymap3d','sciencedates',
       'psutil','python-dateutil','pytz','nose','numpy','scipy','pandas','h5py','astropy','matplotlib','seaborn']
 
 
@@ -18,7 +18,8 @@ setup(name='histutils',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
-      setup_requires=['numpy'], #due to tifffile
 	  install_requires=req,
+      extras_requires={'tifffile':['tifffile']},
+
 	  )
 
