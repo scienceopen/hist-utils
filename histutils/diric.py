@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from __future__ import division
 import numpy as np
 #try:
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     p.add_argument('x',type=float)
     p.add_argument('n',type=int)
     p=p.parse_args()
-    
+
     print(diric(p.x, p.n))
 
 
@@ -65,5 +65,5 @@ if __name__ == '__main__':
             plt.show()
         except Exception as e:
             print(f'skipping plotting  {e} ')
-            
+
 

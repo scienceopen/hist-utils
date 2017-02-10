@@ -2,8 +2,6 @@
 """
 reads .DMCdata files and displays them
  Michael Hirsch
- GPL v3+ license
-
 NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
    default to int32 instead of int64 like everyone else!
  """

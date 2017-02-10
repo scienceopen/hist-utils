@@ -13,13 +13,15 @@ setup(name='histutils',
       version='0.9.1',
       classifiers=[
       'Intended Audience :: Science/Research',
-      'Development Status :: 4 - Beta',
+      'Development Status :: 3 - Alpha',
       'License :: OSI Approved :: MIT License',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
 	  install_requires=req,
-      extras_requires={'tifffile':['tifffile']},
+      extras_requires={'tifffile':['tifffile'],
+                        'dascutils':['dascutils'],
+                        'themisasi':['themisasi']},
 
 	  )
 

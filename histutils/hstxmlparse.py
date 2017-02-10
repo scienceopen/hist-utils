@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # this is a pretty laughable approach, but I didn't take the time to figure out Xpath queries from within Python
 # I plan to never use XML in the future observing seasons, but rather HDF5 to store/load config data
 from subprocess import Popen,PIPE
