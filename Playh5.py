@@ -18,7 +18,7 @@ def playh5movie(h5fn,imgh5,outfn,clim):
         data = f[imgh5]
         try:
             ut1_unix = f['/ut1_unix']
-        except:
+        except KeyError:
             ut1_unix = None
 
         if outfn:

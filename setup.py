@@ -2,7 +2,7 @@
 from setuptools import setup
 
 req= ['pathvalidate','pymap3d','sciencedates',
-      'psutil','python-dateutil','pytz','nose','numpy','scipy','pandas','h5py','astropy','matplotlib','seaborn']
+      'python-dateutil','pytz','nose','numpy','scipy','pandas','h5py','astropy','matplotlib','seaborn']
 
 
 setup(name='histutils',

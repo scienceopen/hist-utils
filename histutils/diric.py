@@ -3,7 +3,7 @@ from __future__ import division
 import numpy as np
 #try:
 #    from numba import jit
-#except:
+#except ImportError:
 #    print('falling back to Numpy, as Numba is not available.')
 """
 Michael Hirsch

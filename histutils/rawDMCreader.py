@@ -12,11 +12,7 @@ from dateutil.parser import parse
 from numpy import int64,uint16,zeros,arange,fromfile
 from re import search
 from astropy.io import fits
-#
-try:
-    from shutil import disk_usage
-except ImportError: #Python 2
-    from psutil import disk_usage
+from shutil import disk_usage
 #
 from . import req2frame,dir2fn,getRawInd,meta2rawInd
 from .h5imgwriter import setupimgh5,imgwriteincr
@@ -24,7 +20,7 @@ from .timedmc import frame2ut1,ut12frame
 #
 try:
     import tifffile
-except:
+except ImportError:
     tifffile=None
 #
 bpp = 16

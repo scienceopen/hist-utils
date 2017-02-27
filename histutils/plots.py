@@ -28,7 +28,7 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
         hIm = hAx.imshow(data[0,...],
                 vmin=clim[0],vmax=clim[1],
                 cmap = 'gray', origin='lower', norm=LogNorm())
-    except: #clim wasn't specified properly
+    except TypeError: #clim wasn't specified properly
         print('setting image viewing limits based on first frame')
         hIm = hAx.imshow(data[0,...], cmap = 'gray', origin='lower',norm=LogNorm() )
 
@@ -50,8 +50,8 @@ def doPlayMovie(data,playMovie,ut1_unix=None,rawFrameInd=None,clim=None):
                 hT.set_text('UT1 estimate: {}  RelFrame#: {}'.format(datetime.utcfromtimestamp(ut1_unix[i]).replace(tzinfo=UTC),i))
             else:
                 hT.set_text('RawFrame#: {} RelFrame# {}'.format(rawFrameInd[i],i) )
-        except:
-            hT.set_text('RelFrame# {}'.format(i) )
+        except TypeError:
+            hT.set_text(f'RelFrame# {i}')
 
         draw(); pause(playMovie)
 
