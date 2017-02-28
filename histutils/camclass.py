@@ -108,7 +108,7 @@ class Cam: #use this like an advanced version of Matlab struct
         
         try:
             if self.fovmaxlen < (1.5*zmax):
-            logging.warning('sanityCheck: To avoid unexpected pixel/sky voxel intersection problems, make your candidate camera FOV at least 1.5 times longer than your maximum Z altitude.')
+                logging.warning('sanityCheck: To avoid unexpected pixel/sky voxel intersection problems, make your candidate camera FOV at least 1.5 times longer than your maximum Z altitude.')
         except TypeError: # just plotting raw data
             pass
 
