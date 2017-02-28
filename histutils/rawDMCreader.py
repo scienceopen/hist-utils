@@ -25,20 +25,25 @@ except ImportError:
 #
 bpp = 16
 
-def goRead(fn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC=None,cmosinit=None,verbose=0,outfn=None,nHeadBytes=4):
+def goRead(fn:Path,
+           xyPix,xyBin,
+           FrameIndReq=None, ut1Req=None,kineticraw=None,
+           startUTC=None,cmosinit=None,verbose=0,outfn=None,nHeadBytes:int=4):
 
     fn = Path(fn).expanduser()
     ext = fn.suffix
 #%% optional output file setup
     outfn = dir2fn(outfn,fn,'.h5')
-    if outfn:
-        freeout =  disk_usage(str(outfn.parent)).free
-        if freeout < 10e9 or freeout < 10*fn.stat().st_size:
-            raise RuntimeError('out of disk space on {}'.format(outfn.parent))
 #%% setup data parameters
     if ext in ('.DMCdata','.dat'):
         # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
         finf = getDMCparam(fn,xyPix,xyBin,FrameIndReq,ut1Req,kineticraw,startUTC,nHeadBytes,verbose)
+        outsize = finf['bytesperframe']*finf['nframeextract']
+        if outfn:
+            freeout =  disk_usage(outfn.parent).free
+            if freeout < 10*outsize:
+                raise RuntimeError(f'out of disk space on {outfn.parent}.  {freeout/1e9} GB free, wanting to write {outsize/1e9} GB.')
+
         rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
 #%% output (variable or file)
         if outfn:
@@ -63,7 +68,7 @@ def goRead(fn,xyPix,xyBin,FrameIndReq=None, ut1Req=None,kineticraw=None,startUTC
         finf,data = getNeoParam(fn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
         rawFrameInd = finf['frameind'] #FIXME this is for individual file, not start of night.
     else:
-        raise ValueError('not sure to do with file {}'.format(fn))
+        raise ValueError(f'not sure to do with file {fn}')
 
     return data, rawFrameInd,finf#,ut1_unix
 #%% workers
@@ -83,18 +88,18 @@ def getserialnum(flist):
         sn.append(ser)
     return sn
 
-def getDMCparam(fn,xyPix,xyBin,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,nHeadBytes=4,verbose=0):
+def getDMCparam(fn:Path,xyPix,xyBin,
+                FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,nHeadBytes=4,verbose=0):
     """
     nHeadBytes=4 for 2013-2016 data
     nHeadBytes=0 for 2011 data
     """
     Nmetadata = nHeadBytes//2 #FIXME for DMCdata version 1 only
 
-    fn = Path(fn).expanduser()
     if not fn.is_file(): #leave this here, getsize() doesn't fail on directory
-        raise ValueError('{} is not a file!'.format(fn))
+        raise ValueError(f'{fn} is not a file!')
 
-    print('reading {}'.format(fn))
+    print(f'reading {fn}')
 
     #np.int64() in case we are fed a float or int
     SuperX = int64(xyPix[0]) // int64(xyBin[0]) # "//" keeps as integer
