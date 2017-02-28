@@ -233,10 +233,10 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
 
     nFrameExtract = FrameIndRel.size #to preallocate properly
     nBytesExtract = nFrameExtract * BytesPerFrame
-    if verbose > 0:
-        print('Extracted {} frames from {} totaling {} bytes.'.format(nFrameExtract,fn,nBytesExtract))
+    print(f'Extracted {nFrameExtract} frames from {fn} totaling {nBytesExtract/1e9:.2f} GB.')
+
     if nBytesExtract > 4e9:
-        logging.info('This will require {:.2f} Gigabytes of RAM.'.format(nBytesExtract/1e9))
+        print('This will require {nBytesExtract/1e9:.2f} GB of RAM.')
 
     return FrameIndRel
 
