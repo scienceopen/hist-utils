@@ -5,18 +5,18 @@ import logging
 from struct import pack,unpack
 # NOTE: need to use int64 since Numpy thru 1.11 defaults to int32 for dtype=int, and we need int64 for large files
 
-def getRawInd(fn,BytesPerImage,nHeadBytes,Nmetadata):
+def getRawInd(fn:Path, BytesPerImage:int, nHeadBytes:int, Nmetadata:int):
     assert isinstance(Nmetadata,int)
     if Nmetadata<1: #no header, only raw images
         fileSizeBytes = fn.stat().st_size
         if fileSizeBytes % BytesPerImage:
-            logging.error('{} may not be read correctly, mismatch frame->file size'.format(fn))
+            logging.error(f'{fn} may not be read correctly, mismatch frame->file size')
 
         firstRawIndex = 1 #definition, one-based indexing
         lastRawIndex = fileSizeBytes // BytesPerImage
     else: # normal case 2013-2016
         # gets first and last raw indices from a big .DMCdata file
-        with open(str(fn),'rb') as f: #NOTE didn't use path here due to Python 2.7, Numpy 1.11 lack of pathlib support. Py3.5 is OK
+        with fn.open('rb') as f:
             f.seek(BytesPerImage, 0) # get first raw frame index
             firstRawIndex = meta2rawInd(f,Nmetadata)
 
@@ -40,7 +40,7 @@ def meta2rawInd(f,Nmetadata):
     return rawind
 
 
-def req2frame(req, N=0):
+def req2frame(req, N:int=0):
     """
     output has to be numpy.arange for > comparison
     """
@@ -60,7 +60,7 @@ def req2frame(req, N=0):
 
     return frame
 
-def dir2fn(ofn,ifn,suffix):
+def dir2fn(ofn,ifn,suffix) -> Path:
     """
     ofn = filename or output directory, to create filename based on ifn
     ifn = input filename (don't overwrite!)
@@ -76,7 +76,7 @@ def dir2fn(ofn,ifn,suffix):
     if ofn.suffix==suffix: #must already be a filename
         pass
     else: #must be a directory
-        assert ofn.is_dir(),'create directory {}'.format(ofn)
+        assert ofn.is_dir(),f'create directory {ofn}'
         ofn = ofn / ifn.with_suffix(suffix).name
 
     try:
@@ -115,7 +115,7 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
     elif isinstance(key,str):
         val = conf.get(key,fallback=fallback)
     else:
-        raise TypeError('invalid key type {}'.format(type(key)))
+        raise TypeError(f'invalid key type {type(key)}')
 
     try:
         return dtype(val.split(sep)[i])

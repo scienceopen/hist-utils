@@ -196,14 +196,14 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
     fileSizeBytes = fn.stat().st_size
 
     if fileSizeBytes < BytesPerImage:
-        raise ValueError('File size {} is smaller than a single image frame!'.format(fileSizeBytes))
+        raise ValueError(f'File size {fileSizeBytes} is smaller than a single image frame!')
 
     if ext=='.DMCdata' and fileSizeBytes % BytesPerFrame:
         logging.error(f"Looks like I am not reading this file correctly, with BPF: {BytesPerFrame:d}")
 
     if ext=='.DMCdata':
         nFrame = fileSizeBytes // BytesPerFrame
-        logging.info(f'{nFrame} frames, Bytes: {fileSizeBytes} in file {fn}')
+        print(f'{nFrame} frames, Bytes: {fileSizeBytes} in file {fn}')
 
         nFrameRaw = (lastRawInd-firstRawInd+1)
         if nFrameRaw != nFrame:
@@ -212,7 +212,7 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
         nFrame = lastRawInd-firstRawInd+1
 
     allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
-    logging.info(f"first / last raw frame #'s: {firstRawInd}  / {lastRawInd} ")
+    print(f"first / last raw frame #'s: {firstRawInd}  / {lastRawInd} ")
 #%% absolute time estimate
     ut1_unix_all = frame2ut1(startUTC,kineticsec,allrawframe)
 #%% setup frame indices

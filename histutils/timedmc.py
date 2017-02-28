@@ -37,7 +37,8 @@ def frame2ut1(tstart,kineticsec,rawind):
 def ut12frame(treq,ind,ut1_unix):
     """
     Given treq, output index(ces) to extract via rawDMCreader
-    treq scalar or vector of ut1_unix time (seconds since Jan 1, 1970)
+    treq: scalar or vector of ut1_unix time (seconds since Jan 1, 1970)
+    ind: zero-based frame index corresponding to ut1_unix, corresponding to input data file.
     """
     if treq is None: #have to do this since interp1 will return last index otherwise
         return

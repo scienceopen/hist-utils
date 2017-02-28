@@ -112,8 +112,8 @@ class Sim:
             except (TypeError,AttributeError): #no specified time
                 print('loading all frames')
 
-        self.pbInd = req2frame(framereq, Nframe)
-        self.nTimeSlice = self.pbInd.size
+        #self.pbInd = req2frame(framereq, Nframe)
+        #self.nTimeSlice = self.pbInd.size
 
         self.raymap = 'astrometry'
         self.realdata = True
