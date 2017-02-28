@@ -105,8 +105,12 @@ class Cam: #use this like an advanced version of Matlab struct
             logging.warning('sanityCheck: Your FOV length seems excessive > 10000 km')
         if self.ncutpix > 4096:
             logging.warning('sanityCheck: Program execution time may be excessive due to large number of camera pixels')
-        if self.fovmaxlen is not None and self.fovmaxlen < (1.5*zmax):
+        
+        try:
+            if self.fovmaxlen < (1.5*zmax):
             logging.warning('sanityCheck: To avoid unexpected pixel/sky voxel intersection problems, make your candidate camera FOV at least 1.5 times longer than your maximum Z altitude.')
+        except TypeError: # just plotting raw data
+            pass
 
         self.boresightEl = splitconf(cp,'boresightElevDeg',ci)
         self.arbfov =      splitconf(cp,'FOVdeg',ci)
