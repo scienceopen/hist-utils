@@ -19,7 +19,7 @@ setup(name='histutils',
       'Programming Language :: Python :: 3.6',
       ],
 	  install_requires=req,
-      extras_requires={'tifffile':['tifffile'],
+      extras_require={'tifffile':['tifffile'],
                         'dascutils':['dascutils'],
                         'themisasi':['themisasi']},
 
