@@ -207,7 +207,7 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
 
         nFrameRaw = (lastRawInd-firstRawInd+1)
         if nFrameRaw != nFrame:
-             logging.warning(f'there may be missed frames: nFrameRaw {nFrameRow}   nFrame {nFrame}')
+             logging.warning(f'there may be missed frames: nFrameRaw {nFrameRaw}   nFrame {nFrame}')
     else:
         nFrame = lastRawInd-firstRawInd+1
 
