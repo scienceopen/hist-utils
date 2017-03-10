@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from pathlib import Path
 import logging
 from numpy import sqrt,atleast_1d
 from matplotlib.pyplot import figure,subplots
@@ -44,7 +45,7 @@ def plotPlainImg(sim,cam,rawdata,t,odir):
 
         writeplots(fg,'cam{}rawFrame'.format(C.name),t,odir)
 #%%
-def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
+def plotRealImg(sim,cam,rawdata,t:int,odir:Path=None,fg=None):
     """
     sim: histfeas/simclass.py
     cam: camclass.py
@@ -84,7 +85,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
            # print('frame {}'.format(t))
             T[i] = updateframe(t,rawdata[i],None,cam[i],axs[i],fg) #hold times for all cameras at this time step
         elif C.name=='asi': #ASI
-            (opt,_,_,times) = readDASC(C.fn, None,None, treq=T[sim.useCamBool][0])
+            opt,_,_,times = readDASC(C.fn, None,None, treq=T[sim.useCamBool][0])
             C.tKeo = times[:,0]
 
             updateframe(0,opt['image'],opt['lambda'],C,axs[i],fg)
@@ -111,7 +112,7 @@ def plotRealImg(sim,cam,rawdata,t,odir=None,fg=None):
 def updateframe(t,raw,wavelen,cam,ax,fg):
     showcb = False
 
-    ttxt='Cam {}: '.format(cam.name)
+    ttxt=f'Cam {cam.name}: '
 
     if raw.ndim ==3:
         frame = raw[t,...]
@@ -143,14 +144,15 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
         v = vis.HistEqStretch(frame)
         NORM = ImageNormalize(stretch=v)
 
-    NORM = LogNorm()
+    NORM = None
+  #  NORM = LogNorm()
   # NORM = ImageNormalize(stretch=vis.LogStretch())
 
     hi = ax.imshow(frame,
                      origin='lower', interpolation='none',
                      #aspect='equal',
                      #extent=(0,C.superx,0,C.supery),
-                     vmin=cam.clim[0], vmax=cam.clim[1],
+                     vmin = cam.clim[0], vmax = cam.clim[1],
                      cmap = 'gray', norm = NORM)
 
     # autoscale(False) for case where we put plots on top of image
