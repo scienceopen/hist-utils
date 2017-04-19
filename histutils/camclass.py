@@ -1,8 +1,6 @@
 from pathlib import Path
 import logging
-from numpy import (linspace, fliplr, flipud, rot90, arange,
-                   polyfit,polyval,rint,empty, isfinite, isclose,
-                   absolute, hypot, unravel_index,array,nan,diff)
+import numpy as np
 from numpy.testing import assert_allclose
 from dateutil.parser import parse
 from scipy.signal import savgol_filter
@@ -62,8 +60,8 @@ class Cam: #use this like an advanced version of Matlab struct
                                    ['../histutils/cal/hst0cal.h5','../histutils/cal/hst1cal.h5'],
                                    projalt=110e3,site='DASC')
                     with h5py.File(sim.fovfn,'w',libver='latest') as H:
-                        H['/rows'] = array(self.hlrows) # Ncam x 4 x Nx  (list,list,ndarray)
-                        H['/cols'] = array(self.hlcols)
+                        H['/rows'] = np.array(self.hlrows)  # Ncam x 4 x Nx  (list,list,ndarray)
+                        H['/cols'] = np.array(self.hlcols)
                 else:
                     if sim.fovfn and sim.fovfn.is_file():
                         with h5py.File(sim.fovfn,'r',libver='latest') as H:
@@ -99,13 +97,13 @@ class Cam: #use this like an advanced version of Matlab struct
         self.lowerthres = splitconf(cp,'lowerthres',ci)
 
 #%% check FOV and 1D cut sizes for sanity
-        self.fovmaxlen = splitconf(cp,'FOVmaxLengthKM',ci,fallback=nan)
+        self.fovmaxlen = splitconf(cp,'FOVmaxLengthKM', ci, fallback=np.nan)
 
         if self.fovmaxlen is not None and self.fovmaxlen > 10e3:
             logging.warning('sanityCheck: Your FOV length seems excessive > 10000 km')
         if self.ncutpix > 4096:
             logging.warning('sanityCheck: Program execution time may be excessive due to large number of camera pixels')
-        
+
         try:
             if self.fovmaxlen < (1.5*zmax):
                 logging.warning('sanityCheck: To avoid unexpected pixel/sky voxel intersection problems, make your candidate camera FOV at least 1.5 times longer than your maximum Z altitude.')
@@ -239,8 +237,8 @@ class Cam: #use this like an advanced version of Matlab struct
         #raySpacingDeg = self.arbfov / self.nCutPix
         maxAng = self.boresightEl + self.arbfov/2
         minAng = self.boresightEl - self.arbfov/2
-        angles=linspace(maxAng, minAng, num=self.ncutpix, endpoint=True)
-        assert isclose(angles[0],maxAng) & isclose(angles[-1],minAng)
+        angles= np.linspace(maxAng, minAng, num=self.ncutpix, endpoint=True)
+        assert np.isclose(angles[0],maxAng) & np.isclose(angles[-1],minAng)
         return angles
 
     def astrometrymap(self):
@@ -268,24 +266,24 @@ class Cam: #use this like an advanced version of Matlab struct
          #rotate works with first two axes
         if self.rotccw: #NOT isinstance integer_types!
             if frame.ndim == 3:
-                frame = rot90(frame.transpose(1,2,0),k=self.rotccw).transpose(2,0,1)
+                frame = np.rot90(frame,self.rotccw,(1,2))
             elif frame.ndim == 2:
-                frame = rot90(frame,k=self.rotccw)
+                frame = np.rot90(frame,self.rotccw)
             else:
                 raise ValueError('ndim==2 or 3')
         # flip
         if self.fliplr:
             if frame.ndim == 3:
-                frame = fliplr(frame.transpose(1,2,0)).transpose(2,0,1)
+                frame = np.fliplr(frame.transpose(1,2,0)).transpose(2,0,1)
             elif frame.ndim==2:
-                frame = fliplr(frame)
+                frame = np.fliplr(frame)
             else:
                 raise ValueError('ndim==2 or 3')
         if self.flipud:
             if frame.ndim == 3:
-                frame = flipud(frame.transpose(1,2,0)).transpose(2,0,1)
+                frame = np.flipud(frame.transpose(1,2,0)).transpose(2,0,1)
             elif frame.ndim==2:
-                frame = flipud(frame)
+                frame = np.flipud(frame)
             else:
                 raise ValueError('ndim==2 or 3')
         return frame
@@ -314,22 +312,22 @@ class Cam: #use this like an advanced version of Matlab struct
             dec = dec.T
         if self.fliplr:
             logging.debug('flipping horizontally cam #{} az/el/ra/dec data.'.format(self.name))
-            az  = fliplr(az)
-            el  = fliplr(el)
-            ra  = fliplr(ra)
-            dec = fliplr(dec)
+            az  = np.fliplr(az)
+            el  = np.fliplr(el)
+            ra  = np.fliplr(ra)
+            dec = np.fliplr(dec)
         if self.flipud:
             logging.debug('flipping vertically cam #{} az/el/ra/dec data.'.format(self.name))
-            az  = flipud(az)
-            el  = flipud(el)
-            ra  = flipud(ra)
-            dec = flipud(dec)
+            az  = np.flipud(az)
+            el  = np.flipud(el)
+            ra  = np.flipud(ra)
+            dec = np.flipud(dec)
         if self.rotccw != 0:
             logging.debug('rotating cam #{} az/el/ra/dec data.'.format(self.name))
-            az  = rot90(az, k = self.rotccw)
-            el  = rot90(el, k = self.rotccw)
-            ra  = rot90(ra, k = self.rotccw)
-            dec = rot90(dec,k = self.rotccw)
+            az  = np.rot90(az, self.rotccw)
+            el  = np.rot90(el, self.rotccw)
+            ra  = np.rot90(ra, self.rotccw)
+            dec = np.rot90(dec,self.rotccw)
 
         self.az = az
         self.el = el
@@ -338,7 +336,7 @@ class Cam: #use this like an advanced version of Matlab struct
 
 
     def debias(self,data):
-        if hasattr(self,'debiasData') and self.debiasData is not None and isfinite(self.debiasData):
+        if hasattr(self,'debiasData') and self.debiasData is not None and np.isfinite(self.debiasData):
             logging.debug('Debiasing Data for Camera #{} by -{}'.format(self.name,self.debiasData) )
             data -= self.debiasData
         return data
@@ -363,7 +361,7 @@ class Cam: #use this like an advanced version of Matlab struct
          return noisy
 
     def dosmooth(self,data):
-        assert isfinite(data).all(),'NaN leaked into brightness data, savgol cannot handle NaN'
+        assert np.isfinite(data).all(),'NaN leaked into brightness data, savgol cannot handle NaN'
         try:
             if self.smoothspan > 0 and self.savgolOrder>0:
                 logging.debug('Smoothing Data for Camera #{}'.format(self.name))
@@ -403,12 +401,12 @@ class Cam: #use this like an advanced version of Matlab struct
         return data
 
     def findLSQ(self,nearrow,nearcol,odir):
-        polycoeff = polyfit(nearcol,nearrow,deg=1,full=False)
+        polycoeff = np.polyfit(nearcol,nearrow,deg=1,full=False)
 #%% columns (x)  to cut from picture
         # NOT range, NEED dtype= for arange api
-        cutcol = arange(self.superx, dtype=int)
+        cutcol = np.arange(self.superx, dtype=int)
 #%% rows (y) to cut from picture
-        cutrow = rint(polyval(polycoeff,cutcol)).astype(int)
+        cutrow = np.rint(np.polyval(polycoeff,cutcol)).astype(int)
         assert (cutrow>=0).all() and (cutrow<self.supery).all(),'impossible least squares fit for 1-D cut\n is your video orientation correct? check the params of video hdf5 file'
         # DONT DO THIS: cutrow.clip(0,self.supery,cutrow)
 #%% angle from magnetic zenith corresponding to those pixels
@@ -428,7 +426,7 @@ class Cam: #use this like an advanced version of Matlab struct
 #%% meager self-check of result
         if self.arbfov is not None:
             expect_diffang = self.arbfov / self.ncutpix
-            diffang = diff(self.angle_deg)
+            diffang = np.diff(self.angle_deg)
             diffoutlier = max(abs(expect_diffang-diffang.min()),
                               abs(expect_diffang-diffang.max()))
             assert_allclose(expect_diffang, diffang.mean(), rtol=0.01),'large bias in camera angle vector detected'
@@ -443,16 +441,16 @@ class Cam: #use this like an advanced version of Matlab struct
                        self.name,odir)
 
     def sky2beam(self,angledist_deg):
-        angle_deg = empty(self.superx, float)
+        angle_deg = np.empty(self.superx, float)
         MagZenInd = angledist_deg.argmin() # whether minimum angle distance from MZ is slightly positive or slightly negative, this should be OK
 
         angle_deg[MagZenInd:] = 90. + angledist_deg[MagZenInd:]
         angle_deg[:MagZenInd] = 90. - angledist_deg[:MagZenInd]
 #%% LSQ
-        col = arange(self.superx, dtype=int)
-        polycoeff = polyfit(col,angle_deg,deg=1,full=False)
+        col = np.arange(self.superx, dtype=int)
+        polycoeff = np.polyfit(col,angle_deg,deg=1,full=False)
 
-        return polyval(polycoeff,col), MagZenInd
+        return np.polyval(polycoeff,col), MagZenInd
 
     def findClosestAzel(self,odir=None):
         assert self.az.shape     == self.el.shape
@@ -460,23 +458,23 @@ class Cam: #use this like an advanced version of Matlab struct
         assert self.az.ndim == 2
 
         npts = self.az2pts.size  #numel
-        R = empty(npts,int)
-        C = empty(npts,int)
+        R = np.empty(npts,int)
+        C = np.empty(npts,int)
         # can be FAR FAR faster than scipy.spatial.distance.cdist()
         for i in range(npts):
             #we do this point by point because we need to know the closest pixel for each point
-            errdist = absolute( hypot(self.az - self.az2pts[i],
+            errdist = abs( np.hypot(self.az - self.az2pts[i],
                                       self.el - self.el2pts[i]) )
 
             """
             THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
             .argmin() has flattened output
             """
-            R[i], C[i] = unravel_index(errdist.argmin(), self.az.shape, order='C')
+            R[i], C[i] = np.unravel_index(errdist.argmin(), self.az.shape, order='C')
 
 #%% dicard edge pixels
-        mask = ~(((C==0) | (C == self.az.shape[1]-1)) |
-                 ((R==0) | (R == self.az.shape[0]-1)))
+        mask = np.logical_not(((C==0) | (C == self.az.shape[1]-1)) |
+                    ((R==0) | (R == self.az.shape[0]-1)))
 
         R = R[mask]
         C = C[mask]
