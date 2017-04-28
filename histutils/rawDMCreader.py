@@ -65,8 +65,9 @@ def goRead(fn:Path,
 
 
     elif ext[:4] == '.tif':
-        finf,data = getNeoParam(fn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
+        finf = getNeoParam(fn,FrameIndReq,ut1Req,kineticraw,startUTC,cmosinit,verbose)
         rawFrameInd = finf['frameind'] #FIXME this is for individual file, not start of night.
+        data = None # just didn't need this right now.
     else:
         raise ValueError(f'not sure to do with file {fn}')
 
@@ -141,7 +142,6 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
                       'lastrawind':len(f)}
     elif fn.suffix.lower() in '.fits':
         with fits.open(fn, mode='readonly', memmap=False) as f:
-            data = None #f[0].data  #NOTE You can read the data if you want, I didn't need it here.
 
             kineticsec = f[0].header['KCT']
             startseries = parse(f[0].header['DATE'] + 'Z') #TODO start of night's recording (with some Solis versionss)
@@ -185,7 +185,7 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
 #%% absolute frame timing (software, yikes)
     finf['ut1'] = frame2ut1(startUTC,kineticsec,rawFrameInd)
 
-    return finf, data
+    return finf
 
 def howbig(SuperX,SuperY,nHeadBytes):
     PixelsPerImage= SuperX * SuperY
