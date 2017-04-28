@@ -132,11 +132,13 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
     nHeadBytes=0
 
     if fn.suffix.lower() in '.tiff':
-        if tifffile is None: raise ImportError('pip install tifffile')
+        if tifffile is None:
+            raise ImportError('pip install tifffile')
         #FIXME didn't the 2011 TIFFs have headers? maybe not.
         with tifffile.TiffFile(str(fn)) as f:
-            data = f.asarray()
-            Y,X = data.shape[-2:]
+            Y,X = f[0].shape
+            cmosinit={'firstrawind':1,
+                      'lastrawind':len(f)}
     elif fn.suffix.lower() in '.fits':
         with fits.open(fn, mode='readonly', memmap=False) as f:
             data = None #f[0].data  #NOTE You can read the data if you want, I didn't need it here.
@@ -165,7 +167,7 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
     PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(X,Y,nHeadBytes)
 
     FrameIndRel = whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,
-                              cmosinit['firstrawind'],cmosinit['lastrawind'],
+                              cmosinit['firstrawind'], cmosinit['lastrawind'],
                               BytesPerImage,BytesPerFrame,verbose)
 
     assert isinstance(FrameIndReq,int) or FrameIndReq is None, 'TODO: add multi-frame request case'
