@@ -101,9 +101,9 @@ def getDMCparam(fn:Path,xyPix,xyBin,
 
     print(f'reading {fn}')
 
-    #np.int64() in case we are fed a float or int
-    SuperX = int64(xyPix[0]) // int64(xyBin[0]) # "//" keeps as integer
-    SuperY = int64(xyPix[1]) // int64(xyBin[1])
+    # int() in case we are fed a float or int
+    SuperX = int(xyPix[0] // xyBin[0])
+    SuperY = int(xyPix[1] // xyBin[1])
 
 
     PixelsPerImage,BytesPerImage,BytesPerFrame = howbig(SuperX,SuperY,nHeadBytes)
@@ -169,7 +169,9 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
                               BytesPerImage,BytesPerFrame,verbose)
 
     assert isinstance(FrameIndReq,int) or FrameIndReq is None, 'TODO: add multi-frame request case'
-    rawFrameInd = arange(cmosinit['firstrawind'],cmosinit['lastrawind']+1,FrameIndReq,dtype=int64)
+    rawFrameInd = arange(cmosinit['firstrawind'],
+                         cmosinit['lastrawind']+1,
+                         FrameIndReq, dtype=int64)
 
     finf = {'superx':X,
             'supery':Y,
@@ -211,17 +213,19 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
     else:
         nFrame = lastRawInd-firstRawInd+1
 
-    allrawframe = arange(firstRawInd,lastRawInd+1,1,dtype=int64)
+    allrawframe = arange(firstRawInd, lastRawInd+1, 1, dtype=int64)
     print(f"first / last raw frame #'s: {firstRawInd}  / {lastRawInd} ")
 #%% absolute time estimate
-    ut1_unix_all = frame2ut1(startUTC,kineticsec,allrawframe)
+    ut1_unix_all = frame2ut1(startUTC, kineticsec, allrawframe)
 #%% setup frame indices
     """
     if no requested frames were specified, read all frames. Otherwise, just
     return the requested frames
     note these assignments have to be "int64", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     """
-    FrameIndRel = ut12frame(ut1req,arange(0,nFrame,1,dtype=int64),ut1_unix_all)
+    FrameIndRel = ut12frame(ut1req,
+                            arange(0, nFrame, 1, dtype=int64),
+                            ut1_unix_all)
 
     if FrameIndRel is None or len(FrameIndRel)==0: #NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
         FrameIndRel = req2frame(FrameIndReq, nFrame)
@@ -241,16 +245,20 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
     return FrameIndRel
 
 
-def getDMCframe(f,iFrm,finf,verbose=0):
+def getDMCframe(f, iFrm, finf, verbose=False):
+    """
+    f is open file handle
+    """
     # on windows, "int" is int32 and overflows at 2.1GB!  We need np.int64
     currByte = iFrm * finf['bytesperframe']
 #%% advance to start of frame in bytes
-    if verbose>0:
+    if verbose:
         print(f'seeking to byte {currByte}')
 
-    assert isinstance(currByte,int64),'int32 will fail on files > 2GB'
+    assert isinstance(iFrm,(int,int64)),'int32 will fail on files > 2GB'
+
     try:
-        f.seek(currByte,0) #no return value
+        f.seek(currByte, 0)
     except IOError as e:
         raise IOError('I couldnt seek to byte {:d}. try using a 64-bit integer for iFrm \n'
               'is {} a DMCdata file?  {}'.format(currByte,f.name,e))
