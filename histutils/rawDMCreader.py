@@ -138,7 +138,7 @@ def getNeoParam(fn,FrameIndReq=None,ut1req=None,kineticsec=None,startUTC=None,cm
             data = f.asarray()
             Y,X = data.shape[-2:]
     elif fn.suffix.lower() in '.fits':
-        with fits.open(str(fn),mode='readonly',memmap=False) as f:
+        with fits.open(fn, mode='readonly', memmap=False) as f:
             data = None #f[0].data  #NOTE You can read the data if you want, I didn't need it here.
 
             kineticsec = f[0].header['KCT']
