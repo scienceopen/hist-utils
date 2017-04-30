@@ -4,7 +4,6 @@ from pytz import UTC
 import h5py
 import numpy as np
 import logging
-import h5py
 from struct import pack,unpack
 # NOTE: need to use int64 since Numpy thru 1.11 defaults to int32 on Windows for dtype=int, and we need int64 for large files
 
@@ -168,7 +167,11 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1):
     assert outfn,'must provide a filename to write'
 
     outfn = Path(outfn).expanduser()
-    print('writing', outfn)
+    txtupd = f'converting file # {i} / {Nfile}'
+    if 'spoolfn' in P:
+        txtupd += f' from {P["spoolfn"].name}'
+    txtupd += f' to {outfn}'
+    print(txtupd)
     #%% saving
     if outfn.suffix == '.h5':
         """
@@ -184,8 +187,16 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1):
         else:
             writemode = 'w'
 
-        N = data.shape[0] * Nfile
-        ind = slice(i,i+data.shape[0])
+        if data is not None:
+
+            N = data.shape[0] * Nfile
+            ind = slice(i*data.shape[0], (i+1)*data.shape[0])
+        else: # FIXME haven't reevaluated for update only case
+            for q in (ut1,rawind,ticks):
+                if q is not None:
+                    N = len(q)
+                    break
+            ind = slice(None)
 
         with h5py.File(outfn, writemode, libver='latest') as f:
             if data is not None:
@@ -215,6 +226,14 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1):
                     ftk.attrs['units'] = 'FPGA tick counter for each image frame'
 
                 f['/ticks'][ind] = ticks
+
+            if 'spoolfn' in P:
+                # http://docs.h5py.org/en/latest/strings.html
+                if 'spoolfn' not in f:
+                    fsp = f.create_dataset('/spoolfn', shape=(N,), dtype=h5py.special_dtype(vlen=bytes))
+                    fsp.attrs['description'] = 'input filename data was extracted from'
+
+                f['/spoolfn'][ind] = P['spoolfn'].name
 
             if 'params' not in f:
                 cparam = np.array((
@@ -249,6 +268,9 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1):
 
             if 'header' not in f and 'header' in P:
                 f['/header'] = str(P['header'])
+
+            if 'hdf5version' not in f:
+                f['/hdf5version'] = h5py.version.hdf5_version_tuple
 
 
     elif outfn.suffix == '.fits':
