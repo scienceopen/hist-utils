@@ -163,7 +163,7 @@ def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16, writemod
 
     return h
 
-def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1):
+def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, det=None):
     assert outfn,'must provide a filename to write'
 
     outfn = Path(outfn).expanduser()
@@ -234,6 +234,13 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1):
                     fsp.attrs['description'] = 'input filename data was extracted from'
 
                 f['/spoolfn'][ind] = P['spoolfn'].name
+
+            if det is not None:
+                if 'detect' not in f:
+                    fdt = f.create_dataset('/detect', shape=(N,), dtype=int)
+                    fdt.attrs['description'] = '# of auroral detections this frame'
+
+                f['/detect'] = det
 
             if 'params' not in f:
                 cparam = np.array((
