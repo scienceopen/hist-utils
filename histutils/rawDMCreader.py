@@ -14,8 +14,7 @@ from re import search
 from astropy.io import fits
 from shutil import disk_usage
 #
-from . import req2frame,dir2fn,getRawInd,meta2rawInd
-from .h5imgwriter import setupimgh5,imgwriteincr
+from . import req2frame,dir2fn,getRawInd,meta2rawInd, setupimgh5,imgwriteincr
 from .timedmc import frame2ut1,ut12frame
 #
 try:

@@ -14,9 +14,8 @@ from pathlib import Path
 from sys import argv
 from numpy import int64
 #
-from histutils import dir2fn
+from histutils import dir2fn,vid2h5
 from histutils.rawDMCreader import goRead
-from histutils.vid2h5 import vid2h5
 from histutils.plots import doPlayMovie,doplotsave
 
 def dmclooper(p):
@@ -38,7 +37,7 @@ def dmclooper(p):
     for i,f in enumerate(flist):
         ofn = dir2fn(p.output,f,'.h5')
         if ofn.is_file():
-            print('\nskipping {} {}'.format(ofn,f))
+            print('\nskipping',ofn,f)
             continue
 
         print('\n file {} / {}   {:.1f} % done with {}'.format(i, N, i/N*100., flist[0].parent ))
@@ -46,7 +45,7 @@ def dmclooper(p):
         rawImgData,rawind,finf = goRead(f, p.pix,p.bin,p.frames,p.ut1,
                                     p.kineticsec,p.startutc,cmosinit,p.verbose,ofn,p.headerbytes)
 #%% convert
-        vid2h5(None,finf['ut1'],rawind, ofn,params,argv)
+        vid2h5(None, finf['ut1'], rawind, None, ofn, params, argv)
 #%% optional plot
         if p.movie:
             plots(rawImgData,rawind,finf)
