@@ -7,6 +7,33 @@ import logging
 from struct import pack,unpack
 # NOTE: need to use int64 since Numpy thru 1.11 defaults to int32 on Windows for dtype=int, and we need int64 for large files
 
+def sixteen2eight(I,Clim):
+    """
+    scipy.misc.bytescale had bugs
+
+    inputs:
+    ------
+    I: 2-D Numpy array of grayscale image data
+    Clim: length 2 of tuple or numpy 1-D array specifying lowest and highest expected values in grayscale image
+    Michael Hirsch, Ph.D.
+    """
+    Q = normframe(I,Clim)
+    Q *= 255 # stretch to [0,255] as a float
+    return Q.round().astype(np.uint8) # convert to uint8
+
+def normframe(I,Clim):
+    """
+    inputs:
+    -------
+    I: 2-D Numpy array of grayscale image data
+    Clim: length 2 of tuple or numpy 1-D array specifying lowest and highest expected values in grayscale image
+    """
+    Vmin = Clim[0]; Vmax = Clim[1]
+
+    return (I.astype(np.float32).clip(Vmin, Vmax) - Vmin) / (Vmax - Vmin) #stretch to [0,1]
+
+
+
 def getRawInd(fn:Path, BytesPerImage:int, nHeadBytes:int, Nmetadata:int):
     assert isinstance(Nmetadata,int)
     if Nmetadata<1: #no header, only raw images
