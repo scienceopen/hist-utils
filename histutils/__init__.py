@@ -190,7 +190,7 @@ def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16, writemod
 
     return h
 
-def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, det=None):
+def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, det=None,tstart=None):
     assert outfn,'must provide a filename to write'
 
     outfn = Path(outfn).expanduser()
@@ -239,6 +239,9 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, 
                     fut1.attrs['units'] = 'seconds since Unix epoch Jan 1 1970 midnight'
 
                 f['/ut1_unix'][ind] = ut1
+
+            if tstart is not None and 'tstart' not in f:
+                f['/tstart'] = tstart
 
             if rawind is not None:
                 if 'rawind' not in f:
