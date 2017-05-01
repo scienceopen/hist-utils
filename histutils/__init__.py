@@ -160,7 +160,7 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
             return fallback
 # %% HDF5
 
-def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16, writemode='r+',key='/rawimg'):
+def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16, writemode='r+', key='/rawimg'):
     """
     f: HDF5 handle (or filename)
 
@@ -169,7 +169,7 @@ def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16, writemod
     if isinstance(f, (str,Path)):  # assume new HDF5 file wanted
         print('creating', f)
         with h5py.File(f, writemode, libver='latest') as F:
-            return setupimgh5(F,Nframetotal,Nrow,Ncol,dtype)
+            return setupimgh5(F,Nframetotal,Nrow,Ncol,dtype,writemode,key)
     elif isinstance(f, h5py.File):
         h = f.create_dataset(key,
                  shape =  (Nframetotal,Nrow,Ncol),
