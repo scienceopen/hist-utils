@@ -160,7 +160,8 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
             return fallback
 # %% HDF5
 
-def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16, writemode='r+', key='/rawimg'):
+def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16,
+               writemode='r+', key='/rawimg',cmdlog:str=''):
     """
     f: HDF5 handle (or filename)
 
@@ -185,6 +186,9 @@ def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16, writemod
         h.attrs["IMAGE_SUBCLASS"] = np.string_("IMAGE_GRAYSCALE")
         h.attrs["DISPLAY_ORIGIN"] = np.string_("LL")
         h.attrs['IMAGE_WHITE_IS_ZERO'] = np.uint8(0)
+
+        if cmdlog and isinstance(cmdlog,str):
+            f['/cmdlog'] = cmdlog
     else:
         raise TypeError(f'{type(f)} is not correct, must be filename or h5py.File HDF5 file handle')
 
