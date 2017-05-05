@@ -274,7 +274,7 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, 
                     fdt = f.create_dataset('/detect', shape=(N,), dtype=int)
                     fdt.attrs['description'] = '# of auroral detections this frame'
 
-                f['/detect'][ind] = det[ind]
+                f['/detect'][i] = det[i]
 
             if 'params' not in f:
                 cparam = np.array((
