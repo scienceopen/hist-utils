@@ -198,6 +198,9 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, 
     assert outfn,'must provide a filename to write'
 
     outfn = Path(outfn).expanduser()
+    assert not outfn.is_dir(),'must provide FILEname, you provided directory {outfn}'
+    outfn.parent.mkdir(exist_ok=True)
+
     txtupd = f'converting file # {i} / {Nfile}'
     if 'spoolfn' in P:
         txtupd += f' from {P["spoolfn"].name}'
