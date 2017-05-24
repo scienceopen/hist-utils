@@ -1,7 +1,7 @@
-.. image:: https://travis-ci.org/scienceopen/histutils.svg?branch=master
-    :target: https://travis-ci.org/scienceopen/histutils
-.. image:: http://coveralls.io/repos/scienceopen/histutils/badge.svg?branch=master&service=github
-   :target: http://coveralls.io/github/scienceopen/histutils?branch=master
+.. image:: https://travis-ci.org/scivision/histutils.svg?branch=master
+    :target: https://travis-ci.org/scivision/histutils
+.. image:: http://coveralls.io/repos/scivision/histutils/badge.svg?branch=master&service=github
+   :target: http://coveralls.io/github/scivision/histutils?branch=master
 
 ==========
 HiSTutils

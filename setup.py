@@ -1,8 +1,18 @@
 #!/usr/bin/env python
-from setuptools import setup
 
-req= ['pathvalidate','pymap3d','sciencedates',
-      'python-dateutil','pytz','nose','numpy','scipy','pandas','h5py','astropy','matplotlib','seaborn']
+req= ['python-dateutil', 'pytz','nose','numpy','scipy', 'pandas', 'h5py', 'astropy', 'matplotlib','seaborn']
+
+pipreq = ['pathvalidate','pymap3d','sciencedates',]
+
+import pip
+try:
+    import conda.cli
+    conda.cli.main('install',*req)
+except Exception:
+    pip.main(['install'] + req)
+pip.main(['install'] + pipreq)
+# %%
+from setuptools import setup
 
 
 setup(name='histutils',
@@ -18,7 +28,6 @@ setup(name='histutils',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
-	  install_requires=req,
       extras_require={'tifffile':['tifffile'],
                         'dascutils':['dascutils'],
                         'themisasi':['themisasi']},
