@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-req= ['python-dateutil', 'pytz','nose','numpy','scipy', 'pandas', 'h5py', 'astropy', 'matplotlib','seaborn']
+req= ['python-dateutil', 'pytz','nose','numpy','scipy','h5py', 'astropy', 'matplotlib','seaborn']
 
 pipreq = ['pathvalidate','pymap3d','sciencedates',]
 
@@ -8,7 +8,7 @@ import pip
 try:
     import conda.cli
     conda.cli.main('install',*req)
-except Exception:
+except ImportError:
     pip.main(['install'] + req)
 pip.main(['install'] + pipreq)
 # %%
