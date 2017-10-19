@@ -201,10 +201,13 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, 
     assert not outfn.is_dir(),'must provide FILEname, you provided directory {outfn}'
     outfn.parent.mkdir(exist_ok=True)
 
-    txtupd = f'converting file # {i} / {Nfile}'
+    txtupd = f'convert file {i} / {Nfile}'
     if 'spoolfn' in P:
-        txtupd += f' from {P["spoolfn"].name}'
-    txtupd += f' to {outfn}'
+        txtupd += f' {P["spoolfn"].name}'
+    txtupd += f' => {outfn}'
+    """
+    note if line wraps (>80 characters), this in-place update breaks.
+    """
     print(txtupd+'\r',end="")
     #%% saving
     if outfn.suffix == '.h5':
