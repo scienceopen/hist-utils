@@ -205,7 +205,7 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, 
     if 'spoolfn' in P:
         txtupd += f' from {P["spoolfn"].name}'
     txtupd += f' to {outfn}'
-    print(txtupd)
+    print(txtupd+'\r',end="")
     #%% saving
     if outfn.suffix == '.h5':
         """
