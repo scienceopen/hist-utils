@@ -1,11 +1,29 @@
 from pathlib import Path
 from datetime import datetime
 from pytz import UTC
+import shutil
 import h5py
 import numpy as np
 import logging
 from struct import pack,unpack
 # NOTE: need to use int64 since Numpy thru 1.11 defaults to int32 on Windows for dtype=int, and we need int64 for large files
+
+
+def write_quota(outbytes:int, outfn:Path) -> int:
+    """
+    aborts writing if not enough space on drive to write
+    """
+
+    if outfn:
+        anch = Path(outfn).resolve().anchor
+        freeout = shutil.disk_usage(anch).free
+
+        if freeout < 10*outbytes:
+            raise IOError(f'out of disk space on {anch}.'
+                          '{freeout/1e9} GB free, wanting to write {outbytes/1e9} GB.')
+
+        return freeout
+
 
 def sixteen2eight(I,Clim):
     """

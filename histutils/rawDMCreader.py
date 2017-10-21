@@ -12,9 +12,8 @@ from dateutil.parser import parse
 from numpy import int64,uint16,zeros,arange,fromfile
 from re import search
 from astropy.io import fits
-from shutil import disk_usage
 #
-from . import req2frame,dir2fn,getRawInd,meta2rawInd, setupimgh5,imgwriteincr
+from . import req2frame,dir2fn,getRawInd,meta2rawInd, setupimgh5,imgwriteincr,write_quota
 from .timedmc import frame2ut1,ut12frame
 #
 try:
@@ -37,11 +36,7 @@ def goRead(fn:Path,
     if ext in ('.DMCdata','.dat'):
         # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
         finf = getDMCparam(fn,xyPix,xyBin,FrameIndReq,ut1Req,kineticraw,startUTC,nHeadBytes,verbose)
-        outsize = finf['bytesperframe']*finf['nframeextract']
-        if outfn:
-            freeout =  disk_usage(outfn.parent).free
-            if freeout < 10*outsize:
-                raise RuntimeError(f'out of disk space on {outfn.parent}.  {freeout/1e9} GB free, wanting to write {outsize/1e9} GB.')
+        write_quota(finf['bytesperframe']*finf['nframeextract'], outfn)
 
         rawFrameInd = zeros(finf['nframeextract'], dtype=int64)
 #%% output (variable or file)
@@ -234,7 +229,7 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
     badReqInd = (FrameIndRel>nFrame) | (FrameIndRel<0)
 # check if we requested frames beyond what the BigFN contains
     if badReqInd.any():
-        raise ValueError('You have requested frames outside the times covered in {}'.format(fn)) #don't include frames in case of None
+        raise ValueError(f'frames requested outside the times covered in {fn}') #don't include frames in case of None
 
     nFrameExtract = FrameIndRel.size #to preallocate properly
     nBytesExtract = nFrameExtract * BytesPerFrame
@@ -246,7 +241,7 @@ def whichframes(fn,FrameIndReq,kineticsec,ut1req,startUTC,firstRawInd,lastRawInd
     return FrameIndRel
 
 
-def getDMCframe(f, iFrm, finf, verbose=False):
+def getDMCframe(f, iFrm:int, finf:dict, verbose:bool=False):
     """
     f is open file handle
     """
@@ -261,15 +256,15 @@ def getDMCframe(f, iFrm, finf, verbose=False):
     try:
         f.seek(currByte, 0)
     except IOError as e:
-        raise IOError('I couldnt seek to byte {:d}. try using a 64-bit integer for iFrm \n'
-              'is {} a DMCdata file?  {}'.format(currByte,f.name,e))
+        raise IOError(f'I couldnt seek to byte {currByte:d}. try using a 64-bit integer for iFrm \n'
+                      'is {f.name} a DMCdata file?  {e}')
 #%% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
         currFrame = fromfile(f, uint16,
                             finf['pixelsperimage']).reshape((finf['supery'],finf['superx']),
                             order='C')
     except ValueError as e:
-        raise ValueError('we may have read past end of file?  {}'.format(e))
+        raise ValueError(f'read past end of file?  {e}')
 
     rawFrameInd = meta2rawInd(f,finf['nmetadata'])
 
