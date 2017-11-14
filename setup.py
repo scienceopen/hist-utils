@@ -1,16 +1,8 @@
 #!/usr/bin/env python
 
-req= ['python-dateutil', 'pytz','nose','numpy','scipy','h5py', 'astropy', 'matplotlib','seaborn']
-
-pipreq = ['pathvalidate','pymap3d','sciencedates',]
-
-import pip
-try:
-    import conda.cli
-    conda.cli.main('install',*req)
-except ImportError:
-    pip.main(['install'] + req)
-pip.main(['install'] + pipreq)
+req= ['python-dateutil', 'pytz','nose','numpy','scipy','h5py', 'astropy', 'matplotlib','seaborn',
+      'pathvalidate',
+      'pymap3d','sciencedates']
 # %%
 from setuptools import setup
 
@@ -29,9 +21,9 @@ setup(name='histutils',
       'Programming Language :: Python :: 3.6',
       ],
       install_requires=req,
-      extras_require={'tifffile':['tifffile'],
-                        'dascutils':['dascutils'],
-                        'themisasi':['themisasi']},
+      python_requires='>=3.6',
+      extras_require={'plot':['tifffile'],
+                        'io':['dascutils','themisasi']},
 
 	  )
 
