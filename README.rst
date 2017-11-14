@@ -1,7 +1,12 @@
 .. image:: https://travis-ci.org/scivision/histutils.svg?branch=master
     :target: https://travis-ci.org/scivision/histutils
+    
 .. image:: http://coveralls.io/repos/scivision/histutils/badge.svg?branch=master&service=github
    :target: http://coveralls.io/github/scivision/histutils?branch=master
+
+.. image:: https://api.codeclimate.com/v1/badges/a40627d049d2f3168ae0/maintainability
+   :target: https://codeclimate.com/github/scivision/histutils/maintainability
+   :alt: Maintainability
 
 ==========
 HiSTutils
