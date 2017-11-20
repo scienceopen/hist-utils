@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-
 req= ['nose', 'python-dateutil', 'pytz','numpy','scipy','h5py', 'astropy',
       'pymap3d','sciencedates']
 # %%
-from setuptools import setup
+from setuptools import setup,find_packages
 
 
 setup(name='histutils',
-      packages=['histutils'],
+      packages=find_packages(),
       author='Michael Hirsch, Ph.D.',
       url='https://github.com/scivision/histutils',
       description='Utilities for reading HiST data, etc.',
