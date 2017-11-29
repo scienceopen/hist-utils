@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-req= ['nose', 'python-dateutil', 'pytz','numpy','scipy','h5py', 'astropy',
+install_requires= ['python-dateutil', 'pytz','numpy','scipy','h5py', 'astropy',
       'pymap3d','sciencedates']
+tests_require=['nose','coveralls']
 # %%
 from setuptools import setup,find_packages
 
@@ -21,7 +22,9 @@ setup(name='histutils',
       install_requires=req,
       python_requires='>=3.6',
       extras_require={'plot':['tifffile','matplotlib','seaborn',],
-                        'io':['dascutils','themisasi']},
+                        'io':['dascutils','themisasi'],
+                        'test':tests_require},
+      tests_require=tests_require,
 
 	  )
 

@@ -71,8 +71,8 @@ def get1Dcut(cam,odir,verbose):
 #
 #
 #        if discardEdgepix:
-#            edgeind = where(logical_or(logical_or(nearCol==0,nearCol == nx-1),
-#                               logical_or(nearRow==0,nearRow==ny-1)) )[0]
+#            edgeind = logical_or(logical_or(nearCol==0,nearCol == nx-1),
+#                               logical_or(nearRow==0,nearRow==ny-1)) 
 #            nearRow = delete(nearRow,edgeind)
 #            nearCol = delete(nearCol,edgeind)
 #            if dbglvl>0: print('deleted',edgeind.size, 'edge pixels ')
