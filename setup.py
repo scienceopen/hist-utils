@@ -23,7 +23,7 @@ setup(name='histutils',
       python_requires='>=3.6',
       extras_require={'plot':['tifffile','matplotlib','seaborn',],
                         'io':['dascutils','themisasi'],
-                        'test':tests_require},
+                        'tests':tests_require},
       tests_require=tests_require,
 
 	  )
