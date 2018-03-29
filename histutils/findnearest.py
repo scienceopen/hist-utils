@@ -1,6 +1,6 @@
 from numpy import unravel_index,ma,atleast_1d,empty
 #
-from pymap3d.haversine import angledist
+from pymap3d.haversine import anglesep
 
 def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
     """
@@ -24,7 +24,7 @@ def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
         r = empty(apts.size,dtype=int); c = empty(apts.size,dtype=int)
         for i,(apt,ept) in enumerate(zip(apts,epts)):
             #we do this point by point because we need to know the closest pixel for each point
-            errang = angledist(az,el, apt,ept)
+            errang = anglesep(az,el, apt,ept)
 
             """
             THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
