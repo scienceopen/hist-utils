@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 #
-from pymap3d.haversine import anglesep
+import pymap3d.haversine as haver
 
 def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
     """
@@ -18,11 +18,17 @@ def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
     az = np.ma.masked_invalid(az)
     el = np.ma.masked_invalid(el)
     nearRow = []; nearCol=[]
+
+    az = np.radians(az)
+    el = np.radians(el)
+    azpts = np.radians(azpts)
+    elpts = np.radians(elpts)
+
     # can be FAR FAR faster than scipy.spatial.distance.cdist()
     for apts,epts in zip(azpts,elpts): #list of arrays or 2-D array
         apts = np.atleast_1d(apts)
         epts = np.atleast_1d(epts) # needed
-        if np.isnan(apts).all() or np.isnan(epts).all():
+        if np.isnan(apts).all() or np.isnan(epts).all() and isinstance(azpts,list):
             logging.warning('all points for smaller FOV were outside larger FOV')
             continue
         assert apts.size==epts.size
@@ -30,8 +36,8 @@ def findClosestAzel(az,el,azpts,elpts,discardEdgepix=True):
         c = np.empty(apts.size,dtype=int)
         for i,(apt,ept) in enumerate(zip(apts,epts)):
             #we do this point by point because we need to know the closest pixel for each point
-            errang = anglesep(az,el, apt,ept)
-
+            #errang = haver.anglesep(az,el, apt,ept, deg=False)
+            errang = haver.anglesep_meeus(az,el, apt,ept, deg=False)
 
             """
             THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
