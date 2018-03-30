@@ -31,7 +31,7 @@ def findClosestAzel(az,el,azpts,elpts):
                 logging.warning('all points for smaller FOV were outside larger FOV')
                 continue
 
-            r,c = _findindex(azpt,elpt)
+            r,c = _findindex(az,el, azpt,elpt)
 
             nearRow.append(r)
             nearCol.append(c)
