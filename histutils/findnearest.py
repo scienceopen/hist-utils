@@ -48,7 +48,7 @@ def _findindex(az,el,azpt,elpt):
 
     assert azpt.size==elpt.size
     r = np.empty(azpt.size,dtype=int)
-    c = r.copy()
+    c = np.empty(azpt.size,dtype=int)
 
     for i,(paz,pel) in enumerate(zip(azpt,elpt)):
         #we do this point by point because we need to know the closest pixel for each point
