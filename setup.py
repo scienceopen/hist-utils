@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 install_requires= ['python-dateutil', 'pytz','numpy','scipy','h5py', 'astropy',
       'pymap3d','sciencedates']
-tests_require=['nose','coveralls']
+tests_require=['pytest','nose','coveralls']
 # %%
 from setuptools import setup,find_packages
 
@@ -25,6 +25,8 @@ setup(name='histutils',
                         'io':['dascutils','themisasi'],
                         'tests':tests_require},
       tests_require=tests_require,
-
+      scripts=['ConvertDMC2h5.py','HDDcost.py','Playh5.py','RunSimulFrame.py',
+      'date2doy.py','WhenEnd.py','WienerAurora.py'],
+      include_package_data=True,
 	  )
 

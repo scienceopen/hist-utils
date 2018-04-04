@@ -1,5 +1,4 @@
 import numpy as np
-import logging
 #
 import pymap3d.haversine as haver
 
@@ -23,46 +22,49 @@ def findClosestAzel(az,el,azpts,elpts):
     azpts = np.radians(azpts)
     elpts = np.radians(elpts)
 
-    # can be FAR FAR faster than scipy.spatial.distance.cdist()
-    if azpts.ndim==2:
-        nearRow = []; nearCol=[]
-        for azpt,elpt in zip(azpts,elpts): #list of arrays or 2-D array
-            if np.isnan(azpt).all() or np.isnan(elpt).all() and isinstance(azpts,list):
-                logging.warning('all points for smaller FOV were outside larger FOV')
-                continue
-
-            r,c = _findindex(az,el, azpt,elpt)
-
-            nearRow.append(r)
-            nearCol.append(c)
-    elif azpts.ndim==1:
-        nearRow, nearCol = _findindex(az,el, azpts, elpts)
+    if np.ma.is_masked(azpts):
+        azpts = azpts.compressed()
+        elpts = elpts.compressed()
     else:
-        raise ValueError('I only understand 1-D and 2-D FOV overlap requests.')
+        azpts = np.atleast_1d(azpts).ravel()
+        elpts = np.atleast_1d(elpts).ravel()
+
+    # can be FAR FAR faster than scipy.spatial.distance.cdist()
+    nearRow, nearCol = _findindex(az,el, azpts, elpts)
 
     return nearRow,nearCol
 
 
-def _findindex(az,el,azpt,elpt):
-    """ point by point """
+def _findindex(az0,el0, az, el):
+    """
+    inputs:
+    ------
+    az0, el0: N-D array of azimuth, elevation. May be masked arrays
+    az, el: 1-D vectors of azimuth, elevation points from other camera to find closest angle for joint FOV.
 
-    assert azpt.size==elpt.size
-    r = np.empty(azpt.size,dtype=int)
-    c = np.empty(azpt.size,dtype=int)
+    output:
+    row, col:  index of camera 0 closest to camera 1 FOV for each unmasked pixel
 
-    for i,(paz,pel) in enumerate(zip(azpt,elpt)):
+    I think with some minor tweaks this could be numba.jit if too slow.
+    """
+
+    assert az0.size == el0.size  # just for clarity
+    assert az.ndim == el.ndim == 1,'expect vector of test points'
+    ic = np.empty(az.size, dtype=int)
+
+    for i,(a,e) in enumerate(zip(az,el)):
         #we do this point by point because we need to know the closest pixel for each point
         #errang = haver.anglesep(az,el, apt,ept, deg=False)
-        errang = haver.anglesep_meeus(az,el, paz,pel, deg=False)
+        ic[i] = haver.anglesep_meeus(az0, el0, a, e, deg=False).argmin()
 
-        """
-        THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
-        """
-        r[i], c[i] = np.unravel_index(errang.argmin(), az.shape,order='C')
+    """
+    THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
+    """
+    r,c = np.unravel_index(ic, az0.shape,order='C')
 
-    mask = (c==0) | (c == az.shape[1]-1) | (r==0) | (r == az.shape[0]-1)
+    mask = (c==0) | (c == az0.shape[1]-1) | (r==0) | (r == az0.shape[0]-1)
 
-    r = np.ma.array(r,mask=mask)
-    c = np.ma.array(c,mask=mask)
+    r = np.ma.masked_where(mask,r)
+    c = np.ma.masked_where(mask,c)
 
     return r,c
