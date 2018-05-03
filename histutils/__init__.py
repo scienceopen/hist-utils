@@ -6,6 +6,7 @@ import h5py
 import numpy as np
 import logging
 from struct import pack,unpack
+from typing import Tuple
 # NOTE: need to use int64 since Numpy thru 1.11 defaults to int32 on Windows for dtype=int, and we need int64 for large files
 
 
@@ -25,7 +26,7 @@ def write_quota(outbytes:int, outfn:Path) -> int:
         return freeout
 
 
-def sixteen2eight(I,Clim):
+def sixteen2eight(I:np.ndarray, Clim:tuple) -> np.ndarray:
     """
     scipy.misc.bytescale had bugs
 
@@ -39,7 +40,8 @@ def sixteen2eight(I,Clim):
     Q *= 255 # stretch to [0,255] as a float
     return Q.round().astype(np.uint8) # convert to uint8
 
-def normframe(I,Clim):
+
+def normframe(I:np.ndarray, Clim:tuple) -> np.ndarray:
     """
     inputs:
     -------
@@ -51,8 +53,7 @@ def normframe(I,Clim):
     return (I.astype(np.float32).clip(Vmin, Vmax) - Vmin) / (Vmax - Vmin) #stretch to [0,1]
 
 
-
-def getRawInd(fn:Path, BytesPerImage:int, nHeadBytes:int, Nmetadata:int):
+def getRawInd(fn:Path, BytesPerImage:int, nHeadBytes:int, Nmetadata:int) -> Tuple[int,int]:
     assert isinstance(Nmetadata,int)
     if Nmetadata<1: #no header, only raw images
         fileSizeBytes = fn.stat().st_size
@@ -107,6 +108,7 @@ def req2frame(req, N:int=0):
 
     return frame
 
+
 def dir2fn(ofn,ifn,suffix) -> Path:
     """
     ofn = filename or output directory, to create filename based on ifn
@@ -132,6 +134,7 @@ def dir2fn(ofn,ifn,suffix) -> Path:
         pass
 
     return ofn
+
 
 def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
     if conf is None:
@@ -177,18 +180,21 @@ def splitconf(conf,key,i=None,dtype=float,fallback=None,sep=','):
         else:
             return fallback
 # %% HDF5
-
 def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16,
-               writemode='r+', key='/rawimg',cmdlog:str=''):
+               writemode='r+', key='/rawimg',cmdlog:str=None):
     """
     f: HDF5 handle (or filename)
 
     h: HDF5 dataset handle
     """
     if isinstance(f, (str,Path)):  # assume new HDF5 file wanted
+        if f.is_dir():
+            raise IOError('must provide specific HDF5 filename, not just a directory')
+            
         print('creating', f)
-        with h5py.File(f, writemode, libver='latest') as F:
-            return setupimgh5(F,Nframetotal,Nrow,Ncol,dtype,writemode,key)
+        with h5py.File(f, writemode) as F:
+            setupimgh5(F,Nframetotal,Nrow,Ncol,dtype,writemode,key)
+        
     elif isinstance(f, h5py.File):
         h = f.create_dataset(key,
                  shape =  (Nframetotal,Nrow,Ncol),
@@ -210,9 +216,8 @@ def setupimgh5(f, Nframetotal:int, Nrow:int, Ncol:int, dtype=np.uint16,
     else:
         raise TypeError(f'{type(f)} is not correct, must be filename or h5py.File HDF5 file handle')
 
-    return h
 
-def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, det=None,tstart=None):
+def vid2h5(data:np.ndarray, ut1, rawind, ticks, outfn:Path, P:dict, i:int=0, Nfile:int=1, det=None,tstart=None):
     assert outfn,'must provide a filename to write'
 
     outfn = Path(outfn).expanduser()
@@ -253,7 +258,7 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, 
                     break
             ind = slice(None)
 
-        with h5py.File(outfn, writemode, libver='latest') as f:
+        with h5py.File(outfn, writemode) as f:
             if data is not None:
                 if 'rawimg' not in f:  # first run
                     setupimgh5(f, N, data.shape[1], data.shape[2])
@@ -355,8 +360,9 @@ def vid2h5(data, ut1, rawind, ticks, outfn, P, cmdlog='', i:int=0, Nfile:int=1, 
         savemat(outfn,matdata,oned_as='column')
     else:
         raise ValueError(f'what kind of file is {outfn}')
+        
 
-def imgwriteincr(fn, imgs, imgslice):
+def imgwriteincr(fn:Path, imgs, imgslice):
     """
     writes HDF5 huge image files in increments
     """
@@ -367,9 +373,9 @@ def imgwriteincr(fn, imgs, imgslice):
     if isinstance(fn, Path):
         assert fn.suffix == '.h5','Expecting to write .h5 file' # avoid accidental overwriting of source file due to misspecified command line
 
-        with h5py.File(fn, 'r+', libver='latest') as f:
+        with h5py.File(fn, 'r+') as f:
             f['/rawimg'][imgslice,:,:] = imgs
     elif isinstance(fn, h5py.File):
         f['/rawimg'][imgslice,:,:] = imgs
     else:
-        raise TypeError(f'fn must be Path or h5py.File instead of {type(fn)}')
+        raise TypeError(f'{fn} must be Path or h5py.File instead of {type(fn)}')

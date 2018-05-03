@@ -6,11 +6,12 @@ from dateutil.parser import parse
 from scipy.signal import savgol_filter
 from numpy.random import poisson
 import h5py
+from typing import List
 #
 from . import splitconf
 from pymap3d import azel2radec, aer2ecef
-from pymap3d.haversine import angledist,angledist_meeus
-from dascutils.readDASCfits import readDASC
+from pymap3d.haversine import anglesep
+import dascutils.io as dio
 from themisasi.fov import mergefov
 from .plots import plotnear_rc, plotlsq_rc
 
@@ -18,7 +19,10 @@ class Cam: #use this like an advanced version of Matlab struct
     """
     simple mode via try except attributeerror
     """
-    def __init__(self,sim,cp,name,zmax=None,xreq=None,makeplot=[],calfn=None,verbose=0):
+    def __init__(self,sim, cp:dict, name:str,
+                 zmax=None,xreq=None,makeplot:List[str]=[],
+                 calfn:Path=None,verbose:int=0):
+        
         self.verbose = verbose
 
         try:
@@ -49,9 +53,9 @@ class Cam: #use this like an advanced version of Matlab struct
             if splitconf(cp,'plotMaxVal',ci) is not None:
                 self.clim[1] =  splitconf(cp,'plotMaxVal',ci)
 
-            _,(self.az,self.el),self.lla,_ = readDASC(self.fn[0],
-                                                cp['azcalfn'].split(',')[ci],
-                                                cp['elcalfn'].split(',')[ci])
+            _,(self.az,self.el),self.lla,_ = dio.load(self.fn[0],
+                                                        cp['azcalfn'].split(',')[ci],
+                                                        cp['elcalfn'].split(',')[ci])
 
             if 'realvid' in makeplot:
                 if 'h5' in makeplot:
@@ -71,9 +75,15 @@ class Cam: #use this like an advanced version of Matlab struct
             return
 
         elif self.usecam:
-            self.name = int(name)
+            try: # integer name
+                self.name = int(name)
+            except ValueError: # non-integer name
+                self.name = name
 #%%
-        self.ncutpix = int(cp['nCutPix'].split(',')[ci])
+        if isinstance(cp['nCutPix'],str):
+            self.ncutpix = int(cp['nCutPix'].split(',')[ci])
+        else: # int
+            self.ncutpix = cp['nCutPix']
 
         self.Bincl =  splitconf(cp,'Bincl',ci)
         self.Bdecl =  splitconf(cp,'Bdecl',ci)
@@ -144,11 +154,16 @@ class Cam: #use this like an advanced version of Matlab struct
 
         # data file name
         if sim.realdata and self.usecam:
-            #.strip() needed in case of multi-line ini
-            self.fn = (sim.realdatapath / cp['fn'].split(',')[ci].strip()).expanduser()
+            if isinstance(cp['fn'],str):
+                #.strip() needed in case of multi-line ini
+                self.fn = (sim.realdatapath / cp['fn'].split(',')[ci].strip()).expanduser()
+            elif isinstance(cp['fn'],Path):
+                self.fn = sim.realdatapath / cp['fn']
+            else:
+                raise ValueError('your camera filename {cp["fn"]} not found')
 
             if not self.fn.suffix == '.h5':
-                raise TypeError('I can only work with HDF5 files, not FITS. Use ConvertSolisFITSh5 if you have FITS')
+                raise OSError('I can only work with HDF5 files, not FITS. Use demutils/ConvertSolisFITSh5 if you have FITS')
 
             assert self.fn.is_file(),'{} does not exist'.format(self.fn)
 
@@ -414,12 +429,10 @@ class Cam: #use this like an advanced version of Matlab struct
         assert len(radecMagzen) == 2
         logging.info('mag. zen. ra,dec {}'.format(radecMagzen))
 
-        if False: #astropy
-            angledist_deg = angledist(      radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
-        else: #meeus
-            angledist_deg = angledist_meeus(radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
+        anglesep_deg = anglesep(radecMagzen[0],radecMagzen[1], self.ra[cutrow, cutcol], self.dec[cutrow, cutcol])
+
 #%% assemble angular distances
-        self.angle_deg,self.angleMagzenind = self.sky2beam(angledist_deg)
+        self.angle_deg,self.angleMagzenind = self.sky2beam(anglesep_deg)
 
         self.cutrow = cutrow
         self.cutcol = cutcol
@@ -427,8 +440,8 @@ class Cam: #use this like an advanced version of Matlab struct
         if self.arbfov is not None:
             expect_diffang = self.arbfov / self.ncutpix
             diffang = np.diff(self.angle_deg)
-            diffoutlier = max(abs(expect_diffang-diffang.min()),
-                              abs(expect_diffang-diffang.max()))
+           # diffoutlier = max(abs(expect_diffang-diffang.min()),
+           #                   abs(expect_diffang-diffang.max()))
             assert_allclose(expect_diffang, diffang.mean(), rtol=0.01),'large bias in camera angle vector detected'
 #            assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
 

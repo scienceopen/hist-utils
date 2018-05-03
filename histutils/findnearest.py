@@ -12,6 +12,10 @@ def findClosestAzel(az,el,azpts,elpts):
     """
     assert az.ndim     == 2
     assert az.shape    == el.shape
+    
+    azpts = np.atleast_1d(azpts)
+    elpts = np.atleast_1d(elpts)
+    
     assert azpts.shape == elpts.shape
 
     az = np.ma.masked_invalid(az)

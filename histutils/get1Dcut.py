@@ -1,10 +1,13 @@
+from pathlib import Path
 from numpy import logspace
 import h5py
+from typing import List
 #
 from pymap3d import ecef2aer
 from .plots import plotLOSecef
+from .camclass import Cam
 
-def get1Dcut(cam,odir,verbose):
+def get1Dcut(cam:List[Cam], odir:Path=None, verbose:bool=False) -> List[Cam]:
     """
     i.   get az/el of each pixel (rotated/transposed as appropriate)
     ii.  get cartesian ECEF of each pixel end, a point outside the grid (to create rays to check intersections with grid)
@@ -37,7 +40,7 @@ def get1Dcut(cam,odir,verbose):
     if verbose and odir:
         dbgfn = odir / 'debugLSQ.h5'
         print('writing', dbgfn)
-        with h5py.File(str(dbgfn),'w',libver='latest') as f:
+        with h5py.File(dbgfn,'w') as f:
             for C in cam:
                 f[f'/cam{C.name}/cutrow'] = C.cutrow
                 f[f'/cam{C.name}/cutcol'] = C.cutcol

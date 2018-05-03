@@ -22,7 +22,8 @@ def dmclooper(p):
     cmosinit = {'firstrawind':p.cmos[0],'lastrawind':p.cmos[1]}
 
     params = {'kineticsec':p.kineticsec,'rotccw':p.rotccw,'transpose':p.transpose,
-              'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire,'sensorloc':p.loc}
+              'flipud':p.flipud,'fliplr':p.fliplr,'fire':p.fire,'sensorloc':p.loc,
+              'cmdlog':' '.join(argv)}
 
     infn = Path(p.infile).expanduser()
     if infn.is_file():
@@ -45,7 +46,7 @@ def dmclooper(p):
         rawImgData,rawind,finf = goRead(f, p.pix,p.bin,p.frames,p.ut1,
                                     p.kineticsec,p.startutc,cmosinit,p.verbose,ofn,p.headerbytes)
 #%% convert
-        vid2h5(None, finf['ut1'], rawind, None, ofn, params, argv)
+        vid2h5(None, finf['ut1'], rawind, None, ofn, params)
 #%% optional plot
         if p.movie:
             plots(rawImgData,rawind,finf)
