@@ -22,7 +22,7 @@ class Cam: #use this like an advanced version of Matlab struct
     def __init__(self,sim, cp:dict, name:str,
                  zmax=None,xreq=None,makeplot:List[str]=[],
                  calfn:Path=None,verbose:int=0):
-        
+
         self.verbose = verbose
 
         try:
@@ -167,7 +167,7 @@ class Cam: #use this like an advanced version of Matlab struct
 
             assert self.fn.is_file(),'{} does not exist'.format(self.fn)
 
-            with h5py.File(str(self.fn),'r',libver='latest') as f:
+            with h5py.File(self.fn,'r') as f:
                 self.filestartutc = f['/ut1_unix'][0]
                 self.filestoputc  = f['/ut1_unix'][-1]
 #%%
@@ -235,13 +235,9 @@ class Cam: #use this like an advanced version of Matlab struct
             self.intens2dn = self.dn2intens = 1.
 #%% summary
         if sim.realdata and self.usecam:
-            logging.info('cam{} timeshift: {} seconds'.format(self.name,self.timeShiftSec))
+            logging.info(f'cam{self.name} timeshift: {self.timeShiftSec} seconds')
 
-            logging.info('Camera {} start/stop UTC: {} / {}, {} frames.'.format(
-                                                              self.name,
-                                                              self.filestartutc,
-                                                              self.filestoputc,
-                                                              self.ut1unix.size))
+            logging.info(f'Camera {self.name} start/stop UTC: {self.filestartutc} / {self.filestoputc}, {self.ut1unix.size} frames.')
 
 
     def arbanglemap(self):
@@ -310,7 +306,7 @@ class Cam: #use this like an advanced version of Matlab struct
         """
         assert self.cal1Dfn.is_file(),'please specify filename for each camera under [cam]/cal1Dname: in .ini file  {}'.format(self.cal1Dfn)
 
-        with h5py.File(str(self.cal1Dfn),'r',libver='latest') as f:
+        with h5py.File(self.cal1Dfn ,'r') as f:
             az = f['az'][()]
             el = f['el'][()]
             ra = f['ra'][()]
