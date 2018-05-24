@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 from numpy import sqrt,atleast_1d
 from matplotlib.pyplot import figure,subplots
-from matplotlib.colors import LogNorm
+#from matplotlib.colors import LogNorm
 from datetime import datetime
 from pytz import UTC
 #
@@ -14,7 +14,7 @@ import skimage.restoration as skres
 from scipy.signal import wiener,medfilt2d
 #
 from .nans import nans
-from dascutils.readDASCfits import readDASC
+import dascutils.io as dio
 from gridaurora.plots import writeplots
 from themisasi.plots import overlayrowcol
 
@@ -85,16 +85,16 @@ def plotRealImg(sim,cam,rawdata,t:int,odir:Path=None,fg=None):
            # print('frame {}'.format(t))
             T[i] = updateframe(t,rawdata[i],None,cam[i],axs[i],fg) #hold times for all cameras at this time step
         elif C.name=='asi': #ASI
-            opt,_,_,times = readDASC(C.fn, None,None, treq=T[sim.useCamBool][0])
-            C.tKeo = times[:,0]
+            dasc = dio.load(C.fn, treq=T[sim.useCamBool][0])
+            C.tKeo = dasc.time
 
-            updateframe(0,opt['image'],opt['lambda'],C,axs[i],fg)
+            updateframe(0,dasc.values, dasc.wavelength, C, axs[i],fg) # FIXME may need API update
             try:
                 overlayrowcol(axs[i],C.hlrows,C.hlcols)
             except AttributeError:
                 pass # az/el were not registered
         else:
-            logging.error('unknown camera {} index {}'.format(C.name,i))
+            logging.error(f'unknown camera {C.name} index {i}')
 
         if i==0:
             axs[0].set_ylabel(datetime.strftime(T[0],'%x')).set_color('limegreen')
@@ -161,7 +161,7 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
 
     if showcb: #showing the colorbar makes the plotting go 5-10x more slowly
         hc = fg.colorbar(hi, ax=ax) #not cax!
-        hc.set_label('{} data numbers'.format(raw.dtype))
+        hc.set_label(f'{raw.dtype} data numbers')
 
 
     dtframe = datetime.fromtimestamp(cam.tKeo[t],tz=UTC)
@@ -176,11 +176,11 @@ def updateframe(t,raw,wavelen,cam,ax,fg):
             tcolor='red'
         else:
             tcolor='limegreen'
-        ttxt += '{} $\lambda$ {:.1f}'.format(dtstr,wavelen[t])
+        ttxt += f'{dtstr} $\lambda$ {wavelen[t]:.1f}'
     else:
         dtstr = datetime.strftime(dtframe,'%H:%M:%S.%f')[:-3] #millisecond
         tcolor='limegreen'
-        ttxt += '{}'.format(dtstr)
+        ttxt += f'{dtstr}'
 
 
 
