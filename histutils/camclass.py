@@ -13,13 +13,14 @@ from pymap3d import azel2radec, aer2ecef
 from pymap3d.haversine import anglesep
 import dascutils.io as dio
 from themisasi.fov import mergefov
+import themisasi
 from .plots import plotnear_rc, plotlsq_rc
 
 class Cam: #use this like an advanced version of Matlab struct
     """
     simple mode via try except attributeerror
     """
-    def __init__(self,sim, cp:dict, name:str,
+    def __init__(self,sim, cp, name:str,
                  zmax=None,xreq=None,makeplot:List[str]=[],
                  calfn:Path=None,verbose:int=0):
 
@@ -37,49 +38,38 @@ class Cam: #use this like an advanced version of Matlab struct
         self.x_km  = None
         self.alt_m = None
 
-        if not self.usecam and sim.realdata and 'asi' in name.lower():
-            fn = Path(cp['fn'].split(',')[ci].strip()).expanduser()
-            self.fn = sorted(fn.glob('*.FITS'))
-            if not self.fn:
-                logging.error('no files found under {}'.format(fn))
-                self.name=None
-                return
-
+        try: # integer name
+            self.name = int(name)
+        except ValueError: # non-integer name
             self.name = name
 
+        if sim.realdata and isinstance(name,str):  # ASI
             self.clim = [None]*2
             if splitconf(cp,'plotMinVal',ci) is not None:
                 self.clim[0] =  splitconf(cp,'plotMinVal',ci)
             if splitconf(cp,'plotMaxVal',ci) is not None:
                 self.clim[1] =  splitconf(cp,'plotMaxVal',ci)
-
-            _,(self.az,self.el),self.lla,_ = dio.load(self.fn[0],
-                                                        cp['azcalfn'].split(',')[ci],
-                                                        cp['elcalfn'].split(',')[ci])
+# %% store az,el calibration data
+            if self.name.startswith('dasc'):
+                dasc = dio.loadcal(cp['azcalfn'].split(',')[ci],
+                                   cp['elcalfn'].split(',')[ci])
+            elif self.name.startswith('themis'):
+                themis = themisasi.loadcal(cp['azcalfn'].split(',')[ci])
+            else:
+                raise ValueError(f'I do not know how to load az/el data for {self.name}')
 
             if 'realvid' in makeplot:
-                if 'h5' in makeplot:
-                    print('fov: writing {}'.format(sim.fovfn))
-                    self.hlrows,self.hlcols = mergefov(None,self.lla,self.az,self.el,None,None,
-                                   ['../histutils/cal/hst0cal.h5','../histutils/cal/hst1cal.h5'],
-                                   projalt=110e3,site='DASC')
-                    with h5py.File(sim.fovfn,'w',libver='latest') as H:
-                        H['/rows'] = np.array(self.hlrows)  # Ncam x 4 x Nx  (list,list,ndarray)
+                if 'h5' in makeplot and sim.fovfn:
+                    print(f'fov: writing {sim.fovfn}')
+                    dasc, themis = mergefov(dasc, themis, method='mzslice')
+                    with h5py.File(sim.fovfn,'w') as H:
+                        H['/rows'] = np.array(self.hlrows)  # TODO: Ncam x 4 x Nx  (list,list,ndarray)
                         H['/cols'] = np.array(self.hlcols)
-                else:
-                    if sim.fovfn and sim.fovfn.is_file():
-                        with h5py.File(sim.fovfn,'r',libver='latest') as H:
+                elif sim.fovfn and sim.fovfn.is_file():
+                        with h5py.File(sim.fovfn,'r') as H:
                             self.hlrows = H['/rows'].value
                             self.hlcols = H['/cols'].value
-
-            return
-
-        elif self.usecam:
-            try: # integer name
-                self.name = int(name)
-            except ValueError: # non-integer name
-                self.name = name
-#%%
+#%% 1-D cuts
         if isinstance(cp['nCutPix'],str):
             self.ncutpix = int(cp['nCutPix'].split(',')[ci])
         else: # int
@@ -92,12 +82,10 @@ class Cam: #use this like an advanced version of Matlab struct
         try:
             self.Baz = 180. + self.Bdecl
             self.Bel = self.Bincl
-        except TypeError:
+        except TypeError: # magnetic field was not specified
             pass
 
-
-        self.timeShiftSec = splitconf(cp,'timeShiftSec',ci,fallback=0.)
-
+        self.timeShiftSec = splitconf(cp,'timeShiftSec',ci,fallback=None)
 #%% image contrast set
         self.clim = [None]*2
         self.clim[0] = splitconf(cp,'plotMinVal',ci)
@@ -105,7 +93,6 @@ class Cam: #use this like an advanced version of Matlab struct
 
         self.intensityScaleFactor = splitconf(cp,'intensityScaleFactor',ci,fallback=1.)
         self.lowerthres = splitconf(cp,'lowerthres',ci)
-
 #%% check FOV and 1D cut sizes for sanity
         self.fovmaxlen = splitconf(cp,'FOVmaxLengthKM', ci, fallback=np.nan)
 
@@ -122,7 +109,6 @@ class Cam: #use this like an advanced version of Matlab struct
 
         self.boresightEl = splitconf(cp,'boresightElevDeg',ci)
         self.arbfov =      splitconf(cp,'FOVdeg',ci)
-
 #%% sky mapping
         if calfn:
             self.cal1Dfn = calfn
@@ -160,37 +146,41 @@ class Cam: #use this like an advanced version of Matlab struct
             elif isinstance(cp['fn'],Path):
                 self.fn = sim.realdatapath / cp['fn']
             else:
-                raise ValueError('your camera filename {cp["fn"]} not found')
+                raise ValueError(f'your camera filename {cp["fn"]} not found')
 
-            if not self.fn.suffix == '.h5':
-                raise OSError('I can only work with HDF5 files, not FITS. Use demutils/ConvertSolisFITSh5 if you have FITS')
+            if self.name.startswith('dasc'):
 
-            assert self.fn.is_file(),'{} does not exist'.format(self.fn)
+            elif self.name.startswith('themis'):
 
-            with h5py.File(self.fn,'r') as f:
-                self.filestartutc = f['/ut1_unix'][0]
-                self.filestoputc  = f['/ut1_unix'][-1]
-#%%
-                self.ut1unix = f['/ut1_unix'].value
-                try:
-                    self.ut1unix += self.timeShiftSec
-                except TypeError:
-                    pass
+            elif self.fn.suffix == '.h5': # legacy data including HiST  (should use xarray to convert instead)
+
+                assert self.fn.is_file(),f'{self.fn} does not exist'
+
+                with h5py.File(self.fn,'r') as f:
+# %% timing, parameter wrangling  FIXME someday do this with xarray.Dataset instead and convert/save data with xarray instead of h5py
+                    self.ut1unix = f['/ut1_unix'][:] # time of each frame in entire video
+                    try:
+                        self.ut1unix += self.timeShiftSec
+                    except TypeError:
+                        pass
 
 
-                self.supery,self.superx = f['/rawimg'].shape[1:]
+                    self.supery,self.superx = f['/rawimg'].shape[1:]
 
-                p = f['/params']
-                self.kineticsec   = p['kineticsec']
-                self.rotccw       = p['rotccw']
-                self.transpose    = p['transpose'] == 1
-                self.fliplr       = p['fliplr'] == 1
-                self.flipud       = p['flipud'] == 1
+                    p = f['/params']
+                    self.kineticsec   = p['kineticsec']
+                    self.rotccw       = p['rotccw']
+                    self.transpose    = p['transpose'] == 1
+                    self.fliplr       = p['fliplr'] == 1
+                    self.flipud       = p['flipud'] == 1
 
-                c = f['/sensorloc']
-                self.lat   = c['lat'].item()
-                self.lon   = c['lon'].item()
-                self.alt_m = c['alt_m'].item()
+                    c = f['/sensorloc']
+                    self.lat   = c['lat'].item()
+                    self.lon   = c['lon'].item()
+                    self.alt_m = c['alt_m'].item()
+            else:
+                raise OSError(f'I am not sure how to work with the data for {self.name}')
+
         elif not sim.realdata: #sim ONLY
             self.kineticsec = splitconf(cp,'kineticsec',ci) #simulation
             self.alt_m =      splitconf(cp,'zkm',ci)*1000 # no fallback, must specify z-location of each cam
