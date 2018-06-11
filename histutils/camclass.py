@@ -3,12 +3,16 @@ import logging
 import numpy as np
 from numpy.testing import assert_allclose
 from dateutil.parser import parse
+from datetime import datetime
 from scipy.signal import savgol_filter
 from numpy.random import poisson
 import h5py
+import xarray
 from typing import List
+
 #
 from . import splitconf
+import sciencedates
 from pymap3d import azel2radec, aer2ecef
 from pymap3d.haversine import anglesep
 import dascutils.io as dio
@@ -136,8 +140,6 @@ class Cam: #use this like an advanced version of Matlab struct
         self.smoothspan = splitconf(cp,'smoothspan',ci,dtype=int)
         self.savgolOrder = splitconf(cp,'savgolOrder',ci,dtype=int)
 
-        """ expects an HDF5 .h5 file"""
-
         # data file name
         if sim.realdata and self.usecam:
             if isinstance(cp['fn'],str):
@@ -147,11 +149,22 @@ class Cam: #use this like an advanced version of Matlab struct
                 self.fn = sim.realdatapath / cp['fn']
             else:
                 raise ValueError(f'your camera filename {cp["fn"]} not found')
+# %% metadata
+            self.lat: float
+            self.lon: float
 
             if self.name.startswith('dasc'):
-
+                data: xarray.Dataset = dio.load(self.fn)
+                self.lat = data.lat
+                self.lon = data.lon
+                self.alt_m = data.alt_m
+                self.ut1unix = sciencedates.datetime2utsec(data.time.values.astype(datetime))
             elif self.name.startswith('themis'):
-
+                data: xarray.Dataset = themisasi.load(self.fn)
+                self.lat = data.lat
+                self.lon = data.lon
+                self.alt_m = data.alt_m
+                self.ut1unix = sciencedates.datetime2utsec(data.time.values.astype(datetime))
             elif self.fn.suffix == '.h5': # legacy data including HiST  (should use xarray to convert instead)
 
                 assert self.fn.is_file(),f'{self.fn} does not exist'
@@ -199,13 +212,10 @@ class Cam: #use this like an advanced version of Matlab struct
             self.fliplr    = splitconf(cp,'fliplr',ci)
             self.flipud    = splitconf(cp,'flipud',ci)
             self.rotccw    = splitconf(cp,'rotccw',ci,fallback=0.)
-
-
-
+# %% camera performance parameters
         self.pixarea_sqcm = splitconf(cp,'pixarea_sqcm',ci)
         self.pedn = splitconf(cp,'pedn',ci)
         self.ampgain = splitconf(cp,'ampgain',ci)
-
 #%% camera model
         """
         A model for sensor gain
@@ -227,8 +237,10 @@ class Cam: #use this like an advanced version of Matlab struct
         if sim.realdata and self.usecam:
             logging.info(f'cam{self.name} timeshift: {self.timeShiftSec} seconds')
 
-            logging.info(f'Camera {self.name} start/stop UTC: {self.filestartutc} / {self.filestoputc}, {self.ut1unix.size} frames.')
-
+            logging.info(f'Camera {self.name} start/stop UTC:'
+                         f'{datetime.utcfromtimestamp(self.ut1unix[0])} / '
+                         f'{datetime.utcfromtimestamp(self.ut1unix[-1])}  '
+                         f'{self.ut1unix.size} frames.')
 
     def arbanglemap(self):
         '''
