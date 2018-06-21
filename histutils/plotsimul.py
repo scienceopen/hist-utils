@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 from numpy import sqrt, atleast_1d
 from matplotlib.pyplot import figure, subplots
-#from matplotlib.colors import LogNorm
+# from matplotlib.colors import LogNorm
 from datetime import datetime
 from pytz import UTC
 #
@@ -61,7 +61,7 @@ def plotRealImg(sim, cam, rawdata, t: int, odir: Path=None, fg=None):
     and 1 degree radar beam red circle centered on magnetic zenith
     """
     ncols = len(cam)
-  #  print('using {} cameras'.format(ncols))
+    #  print('using {} cameras'.format(ncols))
     T = nans(ncols, dtype=datetime)
 
 #    if asi is not None:
@@ -85,7 +85,7 @@ def plotRealImg(sim, cam, rawdata, t: int, odir: Path=None, fg=None):
 
     for i, C in enumerate(cam):
         if C.usecam:  # HiST cameras
-           # print('frame {}'.format(t))
+            # print('frame {}'.format(t))
             # hold times for all cameras at this time step
             T[i] = updateframe(t, rawdata[i], None, cam[i], axs[i], fg)
         elif C.name == 'asi':  # ASI
@@ -134,7 +134,7 @@ def updateframe(t, raw, wavelen, cam, ax, fg):
     http://scikit-image.org/docs/dev/api/skimage.restoration.html?highlight=denoise
     """
     if 'wiener' in cam.cp:
-        #psf = ones((cam.wiener, cam.wiener)) / cam.wiener**2
+        # psf = ones((cam.wiener, cam.wiener)) / cam.wiener**2
         frame = wiener(frame, cam.cp['wiener'])
 
     if 'medfilt2d' in cam.cp:
@@ -152,8 +152,8 @@ def updateframe(t, raw, wavelen, cam, ax, fg):
         NORM = ImageNormalize(stretch=v)
 
     NORM = None
-  #  NORM = LogNorm()
-  # NORM = ImageNormalize(stretch=vis.LogStretch())
+    #  NORM = LogNorm()
+    # NORM = ImageNormalize(stretch=vis.LogStretch())
 
     hi = ax.imshow(frame,
                    origin='lower', interpolation='none',

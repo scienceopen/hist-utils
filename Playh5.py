@@ -7,7 +7,7 @@ import h5py
 from scipy.misc import bytescale
 from numpy import dstack
 #
-#from histutils.sixteen2eight import sixteen2eight
+# from histutils.sixteen2eight import sixteen2eight
 from histutils.plots import doPlayMovie
 
 

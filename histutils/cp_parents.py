@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Union
 import shutil
 
+
 def cp_parents(files, target_dir: Union[str, Path]):
     """
     This function requires Python >= 3.6.

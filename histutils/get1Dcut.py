@@ -1,7 +1,7 @@
 from pathlib import Path
 from numpy import logspace
 import h5py
-from typing import List, Any
+from typing import List
 #
 from pymap3d import ecef2aer
 from .plots import plotLOSecef
@@ -16,7 +16,7 @@ def get1Dcut(cam: List[Cam], odir: Path=None, verbose: bool=False) -> List[Cam]:
     iv.  find the indices corresponding to those angles
     now the cameras are geographically registered to pixel indices
     """
-    
+
 # %% determine slant range between other camera and magnetic zenith to evaluate at
     # 4.5 had zero discards for hst0 #6.8 didn't quite get to zenith
     srpts = logspace(4.3, 6.9, 25)

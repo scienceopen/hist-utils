@@ -10,7 +10,7 @@ from scipy.signal import wiener
 from scipy.misc import imresize
 #
 from matplotlib.pyplot import subplots, show, figure
-from matplotlib.colors import LogNorm
+# from matplotlib.colors import LogNorm
 import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('talk', font_scale=1.4)

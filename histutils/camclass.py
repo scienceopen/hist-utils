@@ -74,10 +74,10 @@ class Cam:  # use this like an advanced version of Matlab struct
                 if 'h5' in makeplot and sim.fovfn:
                     print(f'fov: writing {sim.fovfn}')
                     dasc, themis = mergefov(dasc, themis, method='mzslice')
-                    
+
                     self.hlrows = dasc.rows
                     self.hlcols = dasc.cols
-                    
+
                     with h5py.File(sim.fovfn, 'w') as H:
                         # TODO: Ncam x 4 x Nx  (list,list,ndarray)
                         H['/rows'] = np.array(self.hlrows)
@@ -171,7 +171,7 @@ class Cam:  # use this like an advanced version of Matlab struct
             self.lat: float
             self.lon: float
             data: xarray.Dataset
-            
+
             if self.name.startswith('dasc'):
                 data = dio.load(self.fn)
                 self.lat = data.lat
@@ -274,7 +274,7 @@ class Cam:  # use this like an advanced version of Matlab struct
         here's the center angle of each pixel ( + then - to go from biggest to
         smallest angle)  (e.g. 94.5 deg to 85.5 deg. -- sweeping left to right)
         '''
-        #raySpacingDeg = self.arbfov / self.nCutPix
+        # raySpacingDeg = self.arbfov / self.nCutPix
         maxAng = self.boresightEl + self.arbfov / 2
         minAng = self.boresightEl - self.arbfov / 2
         angles = np.linspace(maxAng, minAng, num=self.ncutpix, endpoint=True)
@@ -284,7 +284,7 @@ class Cam:  # use this like an advanced version of Matlab struct
     def astrometrymap(self):
         pass
         # not sure if get1Dcut.py can be OOP'd
-        #FOVangWidthDeg =pixAngleDeg[-1,iCam] - pixAngleDeg[0,iCam]
+        # FOVangWidthDeg =pixAngleDeg[-1,iCam] - pixAngleDeg[0,iCam]
         # ModelRaySpacingDeg = np.mean( np.diff(pixAngleDeg[:,iCam],n=1) ) # for reference purposes
 
     def toecef(self, ranges):
@@ -305,7 +305,7 @@ class Cam:  # use this like an advanced version of Matlab struct
             else:
                 raise ValueError('ndim==2 or 3')
         # rotate -- note if you use origin='lower', rotCCW -> rotCW !
-         # rotate works with first two axes
+        # rotate works with first two axes
         if self.rotccw:  # NOT isinstance integer_types!
             if frame.ndim == 3:
                 frame = np.rot90(frame, self.rotccw, (1, 2))
@@ -438,7 +438,7 @@ class Cam:  # use this like an advanced version of Matlab struct
             logging.info('Scaling data to Cam #{} by factor of {}'.format(
                 self.name, self.intensityScaleFactor))
             data *= self.intensityScaleFactor
-            #assert isnan(data).any() == False
+            # assert isnan(data).any() == False
         except TypeError:
             pass
 
@@ -482,8 +482,8 @@ class Cam:  # use this like an advanced version of Matlab struct
         if self.arbfov is not None:
             expect_diffang = self.arbfov / self.ncutpix
             diffang = np.diff(self.angle_deg)
-           # diffoutlier = max(abs(expect_diffang-diffang.min()),
-           #                   abs(expect_diffang-diffang.max()))
+            # diffoutlier = max(abs(expect_diffang-diffang.min()),
+            #                   abs(expect_diffang-diffang.max()))
             assert_allclose(expect_diffang, diffang.mean(
             ), rtol=0.01), 'large bias in camera angle vector detected'
 #            assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
@@ -551,6 +551,6 @@ class Cam:  # use this like an advanced version of Matlab struct
             ax.legend()
             ax.set_xlabel('x')
             ax.set_ylabel('y')
-            #ax.set_title('pixel indices (pre-least squares)')
+            # ax.set_title('pixel indices (pre-least squares)')
             ax.set_xlim([0, self.az.shape[1]])
             ax.set_ylim([0, self.az.shape[0]])

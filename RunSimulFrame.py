@@ -35,12 +35,11 @@ matplotlib.use('Agg')
 import matplotlib.animation as anim  # noqa: E402
 from matplotlib.pyplot import figure, pause  # noqa: E402
 
-import h5py # noqa: E402
+import h5py  # noqa: E402
 import logging  # noqa: E402
 logging.basicConfig(level=logging.WARN)
 from astropy.io import fits  # noqa: E402
 #
-from histutils import req2frame  # noqa: E402
 from histutils.camclass import Cam  # noqa: E402
 from histutils.simulFrame import getSimulData, HSTframeHandler  # noqa: E402
 from histutils.plotsimul import plotRealImg  # noqa: E402
@@ -91,7 +90,7 @@ def getmulticam(flist, tstartstop, framereq, cpar, odir, cals, cmdlog=''):
         for t in range(sim.nTimeSlice):
             plotRealImg(sim, cam, rawdata, t, odir=pngdir, fg=fg)
             pause(0.1)  # avoid random crashes
-            #print('grab {}'.format(t))
+            # print('grab {}'.format(t))
             if not cpar['png']:
                 writer.grab_frame(facecolor='k')
             if not t % 100:
@@ -116,8 +115,9 @@ class Sim:
             except (TypeError, AttributeError):  # no specified time
                 print('loading all frames')
 
-        #self.pbInd = req2frame(framereq, Nframe)
-        #self.nTimeSlice = self.pbInd.size
+        print('loaded', Nframe, 'frames')
+        # self.pbInd = req2frame(framereq, Nframe)
+        # self.nTimeSlice = self.pbInd.size
 
         self.raymap = 'astrometry'
         self.realdata = True

@@ -23,7 +23,7 @@ def test_rawread():
         bigfn, (512, 512), (1, 1), framestoplay, verbose=1)
 
     # these are both tested by goRead
-    #finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
+    # finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)
     # with open(bigfn,'rb') as f:
     #    testframe,testind = getDMCframe(f,iFrm=1,finf=finf,verbose=2)
     # test a handful of pixels

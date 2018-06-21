@@ -8,11 +8,11 @@ try:
 except ImportError:
     skml = None
 #
-from mpl_toolkits.mplot3d import Axes3D  # needed for this file
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 from matplotlib.pyplot import figure, subplots, hist, draw, pause, show
 from matplotlib.colors import LogNorm
-#from matplotlib.ticker import ScalarFormatter
-#import matplotlib.animation as anim
+# from matplotlib.ticker import ScalarFormatter
+# import matplotlib.animation as anim
 #
 from pymap3d import ecef2geodetic
 
@@ -21,7 +21,7 @@ def doPlayMovie(data, playMovie, ut1_unix=None, rawFrameInd=None, clim=None):
     if not playMovie or data is None:
         return
 # %%
-    #sfmt = ScalarFormatter(useMathText=True)
+    # sfmt = ScalarFormatter(useMathText=True)
     hf1 = figure(1)
     hAx = hf1.gca()
 
@@ -35,8 +35,8 @@ def doPlayMovie(data, playMovie, ut1_unix=None, rawFrameInd=None, clim=None):
                          origin='lower', norm=LogNorm())
 
     hT = hAx.text(0.5, 1.005, '', ha='center', transform=hAx.transAxes)
-    #hc = hf1.colorbar(hIm,format=sfmt)
-    #hc.set_label('data numbers ' + str(data.dtype))
+    # hc = hf1.colorbar(hIm,format=sfmt)
+    # hc.set_label('data numbers ' + str(data.dtype))
     hAx.set_xlabel('x-pixels')
     hAx.set_ylabel('y-pixels')
 
@@ -183,7 +183,7 @@ def plotnear_rc(R, C, name, shape, odir):
 
     ax.set_xlabel('x')
     ax.set_ylabel('y')
-    #ax.set_title('pixel indices (pre-least squares)')
+    # ax.set_title('pixel indices (pre-least squares)')
     ax.set_xlim([0, shape[1]])
     ax.set_ylim([0, shape[0]])
     ax.set_title('camera {} pre-LSQ fit indices to extract'.format(name))

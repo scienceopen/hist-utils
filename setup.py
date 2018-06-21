@@ -1,9 +1,9 @@
 #!/usr/bin/env python
+from setuptools import setup, find_packages
+
 install_requires = ['python-dateutil', 'pytz', 'numpy', 'scipy', 'h5py', 'astropy',
                     'pymap3d', 'sciencedates']
 tests_require = ['pytest', 'coveralls', 'flake8', 'mypy']
-# %%
-from setuptools import setup, find_packages
 
 
 setup(name='histutils',

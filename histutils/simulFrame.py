@@ -129,13 +129,13 @@ def HSTframeHandler(sim, cam, odir=None, verbose=0):
         # IOError: Can't read data (Src and dest data spaces have different sizes)
         # if you have repeated index in fancy indexing
         with h5py.File(str(C.fn), 'r', libver='latest') as f:
-            I = f['/rawimg'][ind, ...]
+            im = f['/rawimg'][ind, ...]
             # in case repeated frames selected, which h5py 2.5 can't handle (fancy indexing, non-increasing)
             if ind.size != C.pbInd.size:
                 # FIXME allows repeated indexes which h5py 2.5 does not for mmap
-                I = I[C.pbInd - ind[0], ...]
-            I = C.doorientimage(I)
-            rawdata.append(I)
+                im = im[C.pbInd - ind[0], ...]
+            im = C.doorientimage(im)
+            rawdata.append(im)
 # %% assign slice & time to class variables
             # NOTE C.ut1unix is timeshift corrected, f['/ut1_unix'] is UNcorrected!
             # need value for non-Boolean indexing (as of h5py 2.5)
@@ -146,14 +146,13 @@ def HSTframeHandler(sim, cam, odir=None, verbose=0):
             DON'T use try-except AttributeError as that's too broad and causes confusion
             """
             if hasattr(C, 'cutrow'):
-                if I.ndim == 3:
-                    C.keo = I[:, C.cutrow, C.cutcol].T  # row = pix, col = time
-                elif I.ndim == 2:
-                    C.keo = I[C.cutrow, C.cutcol].T
+                if im.ndim == 3:
+                    C.keo = im[:, C.cutrow, C.cutcol].T  # row = pix, col = time
+                elif im.ndim == 2:
+                    C.keo = im[C.cutrow, C.cutcol].T
                 else:
                     raise ValueError('ndim==2 or 3')
 
-    logging.debug(
-        'Loaded all image frames in {:.2f} sec.'.format(time() - tic))
+    logging.debug(f'Loaded all image frames in {time() - tic:.2f} sec.')
 
     return cam, rawdata

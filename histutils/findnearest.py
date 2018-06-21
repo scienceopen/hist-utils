@@ -59,7 +59,7 @@ def _findindex(az0, el0, az, el):
 
     for i, (a, e) in enumerate(zip(az, el)):
         # we do this point by point because we need to know the closest pixel for each point
-        #errang = haver.anglesep(az,el, apt,ept, deg=False)
+        # errang = haver.anglesep(az,el, apt,ept, deg=False)
         ic[i] = haver.anglesep_meeus(az0, el0, a, e, deg=False).argmin()
 
     """
