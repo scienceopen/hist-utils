@@ -13,10 +13,15 @@ git:
   depth: 3
 
 
-install: pip -q install -e .[tests]
+install: pip install -e .[tests]
 
-script: pytest -v
+script: 
+  - pytest -v
+  - flake8
+#  - mypy . --ignore-missing-imports   # need new version of mypy
 
-after_success:
-  - coverage run tests/test_all.py
-  - coveralls
+after_success: 
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.6* ]]; then
+    coverage run tests/test_all.py;
+    coveralls;
+    fi
