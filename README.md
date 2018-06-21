@@ -1,6 +1,10 @@
 [![image](https://travis-ci.org/scivision/histutils.svg?branch=master)](https://travis-ci.org/scivision/histutils)
 [![image](http://coveralls.io/repos/scivision/histutils/badge.svg?branch=master&service=github)](http://coveralls.io/github/scivision/histutils?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a40627d049d2f3168ae0/maintainability)](https://codeclimate.com/github/scivision/histutils/maintainability)
+[![pypi versions](https://img.shields.io/pypi/pyversions/histutils.svg)](https://pypi.python.org/pypi/histutils)
+[![pypi format](https://img.shields.io/pypi/format/histutils.svg)](https://pypi.python.org/pypi/histutils)
+[![PyPi Download stats](http://pepy.tech/badge/histutils)](http://pepy.tech/project/histutils)
+
 
 # HiST Utils
 
