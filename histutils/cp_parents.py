@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-def cp_parents(files, target_dir:Path):
+from pathlib import Path
+from typing import Union
+import shutil
+
+def cp_parents(files, target_dir: Union[str, Path]):
     """
     This function requires Python >= 3.6.
 
@@ -15,20 +19,23 @@ def cp_parents(files, target_dir:Path):
     cp_parents('/tmp/a/b/c/d/boo','/tmp/e/f')
     cp_parents('x/hi','/tmp/e/f/g')  --> copies ./x/hi to /tmp/e/f/g/x/hi
     """
-#%% make list if it's a string
-    if isinstance(files,(str,Path)):
+# %% make list if it's a string
+    if isinstance(files, (str, Path)):
         files = [files]
-#%% cleanup user
-    files = (Path(f).expanduser() for f in files)   #relative path or absolute path is fine
+# %% cleanup user
+    # relative path or absolute path is fine
+    files = (Path(f).expanduser() for f in files)
     target_dir = Path(target_dir).expanduser()
-#%% work
+# %% work
     for f in files:
-        newpath = target_dir / f.parent #to make it work like cp --parents, copying absolute paths if specified
+        # to make it work like cp --parents, copying absolute paths if specified
+        newpath = target_dir / f.parent
         newpath.mkdir(parents=True, exist_ok=True)
-        copy2(f, newpath)
+        shutil.copy2(f, newpath)
 
-#cp_parents('/tmp/a/b/c/d/boo','/tmp/e/f')
-#cp_parents('x/hi','/tmp/e/f/g')  --> copies ./x/hi to /tmp/e/f/g/x/hi
+# cp_parents('/tmp/a/b/c/d/boo','/tmp/e/f')
+# cp_parents('x/hi','/tmp/e/f/g')  --> copies ./x/hi to /tmp/e/f/g/x/hi
+
 
 if __name__ == '__main__':
     from sys import argv
