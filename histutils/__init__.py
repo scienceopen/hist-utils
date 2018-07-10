@@ -275,8 +275,8 @@ def vid2h5(data: np.ndarray, ut1, rawind, ticks, outfn: Path, P: dict, i: int=0,
                 f['/rawimg'][ind, ...] = data
 
             if ut1 is not None:
-                print(
-                    f'writing from {datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC)} to {datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)}')
+                print(f'writing from {datetime.utcfromtimestamp(ut1[0]).replace(tzinfo=UTC)}'
+                      'to {datetime.utcfromtimestamp(ut1[-1]).replace(tzinfo=UTC)}')
                 if 'ut1_unix' not in f:
                     fut1 = f.create_dataset(
                         '/ut1_unix', shape=(N,), dtype=float, fletcher32=True)

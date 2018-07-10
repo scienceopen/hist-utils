@@ -6,24 +6,32 @@ Michael Hirsch
 Updated Aug 2015 to handle HDF5 user-friendly huge video file format
 
 uses data converted from raw .DMCdata format by a command like
-./ConvertDMC2h5.py ~/U/irs_archive4/HSTdata/2013-04-14-HST1/2013-04-14T07-00-CamSer1387.DMCdata -s 2013-04-14T07:00:07Z -k 0.0333333333333333 -t 2013-04-14T9:25:00Z 2013-04-14T9:35:00Z -l 65.12657 -147.496908333 210 --rotccw 2 -o ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5
+./ConvertDMC2h5.py ~//HSTdata/2013-04-14-HST1/2013-04-14T07-00-CamSer1387.DMCdata \
+      -s 2013-04-14T07:00:07Z -k 0.0333333333333333 -t 2013-04-14T9:25:00Z 2013-04-14T9:35:00Z \
+      -l 65.12657 -147.496908333 210 --rotccw 2 -o ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5
 
 
 examples:
 ./RunSimulFrame.py  ~/data/2007-03-23/optical/2007-03-23T1120_8bit.h5  --cmin 0 --cmax 255
 ./RunSimulFrame.py  ~/data/2007-03-23/optical/2007-03-23T1120.h5  --cmin 1500 --cmax 16384
 
-./RunSimulFrame.py ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
+./RunSimulFrame.py ~/data/2013-04-14/hst/2013-04-14T8-54_hst0.h5 \
+     ~/data/2013-04-14/HST/2013-04-14T8-54_hst1.h5 -t 2013-04-14T08:54:25Z 2013-04-14T08:54:30Z
 
-./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
-./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
+./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 -c cal/hst1cal.h5 \
+         -s -0.1886792453 --cmin 1050 --cmax 1150 -m 77.5 19.9
+./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T1034_hst0.h5 ~/data/2013-04-14/hst/2013-04-14T1034_hst1.h5 \
+           -c cal/hst0cal.h5 cal/hst1cal.h5 -s -0.1886792453 0 --cmin 100 1025 --cmax 2000 1130 \
+            -m 77.5 19.9 -t 2013-04-14T10:34:25Z 2013-04-14T10:35:00Z
 
 #apr14 925
-./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 -c cal/hst1cal.h5 --cmin 1090 --cmax 1140 -t 2013-04-14T09:27Z 2013-04-14T09:30Z
+./RunSimulFrame.py  ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 -c cal/hst1cal.h5 \
+              --cmin 1090 --cmax 1140 -t 2013-04-14T09:27Z 2013-04-14T09:30Z
 RunSimulFrame.py   ~/data/2013-04-14/hst/2013-04-14T0925_hst1.h5 --cmin 1090 --cmax 1140  -f 0 17998 20 -s 0
 
 #apr14 824
-RunSimulFrame.py   ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 --cmax 1350  -t 2013-04-14T08:25:45Z 2013-04-14T08:26:30Z
+RunSimulFrame.py   ~/data/2013-04-14/hst/2013-04-14T0824_hst1.h5 --cmin 1090 --cmax 1350 \
+   -t 2013-04-14T08:25:45Z 2013-04-14T08:26:30Z
 
 """
 from dateutil.parser import parse

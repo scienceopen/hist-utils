@@ -238,7 +238,8 @@ def whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC, firstRawInd, last
     """
     if no requested frames were specified, read all frames. Otherwise, just
     return the requested frames
-    note these assignments have to be "int64", not just python "int", because on windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
+    Assignments have to be "int64", not just python "int".
+    Windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     """
     FrameIndRel = ut12frame(ut1req,
                             arange(0, nFrame, 1, dtype=int64),

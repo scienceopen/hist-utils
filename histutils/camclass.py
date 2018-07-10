@@ -124,7 +124,8 @@ class Cam:  # use this like an advanced version of Matlab struct
         try:
             if self.fovmaxlen < (1.5 * zmax):
                 logging.warning(
-                    'sanityCheck: To avoid unexpected pixel/sky voxel intersection problems, make your candidate camera FOV at least 1.5 times longer than your maximum Z altitude.')
+                    'sanityCheck: To avoid unexpected pixel/sky voxel intersection problems,'
+                    ' make your candidate camera FOV at least 1.5 times longer than your maximum Z altitude.')
         except TypeError:  # just plotting raw data
             pass
 
@@ -190,9 +191,8 @@ class Cam:  # use this like an advanced version of Matlab struct
             elif self.fn.suffix == '.h5':
 
                 assert self.fn.is_file(), f'{self.fn} does not exist'
-
+                """timing, parameter wrangling  FIXME someday use xarray.Dataset. convert/save data with xarray instead of h5py"""
                 with h5py.File(self.fn, 'r') as f:
-                    # %% timing, parameter wrangling  FIXME someday do this with xarray.Dataset instead and convert/save data with xarray instead of h5py
                     # time of each frame in entire video
                     self.ut1unix = f['/ut1_unix'][:]
                     try:
