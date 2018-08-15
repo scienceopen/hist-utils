@@ -8,7 +8,6 @@ INPUT FILE FORMAT: intended for use with "DMCdata" raw format, 4-byte
 import logging
 from datetime import datetime
 from time import time
-from pytz import UTC
 import h5py
 from numpy import arange, unique, atleast_1d, around, array, isfinite
 from scipy.interpolate import interp1d
@@ -67,10 +66,9 @@ def HSTsync(sim, cam, verbose):
     """
     tall = arange(mutualStart, mutualStop, sim.kineticsec)
 
-    logging.info('{} mutual frames available from {} to {}'.format(tall.size,
-                                                                   datetime.fromtimestamp(
-                                                                       mutualStart, tz=UTC),
-                                                                   datetime.fromtimestamp(mutualStop, tz=UTC)))
+    logging.info(f'{tall.size} mutual frames available '
+                 f'from {datetime.utcfromtimestamp(mutualStart)}'
+                 f'to {datetime.utcfromtimestamp(mutualStop)}')
 # %% adjust start/stop to user request
     try:
         treq = treqlist

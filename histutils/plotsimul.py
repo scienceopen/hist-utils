@@ -5,7 +5,6 @@ from numpy import sqrt, atleast_1d
 from matplotlib.pyplot import figure, subplots
 # from matplotlib.colors import LogNorm
 from datetime import datetime
-from pytz import UTC
 #
 from astropy.visualization.mpl_normalize import ImageNormalize
 import astropy.visualization as vis
@@ -35,7 +34,7 @@ def plotPlainImg(sim, cam, rawdata, t, odir):
                   origin='lower',
                   vmin=max(C.clim[0], 1), vmax=C.clim[1],
                   cmap='gray')
-        ax.text(0.05, 0.075, datetime.fromtimestamp(C.tKeo[t], tz=UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
+        ax.text(0.05, 0.075, datetime.utcfromtimestamp(C.tKeo[t]).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
                 ha='left',
                 va='top',
                 transform=ax.transAxes,
@@ -170,7 +169,7 @@ def updateframe(t, raw, wavelen, cam, ax, fg):
         hc = fg.colorbar(hi, ax=ax)  # not cax!
         hc.set_label(f'{raw.dtype} data numbers')
 
-    dtframe = datetime.fromtimestamp(cam.tKeo[t], tz=UTC)
+    dtframe = datetime.utcfromtimestamp(cam.tKeo[t])
 
     if cam.name == 'asi':
         dtstr = datetime.strftime(dtframe, '%H:%M:%S')

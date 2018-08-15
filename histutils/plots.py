@@ -2,7 +2,6 @@
 from pathlib import Path
 from numpy import uint16, diff, gradient
 from datetime import datetime
-from pytz import UTC
 try:
     import simplekml as skml
 except ImportError:
@@ -49,11 +48,9 @@ def doPlayMovie(data, playMovie, ut1_unix=None, rawFrameInd=None, clim=None):
         hIm.set_data(d)
         try:
             if titleut:
-                hT.set_text('UT1 estimate: {}  RelFrame#: {}'.format(
-                    datetime.utcfromtimestamp(ut1_unix[i]).replace(tzinfo=UTC), i))
+                hT.set_text(f'UT1 estimate: {datetime.utcfromtimestamp(ut1_unix[i])}  RelFrame#: {i}')
             else:
-                hT.set_text('RawFrame#: {} RelFrame# {}'.format(
-                    rawFrameInd[i], i))
+                hT.set_text(f'RawFrame#: {rawFrameInd[i]} RelFrame# {i}')
         except TypeError:
             hT.set_text(f'RelFrame# {i}')
 
