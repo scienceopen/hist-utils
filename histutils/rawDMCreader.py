@@ -28,7 +28,7 @@ bpp = 16
 def goRead(fn: Path,
            xyPix, xyBin,
            FrameIndReq=None, ut1Req=None, kineticraw=None,
-           startUTC=None, cmosinit=None, verbose=0, outfn=None, nHeadBytes: int=4):
+           startUTC=None, cmosinit=None, verbose=0, outfn=None, nHeadBytes: int = 4):
 
     fn = Path(fn).expanduser()
     ext = fn.suffix
@@ -157,7 +157,7 @@ def getNeoParam(fn, FrameIndReq=None, ut1req=None, kineticsec=None, startUTC=Non
             # TODO wish there was a better way
             try:
                 frametxt = f[0].header['USERTXT1']
-                m = re.search('(?<=Images\:)\d+-\d+(?=\.)', frametxt)
+                m = re.search(r'(?<=Images\:)\d+-\d+(?=\.)', frametxt)
                 inds = m.group(0).split('-')
             except KeyError:  # just a single file?
                 # yes start with 1, end without adding 1 for Andor Solis
@@ -266,7 +266,7 @@ def whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC, firstRawInd, last
     return FrameIndRel
 
 
-def getDMCframe(f, iFrm: int, finf: dict, verbose: bool=False):
+def getDMCframe(f, iFrm: int, finf: dict, verbose: bool = False):
     """
     f is open file handle
     """
@@ -282,7 +282,7 @@ def getDMCframe(f, iFrm: int, finf: dict, verbose: bool=False):
         f.seek(currByte, 0)
     except IOError as e:
         raise IOError(f'I couldnt seek to byte {currByte:d}. try using a 64-bit integer for iFrm \n'
-                      'is {f.name} a DMCdata file?  {e}')
+                      f'is {f.name} a DMCdata file?  {e}')
 # %% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
         currFrame = fromfile(f, uint16,

@@ -91,7 +91,7 @@ def meta2rawInd(f, Nmetadata):
     return rawind
 
 
-def req2frame(req, N: int=0):
+def req2frame(req, N: int = 0):
     """
     output has to be numpy.arange for > comparison
     """
@@ -183,7 +183,7 @@ def splitconf(conf, key, i=None, dtype=float, fallback=None, sep=','):
 
 def setupimgh5(f: Union[Path, h5py.File],
                Nframetotal: int, Nrow: int, Ncol: int, dtype=np.uint16,
-               writemode='r+', key='/rawimg', cmdlog: str=None):
+               writemode='r+', key='/rawimg', cmdlog: str = None):
     """
     f: HDF5 handle (or filename)
 
@@ -223,8 +223,8 @@ def setupimgh5(f: Union[Path, h5py.File],
             f'{type(f)} is not correct, must be filename or h5py.File HDF5 file handle')
 
 
-def vid2h5(data: np.ndarray, ut1, rawind, ticks, outfn: Path, P: dict, i: int=0,
-           Nfile: int=1, det=None, tstart=None, cmdlog: str=None):
+def vid2h5(data: np.ndarray, ut1, rawind, ticks, outfn: Path, P: dict, i: int = 0,
+           Nfile: int = 1, det=None, tstart=None, cmdlog: str = None):
     assert outfn, 'must provide a filename to write'
 
     outfn = Path(outfn).expanduser()

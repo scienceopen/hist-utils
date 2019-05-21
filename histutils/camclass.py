@@ -26,8 +26,8 @@ class Cam:  # use this like an advanced version of Matlab struct
     """
 
     def __init__(self, sim, cp, name: str,
-                 zmax=None, xreq=None, makeplot: List[str]=[],
-                 calfn: Path=None, verbose: int=0) -> None:
+                 zmax=None, xreq=None, makeplot: List[str] = [],
+                 calfn: Path = None, verbose: int = 0) -> None:
 
         self.verbose = verbose
 
@@ -392,8 +392,8 @@ class Cam:  # use this like an advanced version of Matlab struct
         noisy = data.copy()
 
         if self.noiselam:
-            logging.info('adding Poisson noise with $$\lambda={}$$ to camera #{}'.format(
-                self.noiselam, self.name))
+            logging.info('adding Poisson noise with ' + r'$\lambda=' +
+                         f'{self.noiselam} to camera #{self.name}')
             dnoise = poisson(lam=self.noiselam, size=self.ncutpix)
             noisy += dnoise
             self.dnoise = dnoise  # diagnostic

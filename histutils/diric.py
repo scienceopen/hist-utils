@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
             assert_allclose(y, yy)
         except Exception as e:
-            print('skipping comparison')
+            print(f'skipping comparison  {e}')
 
         try:
             import matplotlib.pyplot as plt

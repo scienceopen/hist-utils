@@ -47,7 +47,7 @@ def plotPlainImg(sim, cam, rawdata, t, odir):
 # %%
 
 
-def plotRealImg(sim, cam, rawdata, t: int, odir: Path=None, fg=None):
+def plotRealImg(sim, cam, rawdata, t: int, odir: Path = None, fg=None):
     """
     sim: histfeas/simclass.py
     cam: camclass.py
@@ -181,7 +181,7 @@ def updateframe(t, raw, wavelen, cam, ax, fg):
             tcolor = 'red'
         else:
             tcolor = 'limegreen'
-        ttxt += f'{dtstr} $\lambda$ {wavelen[t]:.1f}'
+        ttxt += f'{dtstr}' + r' $\lambda$' + f' {wavelen[t]:.1f}'
     else:
         dtstr = datetime.strftime(dtframe, '%H:%M:%S.%f')[:-3]  # millisecond
         tcolor = 'limegreen'
