@@ -1,8 +1,6 @@
 [![image](https://travis-ci.org/scivision/histutils.svg?branch=master)](https://travis-ci.org/scivision/histutils)
 [![image](http://coveralls.io/repos/scivision/histutils/badge.svg?branch=master&service=github)](http://coveralls.io/github/scivision/histutils?branch=master)
-[![Maintainability](https://api.codeclimate.com/v1/badges/a40627d049d2f3168ae0/maintainability)](https://codeclimate.com/github/scivision/histutils/maintainability)
 [![pypi versions](https://img.shields.io/pypi/pyversions/histutils.svg)](https://pypi.python.org/pypi/histutils)
-[![pypi format](https://img.shields.io/pypi/format/histutils.svg)](https://pypi.python.org/pypi/histutils)
 [![PyPi Download stats](http://pepy.tech/badge/histutils)](http://pepy.tech/project/histutils)
 
 
@@ -23,8 +21,8 @@ human, they implement a complete program using the module functions.
 
 Simultaneous video playback of two or more cameras.
 
-* -i input file list (.h5) 
-* -t Time range start/stop 
+* -i input file list (.h5)
+* -t Time range start/stop
 * -o Output directory for plots (optional, slow)
 
 #### Example
@@ -44,7 +42,7 @@ files to human- and fast processing- friendly HDF5 files.
 
 #### Example
 
-    python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/data/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z 
+    python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/data/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
 
     python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0333333333333333 -o testframes_cam1.h5 ~/data/2013-04-14T07-00-CamSer1387_frames_205111-1-208621.DMCdata -s 2013-04-14T07:00:07Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
 
