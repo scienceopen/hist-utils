@@ -193,10 +193,12 @@ def setupimgh5(f: Union[Path, h5py.File],
     if isinstance(f, (str, Path)):  # assume new HDF5 file wanted
         f = Path(f).expanduser()
         if f.is_dir():
-            raise IOError(
-                'must provide specific HDF5 filename, not just a directory')
+            raise ValueError('must provide specific HDF5 filename, not just a directory')
+        if not f.is_file():
+            writemode = 'w'
 
         print('creating', f)
+
         with h5py.File(f, writemode) as F:
             setupimgh5(F, Nframetotal, Nrow, Ncol, dtype, writemode, key)
 
