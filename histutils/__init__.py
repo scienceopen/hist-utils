@@ -21,7 +21,7 @@ def write_quota(outbytes: int, outfn: Path) -> Union[None, int]:
 
     if freeout < 10 * outbytes:
         raise IOError(f'out of disk space on {anch}.'
-                      '{freeout/1e9} GB free, wanting to write {outbytes/1e9} GB.')
+                      f'{freeout/1e9} GB free, wanting to write {outbytes/1e9} GB.')
 
     return freeout
 
