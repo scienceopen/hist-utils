@@ -1,0 +1,274 @@
+<?xml version='1.0' standalone='yes' ?>
+<LVData xmlns="http://www.ni.com/LVData">
+<Version>11.0.1</Version>
+<Cluster>
+<Name></Name>
+<NumElts>2</NumElts>
+<Cluster>
+<Name>Input Parameters</Name>
+<NumElts>38</NumElts>
+<SGL>
+<Name>Exposure (sec)</Name>
+<Val>0.00000</Val>
+</SGL>
+<SGL>
+<Name>Accum (sec)</Name>
+<Val>0.00000</Val>
+</SGL>
+<SGL>
+<Name>Kinetic (sec)</Name>
+<Val>0.00000</Val>
+</SGL>
+<I32>
+<Name>HS Speed Index (EM)</Name>
+<Val>0</Val>
+</I32>
+<I32>
+<Name>ROI H Pixels</Name>
+<Val>512</Val>
+</I32>
+<I32>
+<Name>ROI V Pixels</Name>
+<Val>512</Val>
+</I32>
+<I32>
+<Name>Binning (H x V)</Name>
+<Val>1</Val>
+</I32>
+<I32>
+<Name>Vertical Pixel
+Shift Speed [uSec]</Name>
+<Val>2</Val>
+</I32>
+<String>
+<Name>iXon Data Path</Name>
+<Val></Val>
+</String>
+<EW>
+<Name>Triggering Mode</Name>
+<Choice>Internal</Choice>
+<Choice>External</Choice>
+<Choice>N/A (2)</Choice>
+<Choice>N/A (3)</Choice>
+<Choice>N/A (4)</Choice>
+<Choice>N/A (5)</Choice>
+<Choice>External Start</Choice>
+<Val>1</Val>
+</EW>
+<EW>
+<Name>Camera Run Mode</Name>
+<Choice>Reserved (0)</Choice>
+<Choice>Single Scan</Choice>
+<Choice>Accumulate</Choice>
+<Choice>Kinetics</Choice>
+<Choice>Fast Kinetics</Choice>
+<Choice>Run Till Abort</Choice>
+<Choice>Reserved (6)</Choice>
+<Choice>Reserved (7)</Choice>
+<Choice>Reserved (8)</Choice>
+<Choice>Time Delayed Integration</Choice>
+<Val>5</Val>
+</EW>
+<I32>
+<Name>H Pixel Start</Name>
+<Val>512</Val>
+</I32>
+<I32>
+<Name>V Pixels Start</Name>
+<Val>512</Val>
+</I32>
+<I64>
+<Name>Producer
+Cadence (ms)</Name>
+<Val>400</Val>
+</I64>
+<I64>
+<Name>Consumer
+Cadence (ms)</Name>
+<Val>700</Val>
+</I64>
+<String>
+<Name>Producer Loop Name</Name>
+<Val>ProdLoop</Val>
+</String>
+<String>
+<Name>Consumer Loop Name</Name>
+<Val>ConsLoop</Val>
+</String>
+<I32>
+<Name>Frames/File</Name>
+<Val>1000</Val>
+</I32>
+<Boolean>
+<Name>EMCCD cooling?</Name>
+<Val>1</Val>
+</Boolean>
+<I32>
+<Name>Set EMCCD
+temp (C)</Name>
+<Val>-60</Val>
+</I32>
+<I32>
+<Name>Number Of iXon Pulses</Name>
+<Val>53</Val>
+</I32>
+<DBL>
+<Name>Freq</Name>
+<Val>53.00125000000000</Val>
+</DBL>
+<I64>
+<Name>Trigger Hang Time (ms)</Name>
+<Val>1000</Val>
+</I64>
+<I64>
+<Name>Network Cadence (ms)</Name>
+<Val>1000</Val>
+</I64>
+<I64>
+<Name>Triggering
+Cadence (ms)</Name>
+<Val>1000</Val>
+</I64>
+<U16>
+<Name>Pixel Intensity
+Threshold (U16)</Name>
+<Val>1000</Val>
+</U16>
+<U16>
+<Name># of pixels&gt;Threshold, threshold</Name>
+<Val>30</Val>
+</U16>
+<Boolean>
+<Name>Take Dark Images</Name>
+<Val>0</Val>
+</Boolean>
+<I32>
+<Name># of frame batches in circular buffer</Name>
+<Val>150</Val>
+</I32>
+<Boolean>
+<Name>iXonDataVersion</Name>
+<Val>0</Val>
+</Boolean>
+<I32>
+<Name>frames/batch</Name>
+<Val>30</Val>
+</I32>
+<EW>
+<Name>Frame Transfer</Name>
+<Choice>OFF</Choice>
+<Choice>ON</Choice>
+<Val>1</Val>
+</EW>
+<I32>
+<Name>EM Gain</Name>
+<Val>200</Val>
+</I32>
+<I32>
+<Name>PreAmpGain
+Index</Name>
+<Val>1</Val>
+</I32>
+<EW>
+<Name>PREAMP type</Name>
+<Choice>Standard EMCCD gain register</Choice>
+<Choice>Conventional CCD register</Choice>
+<Val>0</Val>
+</EW>
+<Boolean>
+<Name>Baseline Clamp</Name>
+<Val>1</Val>
+</Boolean>
+<Boolean>
+<Name>iXon
+Hardware
+ Trigger</Name>
+<Val>1</Val>
+</Boolean>
+<I32>
+<Name>Record .synoptic frame
+every N Cons. Periods</Name>
+<Val>60</Val>
+</I32>
+</Cluster>
+<Cluster>
+<Name>Readback Parameters</Name>
+<NumElts>18</NumElts>
+<SGL>
+<Name>exposure (sec)</Name>
+<Val>1.00000E-5</Val>
+</SGL>
+<SGL>
+<Name>accumulate (sec)</Name>
+<Val>1.85400E-2</Val>
+</SGL>
+<SGL>
+<Name>kinetic (sec)</Name>
+<Val>1.85400E-2</Val>
+</SGL>
+<SGL>
+<Name>readOut (sec)</Name>
+<Val>NaN</Val>
+</SGL>
+<SGL>
+<Name>Preamp Gain</Name>
+<Val>2.00000</Val>
+</SGL>
+<I32>
+<Name>Number of VS indicies</Name>
+<Val>5</Val>
+</I32>
+<SGL>
+<Name>Vert. Shift
+(usec/shift)</Name>
+<Val>0.90000</Val>
+</SGL>
+<SGL>
+<Name>Horiz. Shift (MHz)</Name>
+<Val>17.00000</Val>
+</SGL>
+<I32>
+<Name>pixels/frame</Name>
+<Val>262144</Val>
+</I32>
+<I32>
+<Name>Bin'd
+H Pxls</Name>
+<Val>512</Val>
+</I32>
+<I32>
+<Name>Bin'd
+V Pxls</Name>
+<Val>512</Val>
+</I32>
+<I32>
+<Name>Bits/pixel</Name>
+<Val>16</Val>
+</I32>
+<U32>
+<Name># of HW buffers</Name>
+<Val>96</Val>
+</U32>
+<U32>
+<Name>dllVersion</Name>
+<Val>2</Val>
+</U32>
+<Path>
+<Name>Data File name</Name>
+<Val>testframes.DMCdata</Val>
+</Path>
+<Path>
+<Name>Log file Name</Name>
+<Val>testframes.log</Val>
+</Path>
+<Path>
+<Name>Synoptic file Name</Name>
+<Val>testframes.synoptic</Val>
+</Path>
+<Path>
+<Name>NMEA file Name</Name>
+<Val>testframes.nmea</Val>
+</Path>
+</Cluster>
+</Cluster>
+</LVData>

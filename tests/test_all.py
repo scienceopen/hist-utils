@@ -3,15 +3,25 @@ from pathlib import Path
 from numpy import uint16, int64, array
 import pytest
 from pytest import approx
+
 from histutils.rawDMCreader import goRead
 from histutils.diric import diric
 from histutils.findnearest import findClosestAzel
+from histutils.hstxmlparse import xmlparam
 
 R = Path(__file__).parent
 
 
 def test_diric():
     assert diric(3., 2) == approx(0.0707372)
+
+
+def test_xmlparse():
+    fn = R / 'testframes.xml'
+    params = xmlparam(fn)
+
+    assert params['binning'] == 1
+    assert params['kineticrate'] == approx(1.88674795e-2)
 
 
 def test_rawread():
