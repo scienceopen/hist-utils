@@ -3,12 +3,18 @@
 Converts 2011 Poker/Ester and 2013-2016 HiST raw data files to HDF5 for easy consumption
 
 full command example with metadata:
-./ConvertDMC2h5.py ~/U/irs_archive3/HSTdata/2013-04-14-HST0/2013-04-14T07-00-CamSer7196.DMCdata \
-  -s 2013-04-14T06:59:55Z -k 0.018867924528301886 -t 2013-04-14T11:30:00Z 2013-04-14T11:30:02Z \
-  -o /tmp/2013-04-14T113000_hst0.h5 -l 65.1186367 -147.432975 500
+
+    python ConvertDMC2h5.py ~/U/irs_archive3/HSTdata/2013-04-14-HST0/2013-04-14T07-00-CamSer7196.DMCdata \
+      -s 2013-04-14T06:59:55Z -k 0.018867924528301886 -t 2013-04-14T11:30:00Z 2013-04-14T11:30:02Z \
+      -o /tmp/2013-04-14T113000_hst0.h5 -l 65.1186367 -147.432975 500
 
 simple command example w/o full metadata (can append metadata later):
-./ConvertDMC2h5.py ~/extdrive/2011-03-01T1000/ -o ~/data/2011-03-01 --headerbytes 0
+
+    python  ConvertDMC2h5.py ~/extdrive/2011-03-01T1000/ -o ~/data/2011-03-01 --headerbytes 0
+
+HiST simple conversion of entire night (without metadata, which can be appended later):
+
+    python ConvertDMC2h5.py ~/data/2014-04-24 -o ~/work/2014-04-24
 """
 from pathlib import Path
 from sys import argv
@@ -32,7 +38,7 @@ def dmclooper(p):
     elif infn.is_dir():
         flist = sorted(infn.glob('*.DMCdata')) + sorted(infn.glob('*.dat'))
     else:
-        raise ValueError('Not sure what {} is'.format(infn))
+        raise FileNotFoundError(infn)
 
     N = len(flist)
 

@@ -113,7 +113,7 @@ def req2frame(req, N: int = 0):
     return frame
 
 
-def dir2fn(ofn, ifn, suffix) -> Union[None, Path]:
+def dir2fn(ofn: Path, ifn: Path, suffix: str) -> Path:
     """
     ofn = filename or output directory, to create filename based on ifn
     ifn = input filename (don't overwrite!)
@@ -124,12 +124,13 @@ def dir2fn(ofn, ifn, suffix) -> Union[None, Path]:
 
     ofn = Path(ofn).expanduser()
     ifn = Path(ifn).expanduser()
-    assert ifn.is_file()
+    if not ifn.is_file():
+        raise FileNotFoundError(ifn)
 
     if ofn.suffix == suffix:  # must already be a filename
         pass
     else:  # must be a directory
-        assert ofn.is_dir(), f'create directory {ofn}'
+        ofn.mkdir(parents=True, exist_ok=True)
         ofn = ofn / ifn.with_suffix(suffix).name
 
     try:
