@@ -19,7 +19,7 @@ sns.set_context('talk', font_scale=1.4)
 fn = 'tests/testframes_cam0.h5'  # indistinct aurora
 
 with h5py.File(fn, 'r') as f:
-    imgs = f['/rawimg'].value.astype(float)  # float for fft
+    imgs = f['/rawimg'][()].astype(float)  # float for fft
 
 im = imgs[0, ...]
 im2 = imgs[1, ...]

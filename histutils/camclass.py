@@ -84,8 +84,8 @@ class Cam:  # use this like an advanced version of Matlab struct
                         H['/cols'] = np.array(self.hlcols)
                 elif sim.fovfn and sim.fovfn.is_file():
                     with h5py.File(sim.fovfn, 'r') as H:
-                        self.hlrows = H['/rows'].value
-                        self.hlcols = H['/cols'].value
+                        self.hlrows = H['/rows'][()]
+                        self.hlcols = H['/cols'][()]
 # %% 1-D cuts
         if isinstance(cp['nCutPix'], str):
             self.ncutpix = int(cp['nCutPix'].split(',')[ci])
