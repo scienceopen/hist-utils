@@ -84,8 +84,8 @@ class Cam:  # use this like an advanced version of Matlab struct
                         H['/cols'] = np.array(self.hlcols)
                 elif sim.fovfn and sim.fovfn.is_file():
                     with h5py.File(sim.fovfn, 'r') as H:
-                        self.hlrows = H['/rows'][()]
-                        self.hlcols = H['/cols'][()]
+                        self.hlrows = H['/rows'][:]
+                        self.hlcols = H['/cols'][:]
 # %% 1-D cuts
         if isinstance(cp['nCutPix'], str):
             self.ncutpix = int(cp['nCutPix'].split(',')[ci])
@@ -339,10 +339,10 @@ class Cam:  # use this like an advanced version of Matlab struct
         ), 'please specify filename for each camera under [cam]/cal1Dname: in .ini file  {}'.format(self.cal1Dfn)
 
         with h5py.File(self.cal1Dfn, 'r') as f:
-            az = f['az'][()]
-            el = f['el'][()]
-            ra = f['ra'][()]
-            dec = f['dec'][()]
+            az = f['az'][:]
+            el = f['el'][:]
+            ra = f['ra'][:]
+            dec = f['dec'][:]
 
         assert az.ndim == el.ndim == 2
         assert az.shape == el.shape
