@@ -1,5 +1,5 @@
-[![image](https://travis-ci.org/scivision/histutils.svg?branch=master)](https://travis-ci.org/scivision/histutils)
-[![image](http://coveralls.io/repos/scivision/histutils/badge.svg?branch=master&service=github)](http://coveralls.io/github/scivision/histutils?branch=master)
+[![Build Status](https://travis-ci.com/space-physics/histutils.svg?branch=h5py)](https://travis-ci.com/space-physics/histutils)
+[![image](http://coveralls.io/repos/space-physics/histutils/badge.svg?branch=master&service=github)](http://coveralls.io/github/space-physics/histutils?branch=master)
 [![pypi versions](https://img.shields.io/pypi/pyversions/histutils.svg)](https://pypi.python.org/pypi/histutils)
 [![PyPi Download stats](http://pepy.tech/badge/histutils)](http://pepy.tech/project/histutils)
 
