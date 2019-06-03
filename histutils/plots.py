@@ -8,7 +8,7 @@ except ImportError:
     skml = None
 #
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
-from matplotlib.pyplot import figure, subplots, hist, draw, pause, show
+from matplotlib.pyplot import figure, hist, draw, pause, show
 from matplotlib.colors import LogNorm
 # from matplotlib.ticker import ScalarFormatter
 # import matplotlib.animation as anim
@@ -169,7 +169,7 @@ def plotLOSecef(cam, odir):
     if odir:
         ofn = odir / 'ecef_cameras.eps'
         print(f'saving {ofn}')
-        fg.savefig(str(ofn), bbox_inches='tight')
+        fg.savefig(ofn, bbox_inches='tight')
 
 
 def plotnear_rc(R, C, name, shape, odir):
@@ -188,7 +188,7 @@ def plotnear_rc(R, C, name, shape, odir):
     if odir:
         ofn = odir / 'prelsq_cam{}.eps'.format(name)
         print(f'saving {ofn}')
-        fg.savefig(str(ofn), bbox_inches='tight')
+        fg.savefig(ofn, bbox_inches='tight')
 
 
 def plotlsq_rc(nR, nC, R, C, ra, dec, angle, name, odir):
@@ -212,9 +212,10 @@ def plotlsq_rc(nR, nC, R, C, ra, dec, angle, name, odir):
     if odir:
         ofn = odir / 'lsq_cam{}.eps'.format(name)
         print(f'saving {ofn}')
-        fg.savefig(str(ofn), bbox_inches='tight')
+        fg.savefig(ofn, bbox_inches='tight')
 # %% ra/dec
-    fg, axs = subplots(2, 1, sharex=True)
+    fg = figure
+    axs = fg.subplots(2, 1, sharex=True)
     fg.suptitle('camera {} ra/dec extracted'.format(name))
 
     ax = axs[0]
@@ -243,9 +244,10 @@ def plotlsq_rc(nR, nC, R, C, ra, dec, angle, name, odir):
     if odir:
         ofn = odir / 'radec_cam{}.eps'.format(name)
         print(f'saving {ofn}')
-        fg.savefig(str(ofn), bbox_inches='tight')
+        fg.savefig(ofn, bbox_inches='tight')
 # %% angles
-    fg, axs = subplots(3, 1, sharex=True)
+    fg = figure()
+    axs = fg.subplots(3, 1, sharex=True)
 
     ax = axs[0]
     ax.plot(angle)
@@ -268,7 +270,7 @@ def plotlsq_rc(nR, nC, R, C, ra, dec, angle, name, odir):
     if odir:
         ofn = odir / 'angles_cam{}.eps'.format(name)
         print(f'saving {ofn}')
-        fg.savefig(str(ofn), bbox_inches='tight')
+        fg.savefig(ofn, bbox_inches='tight')
 # %% zoom angles
     for a in (ax, ax2):
         a.set_xlim((150, 200))
@@ -280,4 +282,4 @@ def plotlsq_rc(nR, nC, R, C, ra, dec, angle, name, odir):
     if odir:
         ofn = odir / 'angles_zoom_cam{}.eps'.format(name)
         print(f'saving {ofn}')
-        fg.savefig(str(ofn), bbox_inches='tight')
+        fg.savefig(ofn, bbox_inches='tight')

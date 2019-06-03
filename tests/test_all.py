@@ -5,7 +5,6 @@ import pytest
 from pytest import approx
 
 from histutils.rawDMCreader import goRead
-from histutils.findnearest import findClosestAzel
 from histutils.hstxmlparse import xmlparam
 
 R = Path(__file__).parent
@@ -40,6 +39,8 @@ def test_rawread():
 
 
 def test_nearazel():
+    findnearest = pytest.importorskip('histutils.findnearest')
+
     az = array([[3.,   4,    5],
                 [2.5,  3.5,  4.5],
                 [2.75, 3.75, 4.75]])
@@ -48,7 +49,7 @@ def test_nearazel():
                 [2.5, 2.5, 2.5]])
     azpts = array([3.6])
     elpts = array([1.5])
-    row, col = findClosestAzel(az, el, azpts, elpts)
+    row, col = findnearest.findClosestAzel(az, el, azpts, elpts)
 
     assert row[0] == 1
     assert col[0] == 1

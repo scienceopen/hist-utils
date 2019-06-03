@@ -2,7 +2,7 @@
 from pathlib import Path
 import logging
 from numpy import sqrt, atleast_1d
-from matplotlib.pyplot import figure, subplots
+from matplotlib.pyplot import figure
 # from matplotlib.colors import LogNorm
 from datetime import datetime
 #
@@ -34,7 +34,7 @@ def plotPlainImg(sim, cam, rawdata, t, odir):
                   origin='lower',
                   vmin=max(C.clim[0], 1), vmax=C.clim[1],
                   cmap='gray')
-        ax.text(0.05, 0.075, datetime.utcfromtimestamp(C.tKeo[t]).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
+        ax.text(0.05, 0.075, datetime.utcfromtimestamp(C.tKeo[t]).isoformat()[:-3],
                 ha='left',
                 va='top',
                 transform=ax.transAxes,
@@ -73,8 +73,8 @@ def plotRealImg(sim, cam, rawdata, t: int, odir: Path = None, fg=None):
 #                asi=list(asi.glob('*.FITS'))
     if fg is None:
         doclose = True
-        fg, axs = subplots(nrows=1, ncols=ncols, figsize=(
-            15, 12), dpi=DPI, facecolor='black')
+        fg = figure(figsize=(15, 12), dpi=DPI, facecolor='black')
+        axs = fg.subplots(nrows=1, ncols=ncols)
         axs = atleast_1d(axs)  # in case only 1
         # fg.set_size_inches(15,5) #clips off
     else:  # maintain original figure handle for anim.writer
@@ -101,8 +101,7 @@ def plotRealImg(sim, cam, rawdata, t: int, odir: Path = None, fg=None):
             logging.error(f'unknown camera {C.name} index {i}')
 
         if i == 0:
-            axs[0].set_ylabel(datetime.strftime(
-                T[0], '%x')).set_color('limegreen')
+            axs[0].set_ylabel(datetime.strftime(T[0], '%x')).set_color('limegreen')
 
             # NOTE: commented out due to Matplotlib 1.x bugs
             # fg.suptitle(datetime.strftime(T[0],'%x')) #makes giant margins that tight_layout doesn't help, bug
