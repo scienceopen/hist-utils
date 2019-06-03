@@ -5,15 +5,10 @@ import pytest
 from pytest import approx
 
 from histutils.rawDMCreader import goRead
-from histutils.diric import diric
 from histutils.findnearest import findClosestAzel
 from histutils.hstxmlparse import xmlparam
 
 R = Path(__file__).parent
-
-
-def test_diric():
-    assert diric(3., 2) == approx(0.0707372)
 
 
 def test_xmlparse():
@@ -28,7 +23,8 @@ def test_rawread():
     bigfn = R / 'testframes.DMCdata'
     framestoplay = (1, 2, 1)  # this is (start,stop,step) so (1,2,1) means read only the second frame in the file
 
-    testframe, testind, finf = goRead(bigfn, (512, 512), (1, 1), framestoplay, verbose=1)
+    testframe, testind, finf = goRead(bigfn, xyPix=(512, 512), xyBin=(1, 1),
+                                      FrameIndReq=framestoplay, verbose=1)
 
     # these are both tested by goRead
     # finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)

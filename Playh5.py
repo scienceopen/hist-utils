@@ -4,10 +4,9 @@ Plays video contained in HDF5 file, especially from rawDMCreader program.
 """
 from pathlib import Path
 import h5py
-from scipy.misc import bytescale
 from numpy import dstack
-#
-# from histutils.sixteen2eight import sixteen2eight
+
+from histutils.utils import sixteen2eight
 from histutils.plots import doPlayMovie
 
 
@@ -50,7 +49,7 @@ def hdf2video(data, imgh5, outfn, clim):
         # RAM usage explodes if scaling all at once on GB class file
         # for d in bytescale(data,1000,4000):
         # for d in sixteen2eight(data,(1000,4000)):
-        hv.write(gray2rgb(bytescale(d, clim[0], clim[1])))
+        hv.write(gray2rgb(sixteen2eight(d, clim[0], clim[1])))
 
     hv.release()
 

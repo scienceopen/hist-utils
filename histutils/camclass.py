@@ -11,7 +11,7 @@ import xarray
 from typing import List, Union
 
 from . import splitconf
-import sciencedates
+from .timedmc import datetime2unix
 from pymap3d import azel2radec, aer2ecef
 from pymap3d.haversine import anglesep
 import dascutils.io as dio
@@ -67,8 +67,7 @@ class Cam:  # use this like an advanced version of Matlab struct
             elif self.name.startswith('themis'):
                 themis = themisasi.loadcal(cp['azcalfn'].split(',')[ci])
             else:
-                raise ValueError(
-                    f'I do not know how to load az/el data for {self.name}')
+                raise ValueError(f'I do not know how to load az/el data for {self.name}')
 
             if 'realvid' in makeplot:
                 if 'h5' in makeplot and sim.fovfn:
@@ -178,15 +177,13 @@ class Cam:  # use this like an advanced version of Matlab struct
                 self.lat = data.lat
                 self.lon = data.lon
                 self.alt_m = data.alt_m
-                self.ut1unix = sciencedates.datetime2utsec(
-                    data.time.values.astype(datetime))
+                self.ut1unix = datetime2unix(data.time.values.astype(datetime))
             elif self.name.startswith('themis'):
                 data = themisasi.load(self.fn)
                 self.lat = data.lat
                 self.lon = data.lon
                 self.alt_m = data.alt_m
-                self.ut1unix = sciencedates.datetime2utsec(
-                    data.time.values.astype(datetime))
+                self.ut1unix = datetime2unix(data.time.values.astype(datetime))
             # legacy data including HiST  (should use xarray to convert instead)
             elif self.fn.suffix == '.h5':
 
@@ -348,29 +345,25 @@ class Cam:  # use this like an advanced version of Matlab struct
         assert az.shape == el.shape
 
         if self.transpose:
-            logging.debug(
-                'tranposing cam #{} az/el/ra/dec data. '.format(self.name))
+            logging.debug('tranposing cam #{} az/el/ra/dec data. '.format(self.name))
             az = az.T
             el = el.T
             ra = ra.T
             dec = dec.T
         if self.fliplr:
-            logging.debug(
-                'flipping horizontally cam #{} az/el/ra/dec data.'.format(self.name))
+            logging.debug('flipping horizontally cam #{} az/el/ra/dec data.'.format(self.name))
             az = np.fliplr(az)
             el = np.fliplr(el)
             ra = np.fliplr(ra)
             dec = np.fliplr(dec)
         if self.flipud:
-            logging.debug(
-                'flipping vertically cam #{} az/el/ra/dec data.'.format(self.name))
+            logging.debug('flipping vertically cam #{} az/el/ra/dec data.'.format(self.name))
             az = np.flipud(az)
             el = np.flipud(el)
             ra = np.flipud(ra)
             dec = np.flipud(dec)
         if self.rotccw != 0:
-            logging.debug(
-                'rotating cam #{} az/el/ra/dec data.'.format(self.name))
+            logging.debug('rotating cam #{} az/el/ra/dec data.'.format(self.name))
             az = np.rot90(az, self.rotccw)
             el = np.rot90(el, self.rotccw)
             ra = np.rot90(ra, self.rotccw)
@@ -383,8 +376,7 @@ class Cam:  # use this like an advanced version of Matlab struct
 
     def debias(self, data):
         if hasattr(self, 'debiasData') and self.debiasData is not None and np.isfinite(self.debiasData):
-            logging.debug(
-                'Debiasing Data for Camera #{} by -{}'.format(self.name, self.debiasData))
+            logging.debug('Debiasing Data for Camera #{} by -{}'.format(self.name, self.debiasData))
             data -= self.debiasData
         return data
 
@@ -484,8 +476,7 @@ class Cam:  # use this like an advanced version of Matlab struct
             diffang = np.diff(self.angle_deg)
             # diffoutlier = max(abs(expect_diffang-diffang.min()),
             #                   abs(expect_diffang-diffang.max()))
-            assert_allclose(expect_diffang, diffang.mean(
-            ), rtol=0.01), 'large bias in camera angle vector detected'
+            assert_allclose(expect_diffang, diffang.mean(), rtol=0.01), 'large bias in camera angle vector detected'
 #            assert diffoutlier < expect_diffang,'large jump in camera angle vector detected' #TODO arbitrary
 
         if self.verbose:

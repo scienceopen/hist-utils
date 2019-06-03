@@ -20,7 +20,7 @@ from pathlib import Path
 from sys import argv
 from numpy import int64
 #
-from histutils import dir2fn, vid2h5
+from histutils.io import dir2fn, vid2h5
 from histutils.rawDMCreader import goRead
 from histutils.plots import doPlayMovie, doplotsave
 

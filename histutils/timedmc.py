@@ -13,10 +13,7 @@ Michael Hirsch
 """
 from datetime import datetime
 from dateutil.parser import parse
-from numpy import atleast_1d, int64, empty, datetime64
-from scipy.interpolate import interp1d
-#
-from sciencedates import forceutc
+import numpy as np
 
 
 def frame2ut1(tstart, kineticsec, rawind):
@@ -44,7 +41,7 @@ def ut12frame(treq, ind, ut1_unix):
     if treq is None:  # have to do this since interp1 will return last index otherwise
         return
 
-    treq = atleast_1d(treq)
+    treq = np.atleast_1d(treq)
 # %% handle human specified string scalar case
     if treq.size == 1:
         treq = datetime2unix(treq[0])
@@ -59,9 +56,7 @@ def ut12frame(treq, ind, ut1_unix):
     """
     We use nearest neighbor interpolation to pick a frame index for each requested time.
     """
-    f = interp1d(ut1_unix, ind, kind='nearest', bounds_error=True,
-                 assume_sorted=True)  # it won't output nan for int case in Numpy 1.10 and other versions too
-    framereq = f(treq).astype(int64)
+    framereq = np.rint(np.interp(treq, ut1_unix, ind)).astype(np.int64)
     framereq = framereq[framereq >= 0]  # discard outside time limits
     return framereq
 
@@ -70,11 +65,11 @@ def datetime2unix(T):
     """
     converts datetime to UT1 unix epoch time
     """
-    T = atleast_1d(T)
+    T = np.atleast_1d(T)
 
-    ut1_unix = empty(T.shape, dtype=float)
+    ut1_unix = np.empty(T.shape, dtype=float)
     for i, t in enumerate(T):
-        if isinstance(t, (datetime, datetime64)):
+        if isinstance(t, (datetime, np.datetime64)):
             pass
         elif isinstance(t, str):
             try:
@@ -88,7 +83,7 @@ def datetime2unix(T):
             raise TypeError('I only accept datetime or parseable date string')
 
         # ut1 seconds since unix epoch, need [] for error case
-        ut1_unix[i] = forceutc(t).timestamp()
+        ut1_unix[i] = t.timestamp()
 
     return ut1_unix
 
@@ -99,5 +94,4 @@ def firetime(tstart, Tfire):
     code.
 
     """
-    raise NotImplementedError(
-        "Yes this is a high priority, would you like to volunteer?")
+    raise NotImplementedError("Yes this is a priority, would you like to volunteer?")
