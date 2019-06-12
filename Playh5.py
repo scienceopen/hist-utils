@@ -4,7 +4,7 @@ Plays video contained in HDF5 file, especially from rawDMCreader program.
 """
 from pathlib import Path
 import h5py
-from numpy import dstack
+import numpy
 
 from histutils.utils import sixteen2eight
 from histutils.plots import doPlayMovie
@@ -55,19 +55,18 @@ def hdf2video(data, imgh5, outfn, clim):
 
 
 def gray2rgb(gray):
-    return dstack((gray,) * 3)
+    return numpy.dstack((gray,) * 3)
 
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='play hdf5 video')
     p.add_argument('h5fn', help='hdf5 .h5 file with video data')
-    p.add_argument(
-        '-p', '--imgh5', help='path / variable inside hdf5 file to image stack (default=rawimg)', default='rawimg')
-    p.add_argument('-o', '--output',
-                   help='output new video file instead of playing back')
-    p.add_argument(
-        '-c', '--clim', help='contrast limits used to convert 16-bit to 8-bit video', nargs=2, type=float)
+    p.add_argument('-p', '--imgh5', help='path / variable inside hdf5 file to image stack (default=rawimg)',
+                   default='rawimg')
+    p.add_argument('-o', '--output', help='output new video file instead of playing back')
+    p.add_argument('-c', '--clim', help='contrast limits used to convert 16-bit to 8-bit video',
+                   nargs=2, type=float)
     P = p.parse_args()
 
     playh5movie(P.h5fn, P.imgh5, P.output, P.clim)

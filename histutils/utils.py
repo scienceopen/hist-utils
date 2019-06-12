@@ -13,7 +13,7 @@ def write_quota(outbytes: int, outfn: Path) -> int:
     anch = Path(outfn).resolve().anchor
     freeout = shutil.disk_usage(anch).free
 
-    if freeout < 10 * outbytes or freeout < 10e9:
+    if freeout < 4 * outbytes or freeout < 10e9:
         raise OSError(f'low disk space on {anch}\n'
                       f'{freeout/1e9:.1f} GByte free, wanting to write {outbytes/1e9:.2f} GByte to {outfn}.')
 

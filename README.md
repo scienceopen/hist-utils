@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/space-physics/histutils.svg?branch=h5py)](https://travis-ci.com/space-physics/histutils)
+[![Build Status](https://travis-ci.com/space-physics/histutils.svg?branch=master)](https://travis-ci.com/space-physics/histutils)
 [![Coverage Status](https://coveralls.io/repos/github/space-physics/histutils/badge.svg?branch=master)](https://coveralls.io/github/space-physics/histutils?branch=master)
 [![pypi versions](https://img.shields.io/pypi/pyversions/histutils.svg)](https://pypi.python.org/pypi/histutils)
 [![PyPi Download stats](http://pepy.tech/badge/histutils)](http://pepy.tech/project/histutils)
