@@ -1,70 +1,71 @@
 #!/usr/bin/env python
 """
 reads .DMCdata files and displays them
- Michael Hirsch
+
 NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
    default to int32 instead of int64 like everyone else!
- """
+"""
 from pathlib import Path
 import logging
 import numpy as np
 from re import search
-from typing import Tuple
+from typing import Dict, Any, Tuple, List
+from typing.io import BinaryIO
 #
-from . import req2frame, dir2fn, getRawInd, meta2rawInd, setupimgh5, imgwriteincr, write_quota
+from . import req2frame, write_quota
+from .io import imgwriteincr, setupimgh5, dir2fn
+from .index import getRawInd, meta2rawInd
 from .timedmc import frame2ut1, ut12frame
 #
 BPP = 16  # bits per pixel
+# NHEADBYTES = 4
 
 
-def goRead(fn: Path, *,
-           xyPix: Tuple[int, int], xyBin: Tuple[int, int],
-           FrameIndReq=None, ut1Req=None, kineticraw=None,
-           startUTC=None, cmosinit=None, verbose=0, outfn=None, nHeadBytes: int = 4):
+def goRead(infn: Path, outfn: Path,
+           params: Dict[str, Any],
+           verbose: bool = False):
 
-    fn = Path(fn).expanduser()
+    infn = Path(infn).expanduser()
 # %% optional output file setup
-    outfn = dir2fn(outfn, fn, '.h5')
+    outfn = dir2fn(outfn, infn, '.h5')
 # %% setup data parameters
     # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
-    finf = getDMCparam(fn, xyPix, xyBin, FrameIndReq,
-                       ut1Req, kineticraw, startUTC, nHeadBytes, verbose)
-    write_quota(finf['bytesperframe'] * finf['nframeextract'], outfn)
+    finf = getDMCparam(infn, params)
+    write_quota(finf['bytes_frame'] * finf['nframeextract'], outfn)
 
     rawFrameInd = np.zeros(finf['nframeextract'], dtype=np.int64)
 # %% output (variable or file)
     if outfn:
-        setupimgh5(outfn, Nframetotal=finf['nframeextract'],
-                   Nrow=finf['supery'], Ncol=finf['superx'])
+        setupimgh5(outfn, finf)
         data = None
     else:
         data = np.zeros((finf['nframeextract'], finf['supery'], finf['superx']),
                         dtype=np.uint16, order='C')
 # %% read
-    with fn.open('rb') as fid:
+    with infn.open('rb') as fid:
         # j and i are NOT the same in general when not starting from beginning of file!
         for j, i in enumerate(finf['frameindrel']):
-            D, rawFrameInd[j] = getDMCframe(fid, i, finf, verbose)
+            D, rawFrameInd[j] = getDMCframe(fid, i, finf)
             if outfn:
                 imgwriteincr(outfn, D, j)
             else:
                 data[j, ...] = D
 # %% absolute time estimate, software timing (at your peril)
-    finf['ut1'] = frame2ut1(startUTC, kineticraw, rawFrameInd)
+    finf['ut1'] = frame2ut1(params.get('startUTC'), params.get('kineticraw'), rawFrameInd)
 
     return data, rawFrameInd, finf
 # %% workers
 
 
-def getserialnum(flist):
+def getserialnum(flist: list) -> List[int]:
     """
     This function assumes the serial number of the camera is in a particular place in the filename.
     This is how the original 2011 image-writing program worked, and I've
     carried over the scheme rather than appending bits to dozens of TB of files.
     """
     sn = []
-    for f in flist:
-        tmp = search(r'(?<=CamSer)\d{3,6}', f)
+    for fn in flist:
+        tmp = search(r'(?<=CamSer)\d{3,6}', fn)
         if tmp:
             ser = int(tmp.group())
         else:
@@ -73,74 +74,71 @@ def getserialnum(flist):
     return sn
 
 
-def getDMCparam(fn: Path, xyPix, xyBin,
-                FrameIndReq=None, ut1req=None, kineticsec=None, startUTC=None, nHeadBytes=4, verbose=0):
+def getDMCparam(fn: Path, params: Dict[str, Any]) -> Dict[str, Any]:
     """
     nHeadBytes=4 for 2013-2016 data
     nHeadBytes=0 for 2011 data
     """
-    Nmetadata = nHeadBytes // 2  # FIXME for DMCdata version 1 only
+    params['nmetadata'] = params['header_bytes'] // 2  # FIXME for DMCdata version 1 only
 
     if not fn.is_file():  # leave this here, getsize() doesn't fail on directory
-        raise ValueError(f'{fn} is not a file!')
+        raise FileNotFoundError(fn)
 
-    print(f'reading {fn}')
+    print('reading', fn)
 
     # int() in case we are fed a float or int
-    SuperX = int(xyPix[0] // xyBin[0])
-    SuperY = int(xyPix[1] // xyBin[1])
+    params['super_x'] = int(params['xy_pixel'][0] // params['xy_bin'][0])
+    params['super_y'] = int(params['xy_pixel'][1] // params['xy_bin'][1])
 
-    PixelsPerImage, BytesPerImage, BytesPerFrame = howbig(
-        SuperX, SuperY, nHeadBytes)
+    sizes = howbig(params)
+    params.update(sizes)
 
-    (firstRawInd, lastRawInd) = getRawInd(
-        fn, BytesPerImage, nHeadBytes, Nmetadata)
+    params['first_frame'], params['last_frame'] = getRawInd(fn, params)
 
-    FrameIndRel = whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC, firstRawInd, lastRawInd,
-                              BytesPerImage, BytesPerFrame, verbose)
+    FrameIndRel = whichframes(fn, params)
 
-    return {'superx': SuperX, 'supery': SuperY, 'nmetadata': Nmetadata,
-            'bytesperframe': BytesPerFrame, 'pixelsperimage': PixelsPerImage,
-            'nframeextract': FrameIndRel.size,
-            'frameindrel': FrameIndRel}
+    params['nframeextract'] = FrameIndRel.size
+    params['frameindrel'] = FrameIndRel
+
+    return params
 
 
-def howbig(SuperX, SuperY, nHeadBytes):
-    PixelsPerImage = SuperX * SuperY
-    BytesPerImage = PixelsPerImage * BPP // 8
-    BytesPerFrame = BytesPerImage + nHeadBytes
-    return PixelsPerImage, BytesPerImage, BytesPerFrame
+def howbig(params: Dict[str, Any]) -> Dict[str, int]:
+
+    sizes = {'pixels_image': params['super_x'] * params['super_y']}
+    sizes['bytes_image'] = sizes['pixels_image'] * BPP // 8
+    sizes['bytes_frame'] = sizes['bytes_image'] + params['header_bytes']
+
+    return sizes
 
 
-def whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC, firstRawInd, lastRawInd,
-                BytesPerImage, BytesPerFrame, verbose):
-    ext = Path(fn).suffix
-# %% get file size
+def whichframes(fn: Path, params: Dict[str, Any]) -> np.ndarray:
+
     fileSizeBytes = fn.stat().st_size
 
-    if fileSizeBytes < BytesPerImage:
-        raise ValueError(
-            f'File size {fileSizeBytes} is smaller than a single image frame!')
+    if fileSizeBytes < params['bytes_image']:
+        raise ValueError(f'File size {fileSizeBytes} is smaller than a single image frame!')
 
-    if ext == '.DMCdata' and fileSizeBytes % BytesPerFrame:
-        logging.error(
-            f"Looks like I am not reading this file correctly, with BPF: {BytesPerFrame:d}")
+    if fileSizeBytes % params['bytes_frame']:
+        logging.error("Either the file is truncated, or I am not reading this file correctly."
+                      f"\n bytes per frame: {params['bytes_frame']:d}")
 
-    if ext == '.DMCdata':
-        nFrame = fileSizeBytes // BytesPerFrame
-        print(f'{nFrame} frames, Bytes: {fileSizeBytes} in file {fn}')
+    first_frame, last_frame = getRawInd(fn, params)
 
-        nFrameRaw = (lastRawInd - firstRawInd + 1)
+    if fn.suffix == '.DMCdata':
+        nFrame = fileSizeBytes // params['bytes_frame']
+        logging.info(f'{nFrame} frames, Bytes: {fileSizeBytes} in file {fn}')
+
+        nFrameRaw = (last_frame - first_frame + 1)
         if nFrameRaw != nFrame:
-            logging.warning(
-                f'there may be missed frames: nFrameRaw {nFrameRaw}   nFrame {nFrame}')
-    else:
-        nFrame = lastRawInd - firstRawInd + 1
+            logging.warning(f'there may be missed frames: nFrameRaw {nFrameRaw}   nFrame {nFrame}')
+    else:  # CMOS
+        nFrame = last_frame - first_frame + 1
 
-    allrawframe = np.arange(firstRawInd, lastRawInd + 1, 1, dtype=np.int64)
-    print(f"first / last raw frame #'s: {firstRawInd}  / {lastRawInd} ")
+    allrawframe = np.arange(first_frame, last_frame + 1, 1, dtype=np.int64)
+    logging.info(f"first / last raw frame #'s: {first_frame}  / {last_frame} ")
 # %% absolute time estimate
-    ut1_unix_all = frame2ut1(startUTC, kineticsec, allrawframe)
+    ut1_unix_all = frame2ut1(params.get('startUTC'), params.get('kineticsec'), allrawframe)
 # %% setup frame indices
     """
     if no requested frames were specified, read all frames. Otherwise, just
@@ -148,13 +146,13 @@ def whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC, firstRawInd, last
     Assignments have to be "int64", not just python "int".
     Windows python 2.7 64-bit on files >2.1GB, the bytes will wrap
     """
-    FrameIndRel = ut12frame(ut1req,
+    FrameIndRel = ut12frame(params.get('ut1req'),
                             np.arange(0, nFrame, 1, dtype=np.int64),
                             ut1_unix_all)
 
     # NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
     if FrameIndRel is None or len(FrameIndRel) == 0:
-        FrameIndRel = req2frame(FrameIndReq, nFrame)
+        FrameIndRel = req2frame(params['frame_request'], nFrame)
 
     badReqInd = (FrameIndRel > nFrame) | (FrameIndRel < 0)
 # check if we requested frames beyond what the BigFN contains
@@ -163,24 +161,28 @@ def whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC, firstRawInd, last
         raise ValueError(f'frames requested outside the times covered in {fn}')
 
     nFrameExtract = FrameIndRel.size  # to preallocate properly
-    nBytesExtract = nFrameExtract * BytesPerFrame
-    print(f'Extracted {nFrameExtract} frames from {fn} totaling {nBytesExtract/1e9:.2f} GB.')
+    bytes_extract = nFrameExtract * params['bytes_frame']
+    logging.info(f'Extracted {nFrameExtract} frames from {fn} totaling {bytes_extract / 1e9:.2f} GB.')
 
-    if nBytesExtract > 4e9:
-        print(f'This will require {nBytesExtract/1e9:.2f} GB of RAM.')
+    if bytes_extract > 4e9:
+        logging.warning(f'This will require {bytes_extract / 1e9:.2f} GB of RAM.')
 
     return FrameIndRel
 
 
-def getDMCframe(f, iFrm: int, finf: dict, verbose: bool = False):
+def getDMCframe(f: BinaryIO, iFrm: int, finf: Dict[str, int]) -> Tuple[np.ndarray, int]:
     """
-    f is open file handle
+    read a single image frame
+
+    Parameters
+    ----------
+    f:
+        open file handle
     """
     # on windows, "int" is int32 and overflows at 2.1GB!  We need np.int64
-    currByte = iFrm * finf['bytesperframe']
+    currByte = iFrm * finf['bytes_frame']
 # %% advance to start of frame in bytes
-    if verbose:
-        print(f'seeking to byte {currByte}')
+    logging.debug(f'seeking to byte {currByte}')
 
     if not isinstance(iFrm, (int, np.int64)):
         raise TypeError('int32 will fail on files > 2GB')
@@ -193,9 +195,9 @@ def getDMCframe(f, iFrm: int, finf: dict, verbose: bool = False):
 # %% read data ***LABVIEW USES ROW-MAJOR C ORDERING!!
     try:
         currFrame = np.fromfile(f, np.uint16,
-                                finf['pixelsperimage']).reshape((finf['supery'], finf['superx']), order='C')
+                                finf['pixels_image']).reshape((finf['super_y'], finf['super_x']), order='C')
     except ValueError as e:
-        raise ValueError(f'read past end of file?  {e}')
+        raise ValueError(f'read past end of file? \n {f.name} \n {e}')
 
     rawFrameInd = meta2rawInd(f, finf['nmetadata'])
 

@@ -32,7 +32,7 @@ def frame2ut1(tstart, kineticsec, rawind):
         return
 
 
-def ut12frame(treq, ind, ut1_unix):
+def ut12frame(treq, ind, ut1_unix) -> np.ndarray:
     """
     Given treq, output index(ces) to extract via rawDMCreader
     treq: scalar or vector of ut1_unix time (seconds since Jan 1, 1970)
@@ -58,6 +58,7 @@ def ut12frame(treq, ind, ut1_unix):
     """
     framereq = np.rint(np.interp(treq, ut1_unix, ind)).astype(np.int64)
     framereq = framereq[framereq >= 0]  # discard outside time limits
+
     return framereq
 
 

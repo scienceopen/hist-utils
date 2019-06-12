@@ -1,8 +1,9 @@
 from pathlib import Path
 import numpy as np
 import h5py
-from typing import Union
+from typing import Union, Dict, Any
 from datetime import datetime
+import logging
 
 
 def dir2fn(ofn: Path, ifn: Path, suffix: str = '.h5') -> Path:
@@ -47,7 +48,8 @@ def dir2fn(ofn: Path, ifn: Path, suffix: str = '.h5') -> Path:
     return ofn
 
 
-def imgwriteincr(fn: Path, imgs: np.ndarray, imgslice: Union[int, slice]):
+def imgwriteincr(fn: Path, imgs: np.ndarray,
+                 imgslice: Union[int, slice]):
     """
     writes HDF5 huge image files in increments
 
@@ -76,7 +78,9 @@ def imgwriteincr(fn: Path, imgs: np.ndarray, imgslice: Union[int, slice]):
 
 
 def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
-           outfn: Path, P: dict, i: int = 0,
+           outfn: Path,
+           params: Dict[str, Any],
+           i: int = 0,
            Nfile: int = 1, det=None, tstart=None, cmdlog: str = None):
 
     outfn = Path(outfn).expanduser()
@@ -84,9 +88,9 @@ def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
         raise IsADirectoryError(outfn)
     outfn.parent.mkdir(exist_ok=True)
 
-    txtupd = f'convert file {i} / {Nfile}'
-    if 'spoolfn' in P:
-        txtupd += f' {P["spoolfn"].name}'
+    txtupd = f'convert file {i+1} / {Nfile}'
+    if params.get('spoolfn'):
+        txtupd += f' {params["spoolfn"].name}'
     txtupd += f' => {outfn}'
     """
     note if line wraps (>80 characters), this in-place update breaks.
@@ -107,7 +111,9 @@ def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
         writemode = 'w'
 
     if data is not None:
-        N = data.shape[0] * Nfile
+        params['nframeextract'] = data.shape[0] * Nfile
+        params['super_y'] = data.shape[1]
+        params['super_x'] = data.shape[2]
         ind = slice(i * data.shape[0], (i + 1) * data.shape[0])
     else:  # FIXME haven't reevaluated for update only case
         for q in (ut1, rawind, ticks):
@@ -119,7 +125,7 @@ def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
     with h5py.File(outfn, writemode) as f:
         if data is not None:
             if 'rawimg' not in f:  # first run
-                setupimgh5(f, Nframetotal=N, Nrow=data.shape[1], Ncol=data.shape[2])
+                setupimgh5(f, params)
 
             f['/rawimg'][ind, ...] = data
 
@@ -150,13 +156,13 @@ def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
 
             f['/ticks'][ind] = ticks
 
-        if 'spoolfn' in P:
+        if params.get('spoolfn'):
             # http://docs.h5py.org/en/latest/strings.html
             if 'spoolfn' not in f:
                 fsp = f.create_dataset('/spoolfn', shape=(N,), dtype=h5py.special_dtype(vlen=bytes))
                 fsp.attrs['description'] = 'input filename data was extracted from'
 
-            f['/spoolfn'][ind] = P['spoolfn'].name
+            f['/spoolfn'][ind] = params['spoolfn'].name
 
         if det is not None:
             if 'detect' not in f:
@@ -167,11 +173,11 @@ def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
 
         if 'params' not in f:
             cparam = np.array((
-                P['kineticsec'],
-                P['rotccw'],
-                P['transpose'],
-                P['flipud'],
-                P['fliplr'],
+                params['kineticsec'],
+                params['rotccw'],
+                params['transpose'],
+                params['flipud'],
+                params['fliplr'],
                 1),
                 dtype=[('kineticsec', 'f8'),
                        ('rotccw', 'i1'),
@@ -184,14 +190,17 @@ def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
             # cannot use fletcher32 here, typeerror
             f.create_dataset('/params', data=cparam)
 
-        if 'sensorloc' not in f and 'sensorloc' in P:
-            loc = P['sensorloc']
-            lparam = np.array((loc[0], loc[1], loc[2]),
-                              dtype=[('lat', 'f8'), ('lon', 'f8'), ('alt_m', 'f8')])
+        if 'sensorloc' not in f and params.get('sensorloc'):
+            loc = params['sensorloc']
+            try:
+                lparam = np.array((loc[0], loc[1], loc[2]),
+                                  dtype=[('lat', 'f8'), ('lon', 'f8'), ('alt_m', 'f8')])
 
-            # cannot use fletcher32 here, typeerror
-            Ld = f.create_dataset('/sensorloc', data=lparam)
-            Ld.attrs['units'] = 'WGS-84 lat (deg),lon (deg), altitude (meters)'
+                # cannot use fletcher32 here, typeerror
+                Ld = f.create_dataset('/sensorloc', data=lparam)
+                Ld.attrs['units'] = 'WGS-84 lat (deg),lon (deg), altitude (meters)'
+            except (IndexError, TypeError) as e:
+                logging.error(f'could not write sensor position {e}')
 
         if 'cmdlog' not in f:
             if isinstance(cmdlog, (tuple, list)):
@@ -199,16 +208,18 @@ def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
             # cannot use fletcher32 here, typeerror
             f['/cmdlog'] = str(cmdlog)
 
-        if 'header' not in f and 'header' in P:
-            f['/header'] = str(P['header'])
+        if 'header' not in f and params.get('header'):
+            f['/header'] = str(params['header'])
 
         if 'hdf5version' not in f:
             f['/hdf5version'] = h5py.version.hdf5_version_tuple
 
 
-def setupimgh5(f: Union[Path, h5py.File], *,
-               Nframetotal: int, Nrow: int, Ncol: int, dtype=np.uint16,
-               writemode: str = 'r+', key: str = '/rawimg', cmdlog: str = None):
+def setupimgh5(f: Union[Path, h5py.File], params: Dict[str, int], *,
+               dtype=np.uint16,
+               writemode: str = 'r+',
+               key: str = '/rawimg',
+               cmdlog: str = None):
     """
     Configures an HDF5 file for storing image stacks, enabling video player in
     HDF5 readers so equipped
@@ -227,12 +238,13 @@ def setupimgh5(f: Union[Path, h5py.File], *,
             writemode = 'w'
 
         with h5py.File(f, writemode) as F:
-            setupimgh5(F, Nframetotal=Nframetotal, Nrow=Nrow, Ncol=Ncol, dtype=dtype,
-                       writemode=writemode, key=key)
+            setupimgh5(F, params, dtype=dtype, writemode=writemode, key=key)
 
     elif isinstance(f, h5py.File):
+        Nrow, Ncol = params['super_y'], params['super_x']
+
         h = f.create_dataset(key,
-                             shape=(Nframetotal, Nrow, Ncol),
+                             shape=(params['nframeextract'], Nrow, Ncol),
                              dtype=dtype,
                              chunks=(1, Nrow, Ncol),  # each image is a chunk
                              compression='gzip',

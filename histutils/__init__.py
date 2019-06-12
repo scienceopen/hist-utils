@@ -5,4 +5,3 @@ and we need int64 for large files
 """
 from .utils import splitconf, write_quota  # noqa: F401
 from .index import req2frame, getRawInd, meta2rawInd  # noqa: F401
-from .io import dir2fn, setupimgh5, imgwriteincr  # noqa: F401
