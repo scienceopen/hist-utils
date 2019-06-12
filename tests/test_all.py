@@ -20,10 +20,10 @@ def test_xmlparse():
 
 def test_rawread():
     bigfn = R / 'testframes.DMCdata'
-    framestoplay = (1, 2, 1)  # this is (start,stop,step) so (1,2,1) means read only the second frame in the file
 
-    testframe, testind, finf = goRead(bigfn, xyPix=(512, 512), xyBin=(1, 1),
-                                      FrameIndReq=framestoplay, verbose=1)
+    params = {'xy_pixel': (512, 512), 'xy_bin': (1, 1), 'frame_request': (1, 2, 1), 'header_bytes': 4}
+
+    testframe, testind, finf = goRead(bigfn, params)
 
     # these are both tested by goRead
     # finf = getDMCparam(bigfn,(512,512),(1,1),None,verbose=2)

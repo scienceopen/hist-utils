@@ -54,7 +54,7 @@ def dmclooper(p):
 
         logging.info(f'\n file {i+1} / {N}   {i+1 / N * 100.:.1f} % done with {flist[0].parent}')
 
-        rawImgData, rawind, finf = goRead(fn, outfn, params)
+        rawImgData, rawind, finf = goRead(fn, params, outfn=outfn)
 # %% convert
         vid2h5(None, ut1=finf['ut1'], rawind=rawind, ticks=None, outfn=outfn, params=params)
 # %% optional plot

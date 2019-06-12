@@ -21,9 +21,7 @@ BPP = 16  # bits per pixel
 # NHEADBYTES = 4
 
 
-def goRead(infn: Path, outfn: Path,
-           params: Dict[str, Any],
-           verbose: bool = False):
+def goRead(infn: Path, params: Dict[str, Any], *, outfn: Path = None):
 
     infn = Path(infn).expanduser()
 # %% optional output file setup
@@ -39,7 +37,7 @@ def goRead(infn: Path, outfn: Path,
         setupimgh5(outfn, finf)
         data = None
     else:
-        data = np.zeros((finf['nframeextract'], finf['supery'], finf['superx']),
+        data = np.zeros((finf['nframeextract'], finf['super_y'], finf['super_x']),
                         dtype=np.uint16, order='C')
 # %% read
     with infn.open('rb') as fid:
