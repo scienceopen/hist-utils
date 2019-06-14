@@ -3,18 +3,21 @@ import numpy as np
 import shutil
 
 
-def write_quota(outbytes: int, outfn: Path) -> int:
+def write_quota(outbytes: int, outfn: Path, limitGB: float = 10e9) -> int:
     """
     aborts writing if not enough space on drive to write
     """
     if not outfn:
         return None
 
-    anch = Path(outfn).resolve().anchor
-    freeout = shutil.disk_usage(anch).free
+    anchor = Path(outfn).resolve().anchor
+    freeout = shutil.disk_usage(anchor).free
 
-    if freeout < 4 * outbytes or freeout < 10e9:
-        raise OSError(f'low disk space on {anch}\n'
+    if outbytes < 0:
+        raise ValueError('cannot write less than 0 bytes!')
+
+    if (freeout - outbytes) < limitGB:
+        raise OSError(f'low disk space on {anchor}\n'
                       f'{freeout/1e9:.1f} GByte free, wanting to write {outbytes/1e9:.2f} GByte to {outfn}.')
 
     return freeout
