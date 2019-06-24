@@ -39,3 +39,7 @@ def test_quota_ok(tmp_path):
         assert hu.write_quota(0, test_fn) == freeout
     else:
         pytest.skip('not enough free space')
+
+
+if __name__ == '__main__':
+    pytest.main([__file__])

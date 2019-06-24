@@ -1,23 +1,29 @@
 from pathlib import Path
 import numpy as np
+from typing import Iterable, Dict
 import shutil
+import re
 
 
-def write_quota(outbytes: int, outfn: Path, limitGB: float = 10e9) -> int:
+def write_quota(outbytes: int,
+                outfn: Path,
+                limitGB: float = 10e9) -> int:
     """
     aborts writing if not enough space on drive to write
     """
     if not outfn:
         return None
 
-    anchor = Path(outfn).resolve().anchor
-    freeout = shutil.disk_usage(anchor).free
+    # NOTE: Must have .resolve() to avoid false tripping on soft-linked external drives!
+    outfn = Path(outfn).expanduser().resolve()
+
+    freeout = shutil.disk_usage(outfn.parent).free
 
     if outbytes < 0:
         raise ValueError('cannot write less than 0 bytes!')
 
     if (freeout - outbytes) < limitGB:
-        raise OSError(f'low disk space on {anchor}\n'
+        raise OSError(f'low disk space on {outfn.parent}\n'
                       f'{freeout/1e9:.1f} GByte free, wanting to write {outbytes/1e9:.2f} GByte to {outfn}.')
 
     return freeout
@@ -90,3 +96,17 @@ def splitconf(conf, key, i=None, dtype=float, fallback=None, sep=','):
                 return fallback
         else:
             return fallback
+
+
+def get_camera_serial_number(files: Iterable[Path]) -> Dict[str, int]:
+    """
+    This function assumes the serial number of the camera is in a particular place in the filename.
+    This is how the original 2011 image-writing program worked, and I've
+    carried over the scheme rather than appending bits to dozens of TB of files.
+    """
+    sn = {}
+    for file in files:
+        tmp = re.search(r'(?<=CamSer)\d{3,6}', file.name)
+        if tmp:
+            sn[file.name] = int(tmp.group())
+    return sn

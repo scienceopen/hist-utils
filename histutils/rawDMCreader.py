@@ -8,20 +8,21 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
 from pathlib import Path
 import logging
 import numpy as np
-from re import search
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple
 from typing.io import BinaryIO
 #
-from . import req2frame, write_quota
+from .utils import write_quota
 from .io import imgwriteincr, setupimgh5, dir2fn
-from .index import getRawInd, meta2rawInd
+from .index import getRawInd, meta2rawInd, req2frame
 from .timedmc import frame2ut1, ut12frame
 #
 BPP = 16  # bits per pixel
 # NHEADBYTES = 4
 
 
-def goRead(infn: Path, params: Dict[str, Any], *, outfn: Path = None):
+def goRead(infn: Path,
+           params: Dict[str, Any], *,
+           outfn: Path = None) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
 
     infn = Path(infn).expanduser()
 # %% optional output file setup
@@ -52,24 +53,6 @@ def goRead(infn: Path, params: Dict[str, Any], *, outfn: Path = None):
     finf['ut1'] = frame2ut1(params.get('startUTC'), params.get('kineticraw'), rawFrameInd)
 
     return data, rawFrameInd, finf
-# %% workers
-
-
-def getserialnum(flist: list) -> List[int]:
-    """
-    This function assumes the serial number of the camera is in a particular place in the filename.
-    This is how the original 2011 image-writing program worked, and I've
-    carried over the scheme rather than appending bits to dozens of TB of files.
-    """
-    sn = []
-    for fn in flist:
-        tmp = search(r'(?<=CamSer)\d{3,6}', fn)
-        if tmp:
-            ser = int(tmp.group())
-        else:
-            ser = None
-        sn.append(ser)
-    return sn
 
 
 def getDMCparam(fn: Path, params: Dict[str, Any]) -> Dict[str, Any]:
