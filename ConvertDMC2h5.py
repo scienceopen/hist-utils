@@ -47,16 +47,16 @@ def dmclooper(p):
     N = len(flist)
 
     for i, fn in enumerate(flist):
-        outfn = dir2fn(p.outdir, fn, '.h5')
-        if outfn.is_file():
-            print('\nskipping', outfn, fn)
+        params['outfn'] = dir2fn(p.outdir, fn, '.h5')
+        if params['outfn'].is_file():
+            logging.warning('\nskipping', params['outfn'], fn)
             continue
 
         logging.info(f'\n file {i+1} / {N}   {i+1 / N * 100.:.1f} % done with {flist[0].parent}')
 
-        rawImgData, rawind, finf = goRead(fn, params, outfn=outfn)
+        rawImgData, rawind, finf = goRead(fn, params)
 # %% convert
-        vid2h5(None, ut1=finf['ut1'], rawind=rawind, ticks=None, outfn=outfn, params=params)
+        vid2h5(None, ut1=finf['ut1'], rawind=rawind, ticks=None, params=params)
 # %% optional plot
         if p.movie:
             plots(rawImgData, rawind, finf)

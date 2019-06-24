@@ -1,6 +1,6 @@
 from pathlib import Path
 import numpy as np
-from typing import Iterable, Dict
+from typing import Iterable, Dict, Tuple
 import shutil
 import re
 
@@ -29,7 +29,7 @@ def write_quota(outbytes: int,
     return freeout
 
 
-def sixteen2eight(I: np.ndarray, Clim: tuple) -> np.ndarray:
+def sixteen2eight(I: np.ndarray, Clim: Tuple[int, int]) -> np.ndarray:
     """
     scipy.misc.bytescale had bugs
 

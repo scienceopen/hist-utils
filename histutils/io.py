@@ -78,12 +78,14 @@ def imgwriteincr(fn: Path, imgs: np.ndarray,
 
 
 def vid2h5(data: np.ndarray, *, ut1, rawind, ticks,
-           outfn: Path,
            params: Dict[str, Any],
            i: int = 0,
            Nfile: int = 1, det=None, tstart=None, cmdlog: str = None):
 
-    outfn = Path(outfn).expanduser()
+    if not params.get('outfn'):
+        raise OSError('must specify file to write in params["outfn"]')
+
+    outfn = Path(params['outfn']).expanduser()
     if outfn.is_dir():
         raise IsADirectoryError(outfn)
     outfn.parent.mkdir(exist_ok=True)

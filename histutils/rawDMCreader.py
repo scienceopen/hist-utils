@@ -12,7 +12,7 @@ from typing import Dict, Any, Tuple
 from typing.io import BinaryIO
 #
 from .utils import write_quota
-from .io import imgwriteincr, setupimgh5, dir2fn
+from .io import imgwriteincr, setupimgh5
 from .index import getRawInd, meta2rawInd, req2frame
 from .timedmc import frame2ut1, ut12frame
 #
@@ -21,21 +21,18 @@ BPP = 16  # bits per pixel
 
 
 def goRead(infn: Path,
-           params: Dict[str, Any], *,
-           outfn: Path = None) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+           params: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
 
     infn = Path(infn).expanduser()
-# %% optional output file setup
-    outfn = dir2fn(outfn, infn, '.h5')
 # %% setup data parameters
     # preallocate *** LABVIEW USES ROW-MAJOR ORDERING C ORDER
     finf = getDMCparam(infn, params)
-    write_quota(finf['bytes_frame'] * finf['nframeextract'], outfn)
+    write_quota(finf['bytes_frame'] * finf['nframeextract'], params.get('outfn'))
 
     rawFrameInd = np.zeros(finf['nframeextract'], dtype=np.int64)
 # %% output (variable or file)
-    if outfn:
-        setupimgh5(outfn, finf)
+    if params.get('outfn'):
+        setupimgh5(params['outfn'], finf)
         data = None
     else:
         data = np.zeros((finf['nframeextract'], finf['super_y'], finf['super_x']),
@@ -45,8 +42,8 @@ def goRead(infn: Path,
         # j and i are NOT the same in general when not starting from beginning of file!
         for j, i in enumerate(finf['frameindrel']):
             D, rawFrameInd[j] = getDMCframe(fid, i, finf)
-            if outfn:
-                imgwriteincr(outfn, D, j)
+            if params.get('outfn'):
+                imgwriteincr(params['outfn'], D, j)
             else:
                 data[j, ...] = D
 # %% absolute time estimate, software timing (at your peril)
@@ -145,7 +142,7 @@ def whichframes(fn: Path, params: Dict[str, Any]) -> np.ndarray:
     bytes_extract = nFrameExtract * params['bytes_frame']
     logging.info(f'Extracted {nFrameExtract} frames from {fn} totaling {bytes_extract / 1e9:.2f} GB.')
 
-    if bytes_extract > 4e9:
+    if bytes_extract > 4e9 and 'outfn' not in params:
         logging.warning(f'This will require {bytes_extract / 1e9:.2f} GB of RAM.')
 
     return FrameIndRel
