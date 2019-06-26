@@ -49,7 +49,7 @@ def dmclooper(p):
     for i, fn in enumerate(flist):
         params['outfn'] = dir2fn(p.outdir, fn, '.h5')
         if params['outfn'].is_file():
-            logging.warning('\nskipping', params['outfn'], fn)
+            logging.warning(f'\nskipping {params["outfn"]} {fn}')
             continue
 
         logging.info(f'\n file {i+1} / {N}   {i+1 / N * 100.:.1f} % done with {flist[0].parent}')

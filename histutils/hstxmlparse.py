@@ -15,9 +15,6 @@ def xmlparam(fn: Path) -> Dict[str, Any]:
     * resolution pixels
     * binning pixels
 
-
-    This is probably not the "correct" way to do this, but it is good enough for our purposes.
-
     Parameters
     ----------
 
