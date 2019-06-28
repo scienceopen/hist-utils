@@ -158,6 +158,8 @@ def getDMCframe(f: Union[BinaryIO, Path], iFrm: int, finf: Dict[str, int]) -> Tu
         open file handle or file path
     """
     if isinstance(f, Path):
+        if not f.is_file():  # need for Windows PermissionError
+            raise FileNotFoundError(f)
         with f.open('rb') as g:
             return getDMCframe(g, iFrm, finf)
     # on windows, "int" is int32 and overflows at 2.1GB!  We need np.int64
