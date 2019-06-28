@@ -88,7 +88,9 @@ def howbig(params: Dict[str, Any], finf: Dict[str, Any]) -> Dict[str, int]:
     return sizes
 
 
-def whichframes(fn: Path, params: Dict[str, Any], finf: Dict[str, Any]) -> np.ndarray:
+def whichframes(fn: Path,
+                params: Dict[str, Any],
+                finf: Dict[str, Any]) -> np.ndarray:
 
     fileSizeBytes = fn.stat().st_size
 
@@ -128,7 +130,7 @@ def whichframes(fn: Path, params: Dict[str, Any], finf: Dict[str, Any]) -> np.nd
 
     # NOTE: no ut1req or problems with ut1req, canNOT use else, need to test len() in case index is [0] validly
     if FrameIndRel is None or len(FrameIndRel) == 0:
-        FrameIndRel = req2frame(params['frame_request'], nFrame)
+        FrameIndRel = req2frame(params.get('frame_request'), nFrame)
 
     badReqInd = (FrameIndRel > nFrame) | (FrameIndRel < 0)
 # check if we requested frames beyond what the BigFN contains
