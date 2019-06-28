@@ -8,7 +8,7 @@ NOTE: Observe the dtype=np.int64, this is for Windows Python, that wants to
 from pathlib import Path
 import logging
 import numpy as np
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Union
 from typing.io import BinaryIO
 #
 from .utils import write_quota
@@ -148,15 +148,18 @@ def whichframes(fn: Path, params: Dict[str, Any]) -> np.ndarray:
     return FrameIndRel
 
 
-def getDMCframe(f: BinaryIO, iFrm: int, finf: Dict[str, int]) -> Tuple[np.ndarray, int]:
+def getDMCframe(f: Union[BinaryIO, Path], iFrm: int, finf: Dict[str, int]) -> Tuple[np.ndarray, int]:
     """
     read a single image frame
 
     Parameters
     ----------
-    f:
-        open file handle
+    f: pathlib.Path or BinaryIO
+        open file handle or file path
     """
+    if isinstance(f, Path):
+        with f.open('rb') as g:
+            return getDMCframe(g, iFrm, finf)
     # on windows, "int" is int32 and overflows at 2.1GB!  We need np.int64
     currByte = iFrm * finf['bytes_frame']
 # %% advance to start of frame in bytes
