@@ -57,54 +57,52 @@ def getDMCparam(fn: Path, params: Dict[str, Any]) -> Dict[str, Any]:
     nHeadBytes=4 for 2013-2016 data
     nHeadBytes=0 for 2011 data
     """
-    params['nmetadata'] = params['header_bytes'] // 2  # FIXME for DMCdata version 1 only
+    finf = {'nmetadata': params['header_bytes'] // 2,
+            'header_bytes': params['header_bytes']}  # FIXME for DMCdata version 1 only
 
     if not fn.is_file():  # leave this here, getsize() doesn't fail on directory
         raise FileNotFoundError(fn)
 
-    print('reading', fn)
-
     # int() in case we are fed a float or int
-    params['super_x'] = int(params['xy_pixel'][0] // params['xy_bin'][0])
-    params['super_y'] = int(params['xy_pixel'][1] // params['xy_bin'][1])
+    finf['super_x'] = int(params['xy_pixel'][0] // params['xy_bin'][0])
+    finf['super_y'] = int(params['xy_pixel'][1] // params['xy_bin'][1])
 
-    sizes = howbig(params)
-    params.update(sizes)
+    finf.update(howbig(params, finf))
 
-    params['first_frame'], params['last_frame'] = getRawInd(fn, params)
+    finf['first_frame'], finf['last_frame'] = getRawInd(fn, finf)
 
-    FrameIndRel = whichframes(fn, params)
+    FrameIndRel = whichframes(fn, params, finf)
 
-    params['nframeextract'] = FrameIndRel.size
-    params['frameindrel'] = FrameIndRel
+    finf['nframeextract'] = FrameIndRel.size
+    finf['frameindrel'] = FrameIndRel
 
-    return params
+    return finf
 
 
-def howbig(params: Dict[str, Any]) -> Dict[str, int]:
+def howbig(params: Dict[str, Any], finf: Dict[str, Any]) -> Dict[str, int]:
 
-    sizes = {'pixels_image': params['super_x'] * params['super_y']}
+    sizes = {'pixels_image': finf['super_x'] * finf['super_y']}
     sizes['bytes_image'] = sizes['pixels_image'] * BPP // 8
     sizes['bytes_frame'] = sizes['bytes_image'] + params['header_bytes']
 
     return sizes
 
 
-def whichframes(fn: Path, params: Dict[str, Any]) -> np.ndarray:
+def whichframes(fn: Path, params: Dict[str, Any], finf: Dict[str, Any]) -> np.ndarray:
 
     fileSizeBytes = fn.stat().st_size
 
-    if fileSizeBytes < params['bytes_image']:
+    if fileSizeBytes < finf['bytes_image']:
         raise ValueError(f'File size {fileSizeBytes} is smaller than a single image frame!')
 
-    if fileSizeBytes % params['bytes_frame']:
+    if fileSizeBytes % finf['bytes_frame']:
         logging.error("Either the file is truncated, or I am not reading this file correctly."
-                      f"\n bytes per frame: {params['bytes_frame']:d}")
+                      f"\n bytes per frame: {finf['bytes_frame']:d}")
 
-    first_frame, last_frame = getRawInd(fn, params)
+    first_frame, last_frame = getRawInd(fn, finf)
 
     if fn.suffix == '.DMCdata':
-        nFrame = fileSizeBytes // params['bytes_frame']
+        nFrame = fileSizeBytes // finf['bytes_frame']
         logging.info(f'{nFrame} frames, Bytes: {fileSizeBytes} in file {fn}')
 
         nFrameRaw = (last_frame - first_frame + 1)
@@ -139,11 +137,11 @@ def whichframes(fn: Path, params: Dict[str, Any]) -> np.ndarray:
         raise ValueError(f'frames requested outside the times covered in {fn}')
 
     nFrameExtract = FrameIndRel.size  # to preallocate properly
-    bytes_extract = nFrameExtract * params['bytes_frame']
+    bytes_extract = nFrameExtract * finf['bytes_frame']
     logging.info(f'Extracted {nFrameExtract} frames from {fn} totaling {bytes_extract / 1e9:.2f} GB.')
 
     if bytes_extract > 4e9 and 'outfn' not in params:
-        logging.warning(f'This will require {bytes_extract / 1e9:.2f} GB of RAM.')
+        logging.info(f'This will require {bytes_extract / 1e9:.2f} GB of RAM.')
 
     return FrameIndRel
 

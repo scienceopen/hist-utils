@@ -6,30 +6,30 @@ import logging
 from struct import pack, unpack
 
 
-def getRawInd(fn: Path, params: Dict[str, int]) -> Tuple[int, int]:
-    if not isinstance(params['nmetadata'], int):
-        raise TypeError(params['nmetadata'])
+def getRawInd(fn: Path, finf: Dict[str, int]) -> Tuple[int, int]:
+    if not isinstance(finf['nmetadata'], int):
+        raise TypeError(finf['nmetadata'])
 
-    if params['nmetadata'] < 1:  # no header, only raw images
+    if finf['nmetadata'] < 1:  # no header, only raw images
         fileSizeBytes = fn.stat().st_size
-        if fileSizeBytes % params['bytes_image']:
+        if fileSizeBytes % finf['bytes_image']:
             logging.error(f'{fn} may not be read correctly, mismatch frame->file size')
 
         firstRawIndex = 1  # definition, one-based indexing
-        lastRawIndex = fileSizeBytes // params['bytes_image']
+        lastRawIndex = fileSizeBytes // finf['bytes_image']
     else:  # normal case 2013-2016
         # gets first and last raw indices from a big .DMCdata file
         with fn.open('rb') as f:
-            f.seek(params['bytes_image'], 0)  # get first raw frame index
-            firstRawIndex = meta2rawInd(f, params['nmetadata'])
+            f.seek(finf['bytes_image'], 0)  # get first raw frame index
+            firstRawIndex = meta2rawInd(f, finf['nmetadata'])
 
             if firstRawIndex < 1:
                 raise ValueError(firstRawIndex)
             if firstRawIndex > 100_000_000:
                 logging.error(f'first index seems impossibly large {firstRawIndex}')
 # %%
-            f.seek(-params['header_bytes'], 2)  # get last raw frame index
-            lastRawIndex = meta2rawInd(f, params['nmetadata'])
+            f.seek(-finf['header_bytes'], 2)  # get last raw frame index
+            lastRawIndex = meta2rawInd(f, finf['nmetadata'])
 
             if lastRawIndex < 1:
                 raise ValueError(lastRawIndex)
