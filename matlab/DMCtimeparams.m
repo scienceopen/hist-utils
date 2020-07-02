@@ -13,7 +13,7 @@ function [rawFrameRate,startUTC] = DMCtimeparams(BigFN,rawFrameRate,startUTC,ver
 if nargin<4, verbose = 0; end
 [BigDir,BigStem] = fileparts(BigFN);
 % handle the case where we have a partial filename (with _frames....)
-BigStem = regexp(BigStem,'.*CamSer\d{3,6}(?<=.*)','match'); 
+BigStem = regexp(BigStem,'.*CamSer\d{3,6}(?<=.*)','match');
 if ~isempty(BigStem) %old files might not have this naming scheme
     BigStem=BigStem{1};
 else
@@ -27,7 +27,7 @@ if ~isempty(rawFrameRate)
    if strcmpi(rawFrameRate,'auto') % grep XML
      XMLfn = [BigDir,'/',BigStem,'.xml'];
      %crude but works
-     xmltxt=[]; 
+     xmltxt=[];
      lbtxt = '<I32><Name>Number Of iXon Pulses</Name><Val>';  latxt = '</Val></I32>';
      regtxt = ['(?<=',lbtxt,')','\d{1,4}','(?=',latxt,')'];
      if verbose>1
@@ -49,7 +49,7 @@ if ~isempty(rawFrameRate)
    end
    fclose(fidxml);
 end %if isemptyFrameRate
-%% use nmea file or user specification to determine start time 
+%% use nmea file or user specification to determine start time
 if ~isempty(startUTC)
    if strcmpi(startUTC,'auto') % grep XML
      NMEAfn = [BigDir,'/',BigStem,'.nmea'];
@@ -67,13 +67,13 @@ if ~isempty(startUTC)
           gprmc = textscan(nmeatxt,'%s %d %s %f %s %f %s %f %f %d %f %s','delimiter',',','emptyvalue',nan);
       end
      end %while
-     
-     %it was easiest to use fixed length strings to do the conversion
-      dates = num2str(gprmc{10},'%06d'); 
-      times = num2str(gprmc{2},'%06d'); 
 
-      if ~isempty(dates) && all(~isnan(dates))          
-          startUTC = datenum([dates,times],'ddmmyyHHMMSS'); 
+     %it was easiest to use fixed length strings to do the conversion
+      dates = num2str(gprmc{10},'%06d');
+      times = num2str(gprmc{2},'%06d');
+
+      if ~isempty(dates) && all(~isnan(dates))
+          startUTC = datenum([dates,times],'ddmmyyHHMMSS');
       end %don't want nan's
    elseif isnumeric(startUTC) && length(startUTC)==6     %use user specified datevec
      startUTC = datenum(startUTC);
@@ -82,7 +82,7 @@ if ~isempty(startUTC)
        error(['unknown starttime ',startUTC])
    end %if strcmpi auto
    if verbose>0
-    fprintf('using start time %s UTC\n',datestr(startUTC)) 
+    fprintf('using start time %s UTC\n',datestr(startUTC))
    end
    fclose(fidnmea);
 end %is empty startUTC

@@ -12,11 +12,19 @@ try:
 except ImportError:
     fits = None
 
-from .rawDMCreader import howbig, whichframes
+from .rawDMCreader import howbig  # , whichframes
 from .timedmc import frame2ut1
 
 
-def getNeoParam(fn, FrameIndReq=None, ut1req=None, kineticsec=None, startUTC=None, cmosinit={}, verbose=False):
+def getNeoParam(
+    fn: Path,
+    FrameIndReq=None,
+    ut1req=None,
+    kineticsec=None,
+    startUTC=None,
+    cmosinit: dict = None,
+    verbose=False,
+):
     """
     assumption is that this is a Neo sCMOS FITS / TIFF file, where Solis chooses to break up the recordings
     into smaller files. Verify if this timing estimate makes sense for your application!
@@ -30,35 +38,33 @@ def getNeoParam(fn, FrameIndReq=None, ut1req=None, kineticsec=None, startUTC=Non
 
     nHeadBytes = 0
 
-    if fn.suffix.lower() in '.tiff':
+    if fn.suffix.lower() in ".tiff":
         if tifffile is None:
-            raise ImportError('tifffile')
+            raise ImportError("tifffile")
         # FIXME didn't the 2011 TIFFs have headers? maybe not.
         with tifffile.TiffFile(str(fn)) as f:
             Y, X = f[0].shape
-            cmosinit = {'firstrawind': 1,
-                        'lastrawind': len(f)}
-    elif fn.suffix.lower() in '.fits':
+            cmosinit = {"firstrawind": 1, "lastrawind": len(f)}
+    elif fn.suffix.lower() in ".fits":
         if tifffile is None:
-            raise ImportError('astropy')
+            raise ImportError("astropy")
 
-        with fits.open(fn, mode='readonly', memmap=False) as f:
+        with fits.open(fn, mode="readonly", memmap=False) as f:
 
-            kineticsec = f[0].header['KCT']
+            kineticsec = f[0].header["KCT"]
             # TODO start of night's recording (with some Solis versionss)
-            startseries = parse(f[0].header['DATE'] + 'Z')
+            startseries = parse(f[0].header["DATE"] + "Z")
 
             # TODO wish there was a better way
             try:
-                frametxt = f[0].header['USERTXT1']
-                m = re.search(r'(?<=Images\:)\d+-\d+(?=\.)', frametxt)
-                inds = m.group(0).split('-')
+                frametxt = f[0].header["USERTXT1"]
+                m = re.search(r"(?<=Images\:)\d+-\d+(?=\.)", frametxt)
+                inds = m.group(0).split("-")
             except KeyError:  # just a single file?
                 # yes start with 1, end without adding 1 for Andor Solis
                 inds = [1, f[0].shape[0]]
 
-            cmosinit = {'firstrawind': int(inds[0]),
-                        'lastrawind': int(inds[1])}
+            cmosinit = {"firstrawind": int(inds[0]), "lastrawind": int(inds[1])}
 
             # start = parse(f[0].header['FRAME']+'Z') No, incorrect by several hours with some 2015 Solis versions!
 
@@ -66,27 +72,33 @@ def getNeoParam(fn, FrameIndReq=None, ut1req=None, kineticsec=None, startUTC=Non
 
         startUTC = startseries.timestamp()
 
-# %% FrameInd relative to this file
-    PixelsPerImage, BytesPerImage, BytesPerFrame = howbig(X, Y, nHeadBytes)
+    # %% FrameInd relative to this file
+    finf = {"super_x": X, "super_y": Y}
+    params = {"header_bytes": nHeadBytes}
+    PixelsPerImage, BytesPerImage, BytesPerFrame = howbig(params, finf)
 
-    FrameIndRel = whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC,
-                              cmosinit['firstrawind'], cmosinit['lastrawind'],
-                              BytesPerImage, BytesPerFrame, verbose)
+    raise NotImplementedError("This function needs to have API updated")
 
-    assert isinstance(
-        FrameIndReq, int) or FrameIndReq is None, 'TODO: add multi-frame request case'
-    rawFrameInd = np.arange(cmosinit['firstrawind'],
-                            cmosinit['lastrawind'] + 1,
-                            FrameIndReq, dtype=np.int64)
+    # FrameIndRel = whichframes(fn, FrameIndReq, kineticsec, ut1req, startUTC,
+    #                           cmosinit['firstrawind'], cmosinit['lastrawind'],
+    #                           BytesPerImage, BytesPerFrame, verbose)
+    FrameIndRel = None
 
-    finf = {'superx': X,
-            'supery': Y,
-            'nframeextract': FrameIndRel.size,
-            'nframe': rawFrameInd.size,
-            'frameindrel': FrameIndRel,
-            'frameind': rawFrameInd,
-            'kineticsec': kineticsec}
-# %% absolute frame timing (software, yikes)
-    finf['ut1'] = frame2ut1(startUTC, kineticsec, rawFrameInd)
+    assert isinstance(FrameIndReq, int) or FrameIndReq is None, "TODO: add multi-frame request case"
+    rawFrameInd = np.arange(
+        cmosinit["firstrawind"], cmosinit["lastrawind"] + 1, FrameIndReq, dtype=np.int64
+    )
+
+    finf = {
+        "superx": X,
+        "supery": Y,
+        "nframeextract": FrameIndRel.size,
+        "nframe": rawFrameInd.size,
+        "frameindrel": FrameIndRel,
+        "frameind": rawFrameInd,
+        "kineticsec": kineticsec,
+    }
+    # %% absolute frame timing (software, yikes)
+    finf["ut1"] = frame2ut1(startUTC, kineticsec, rawFrameInd)
 
     return finf

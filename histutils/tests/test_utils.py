@@ -11,19 +11,19 @@ R = Path(__file__).parent
 
 
 def test_xmlparse():
-    fn = R / 'testframes.xml'
+    fn = R / "testframes.xml"
     params = xmlparam(fn)
 
-    assert params['binning'] == 1
-    assert params['kineticrate'] == approx(1.88674795e-2)
+    assert params["binning"] == 1
+    assert params["kineticrate"] == approx(1.88674795e-2)
 
 
 def test_quota_too_small(tmp_path):
     freeout = shutil.disk_usage(tmp_path).free
 
-    test_fn = tmp_path/'fake_file'
+    test_fn = tmp_path / "fake_file"
 
-    too_small = max(0, freeout-9e9)  # handles where drive already has less than 10 GB free
+    too_small = max(0, freeout - 9e9)  # handles where drive already has less than 10 GB free
     with pytest.raises(OSError):
         hu.write_quota(too_small, test_fn)
 
@@ -33,13 +33,13 @@ def test_quota_too_small(tmp_path):
 
 def test_quota_ok(tmp_path):
     freeout = shutil.disk_usage(tmp_path).free
-    test_fn = tmp_path/'fake_file'
+    test_fn = tmp_path / "fake_file"
 
     if freeout > 10e9:
         assert hu.write_quota(0, test_fn) == freeout
     else:
-        pytest.skip('not enough free space')
+        pytest.skip("not enough free space")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

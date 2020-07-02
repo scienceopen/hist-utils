@@ -40,18 +40,18 @@ def xmlparam(fn: Path) -> Dict[str, Any]:
     diter = data.iter()
     for el in diter:
         txt = el.text
-        if txt == 'Binning (H x V)':
+        if txt == "Binning (H x V)":
             txt = next(diter).text
-            params['binning'] = int(txt)
-        elif txt == 'ROI H Pixels':
+            params["binning"] = int(txt)
+        elif txt == "ROI H Pixels":
             txt = next(diter).text
-            params['horizpixels'] = int(txt)
-        elif txt == 'ROI V Pixels':
+            params["horizpixels"] = int(txt)
+        elif txt == "ROI V Pixels":
             txt = next(diter).text
-            params['vertpixels'] = int(txt)
-        elif txt == 'Freq':
+            params["vertpixels"] = int(txt)
+        elif txt == "Freq":
             txt = next(diter).text
-            params['pulsefreq'] = float(txt)
-            params['kineticrate'] = 1 / params['pulsefreq']
+            params["pulsefreq"] = float(txt)
+            params["kineticrate"] = 1 / params["pulsefreq"]
 
     return params

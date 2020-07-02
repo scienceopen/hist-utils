@@ -16,12 +16,12 @@ lastRawIndex = meta2rawInd(fid,Nmetadata);
 %% take requests
 if nargin > 3 && nargout > 2
     nFrameReq = length(ReqFrameInd);
-    
+
     ReqRawInd = zeros(nFrameReq,1,'double'); %preallocate, double float for numerical ops compatibility
     jFrm = 0;
     for iFrm = ReqFrameInd
         jFrm = jFrm + 1;
-        
+
         currByte = (iFrm - 0) * (BytesPerImage+nHeadBytes) -nHeadBytes;  %goes just past frame, then backs up
         fseek(fid,currByte,'bof');
         ReqRawInd(jFrm) = meta2rawInd(fid,Nmetadata);

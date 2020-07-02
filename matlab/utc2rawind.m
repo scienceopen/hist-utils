@@ -1,5 +1,5 @@
 function rawind = utc2rawind(fn,utcdatenum)
-% estimates raw frame index of .DMCdata file 
+% estimates raw frame index of .DMCdata file
 % NOT guaranteed to be correct
 % INPUTS
 % fn: huge .DMCdata file

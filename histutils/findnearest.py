@@ -1,4 +1,5 @@
 import numpy as np
+
 #
 import pymap3d.haversine as haver
 
@@ -54,7 +55,7 @@ def _findindex(az0, el0, az, el):
     """
 
     assert az0.size == el0.size  # just for clarity
-    assert az.ndim == el.ndim == 1, 'expect vector of test points'
+    assert az.ndim == el.ndim == 1, "expect vector of test points"
     ic = np.empty(az.size, dtype=int)
 
     for i, (a, e) in enumerate(zip(az, el)):
@@ -65,7 +66,7 @@ def _findindex(az0, el0, az, el):
     """
     THIS UNRAVEL_INDEX MUST BE ORDER = 'C'
     """
-    r, c = np.unravel_index(ic, az0.shape, order='C')
+    r, c = np.unravel_index(ic, az0.shape, order="C")
 
     mask = (c == 0) | (c == az0.shape[1] - 1) | (r == 0) | (r == az0.shape[0] - 1)
 

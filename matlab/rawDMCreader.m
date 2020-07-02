@@ -1,5 +1,5 @@
 % [data, rawFrameInd,tUTC] = rawDMCreader()
-% 
+%
 % reads uint16 raw data files from DMC
 % Tested with Octave 4.0 & Matlab R2014a
 % Michael Hirsch Dec 2011 / Mar 2012 / Mar 2014
@@ -15,7 +15,7 @@
 % but rather 1-indexed from start of file
 % playmovie: if ~= 0, play with pause moviePlay seconds
 % clim: for imagesc, sets the upper and lower contrast. E.g. [1000, 1200]
-% rawframerate: {'auto'} get from XML file (recommended) or manually specify 
+% rawframerate: {'auto'} get from XML file (recommended) or manually specify
 % startutc: {'auto'} get from NMEA file (recommended) or manually specify as  "datenum"
 %
 % OUTPUTS:
@@ -80,7 +80,7 @@ BytesPerImage = PixelsPerImage*bpp/8;
 BytesPerFrame = BytesPerImage + nHeadBytes;
 
 % get file size
-fileInfo= dir(bigfn); 
+fileInfo= dir(bigfn);
 if isempty(fileInfo), error(['file does not exist: ',bigfn]), end
 fileSizeBytes = fileInfo.bytes;
 
@@ -92,7 +92,7 @@ if rem(nFrame,1) ~= 0
     warning(['Not reading file correctly, bytesPerFrame: ',int2str(BytesPerFrame)])
 end
 
-%% get "raw" frame numbers -- that Camera FPGA tags each frame with 
+%% get "raw" frame numbers -- that Camera FPGA tags each frame with
 % this raw frame is critical to knowing what time an image was taken, which
 % is critical for the usability of this data in light of other sensors
 % (radar, optical)
@@ -134,10 +134,10 @@ end
 % per number. That can use up all the RAM of your PC. The data is only
 % 16-bit, so to load bigger files, I keep the data 16-bit.
 % In analysis programs, we might convert the data frame-by-frame to double
-% or single float as we stream the data through an algorithm.  
+% or single float as we stream the data through an algorithm.
 % That's because many Matlab functions will crash or give unexpected
 % results with integers (or single float!)
-data = zeros(SuperY,SuperX,nFrameExtract,'uint16'); 
+data = zeros(SuperY,SuperX,nFrameExtract,'uint16');
 % I created a custom header, but I needed 32-bit numbers. So I stick two
 % 16-bit numbers together when writing the data--Matlab needs to unstick
 % and restick this number into a 32-bit integer again.
@@ -145,7 +145,7 @@ data = zeros(SuperY,SuperX,nFrameExtract,'uint16');
 % uint's can lead to unexpected results!
 rawFrameInd = zeros(nFrameExtract,1,'int64');
 if ~isempty(rawFrameRate)
-    tUTC = nan(nFrameExtract,1,'double'); 
+    tUTC = nan(nFrameExtract,1,'double');
 else
     tUTC = [];
 end
@@ -156,36 +156,36 @@ jFrm = 0;
 tic %in case of remote file system, give user sense of progress
 disp('starting file read')
 Toc=toc;
-for iFrame = FrameInd  
-    
+for iFrame = FrameInd
+
     jFrm = jFrm + 1; %used for indexing memory
-    
+
     currByte = (iFrame - 1) * BytesPerFrame; %start at beginning of frame
-    
+
     % advance to start of frame in bytes
     fsErr = fseek(fid,currByte,'bof');
     if fsErr
         error(['Could not seek to byte ',currByte,', request ',int2str(jFrm)])
     end
-    
+
     %read data
     %we transpose because Labview writes ROW MAJOR and Matlab is COLUMN MAJOR
     data(:,:,jFrm) = transpose(fread(fid,[SuperY,SuperX],dFormat,0,'l')); %first read the image
     metadata = fread(fid,nHeader,dFormat,0,'l'); % we have to typecast this
-    
+
     %stick two 16-bit numbers together again to make the actual 32-bit raw
     %frame index
     rawFrameInd(jFrm) = int64( typecast( [metadata(2), metadata(1)] ,'uint32') );
     if ~isempty(rawFrameRate)
-        tUTC(jFrm) = U.startutc + ( rawFrameInd(jFrm) - 1 )/rawFrameRate /86400; 
+        tUTC(jFrm) = U.startutc + ( rawFrameInd(jFrm) - 1 )/rawFrameRate /86400;
     end
-    
+
     %progress for slow drives/connections
     if ~mod(jFrm,5) && toc-Toc>2
         Toc=toc;
         fprintf([num2str(jFrm/nFrameExtract*100,'%.1f'),'%%.. '])
     end
-   
+
 end %for
 
 fclose(fid);
@@ -211,15 +211,15 @@ end
     end %switch
    %flip the picture back upright.  Different programs have different ideas
    %about what corner of the image is the origin. Or whether to start indexing at (0,0) or (1,1).
-    set(h.ax,'ydir','normal') 
+    set(h.ax,'ydir','normal')
     % just some labels
     h.t = title(h.ax,'');
-    colormap(h.ax,'gray') 
+    colormap(h.ax,'gray')
     h.cb = colorbar('peer',h.ax);
     ylabel(h.cb,'Data Numbers')
     xlabel(h.ax,'x-pixels')
     ylabel(h.ax,'y-pixels')
-%% do the plotting    
+%% do the plotting
 % setting Cdata like this is much, MUCH faster than repeatedly calling
 % imagesc() !
 try
@@ -230,7 +230,7 @@ try
      if ~isempty(tUTC)
          titlestring = [titlestring,'  time: ',datestr(tUTC(iFrame),'yyyy-mm-ddTHH:MM:SS.FFF'),' UTC']; %#ok<AGROW>
      end
-     
+
      set(h.t,'String',titlestring)
      pause(pbpause)
     end

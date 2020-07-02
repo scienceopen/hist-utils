@@ -42,17 +42,17 @@ def ut12frame(treq, ind, ut1_unix) -> np.ndarray:
         return
 
     treq = np.atleast_1d(treq)
-# %% handle human specified string scalar case
+    # %% handle human specified string scalar case
     if treq.size == 1:
         treq = datetime2unix(treq[0])
-# %% handle time range case
+    # %% handle time range case
     elif treq.size == 2:
         tstartreq = datetime2unix(treq[0])
         tendreq = datetime2unix(treq[1])
         treq = ut1_unix[(ut1_unix > tstartreq) & (ut1_unix < tendreq)]
     else:  # otherwise, it's a vector of requested values
         treq = datetime2unix(treq)
-# %% get indices
+    # %% get indices
     """
     We use nearest neighbor interpolation to pick a frame index for each requested time.
     """
@@ -81,7 +81,7 @@ def datetime2unix(T):
         elif isinstance(t, (float, int)):  # assuming ALL are ut1_unix already
             return T
         else:
-            raise TypeError('I only accept datetime or parseable date string')
+            raise TypeError("I only accept datetime or parseable date string")
 
         # ut1 seconds since unix epoch, need [] for error case
         ut1_unix[i] = t.timestamp()

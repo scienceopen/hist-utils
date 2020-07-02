@@ -1,13 +1,11 @@
 from pathlib import Path
 import numpy as np
-from typing import Iterable, Dict, Tuple
+import typing as T
 import shutil
 import re
 
 
-def write_quota(outbytes: int,
-                outfn: Path,
-                limitGB: float = 10e9) -> int:
+def write_quota(outbytes: int, outfn: Path, limitGB: float = 10e9) -> int:
     """
     aborts writing if not enough space on drive to write
     """
@@ -20,16 +18,18 @@ def write_quota(outbytes: int,
     freeout = shutil.disk_usage(outfn.parent).free
 
     if outbytes < 0:
-        raise ValueError('cannot write less than 0 bytes!')
+        raise ValueError("cannot write less than 0 bytes!")
 
     if (freeout - outbytes) < limitGB:
-        raise OSError(f'low disk space on {outfn.parent}\n'
-                      f'{freeout/1e9:.1f} GByte free, wanting to write {outbytes/1e9:.2f} GByte to {outfn}.')
+        raise OSError(
+            f"low disk space on {outfn.parent}\n"
+            f"{freeout/1e9:.1f} GByte free, wanting to write {outbytes/1e9:.2f} GByte to {outfn}."
+        )
 
     return freeout
 
 
-def sixteen2eight(I: np.ndarray, Clim: Tuple[int, int]) -> np.ndarray:
+def sixteen2eight(img: np.ndarray, Clim: T.Tuple[int, int]) -> np.ndarray:
     """
     scipy.misc.bytescale had bugs
 
@@ -39,12 +39,12 @@ def sixteen2eight(I: np.ndarray, Clim: Tuple[int, int]) -> np.ndarray:
     Clim: length 2 of tuple or numpy 1-D array specifying lowest and highest expected values in grayscale image
     Michael Hirsch, Ph.D.
     """
-    Q = normframe(I, Clim)
+    Q = normframe(img, Clim)
     Q *= 255  # stretch to [0,255] as a float
     return Q.round().astype(np.uint8)  # convert to uint8
 
 
-def normframe(I: np.ndarray, Clim: tuple) -> np.ndarray:
+def normframe(img: np.ndarray, Clim: T.Tuple[int, int]) -> np.ndarray:
     """
     inputs:
     -------
@@ -55,10 +55,10 @@ def normframe(I: np.ndarray, Clim: tuple) -> np.ndarray:
     Vmax = Clim[1]
 
     # stretch to [0,1]
-    return (I.astype(np.float32).clip(Vmin, Vmax) - Vmin) / (Vmax - Vmin)
+    return (img.astype(np.float32).clip(Vmin, Vmax) - Vmin) / (Vmax - Vmin)
 
 
-def splitconf(conf, key, i=None, dtype=float, fallback=None, sep=','):
+def splitconf(conf, key, i=None, dtype=float, fallback=None, sep: str = ","):
     if conf is None:
         return fallback
 
@@ -71,7 +71,7 @@ def splitconf(conf, key, i=None, dtype=float, fallback=None, sep=','):
             return fallback
 
     if i is not None:
-        assert isinstance(i, (int, slice)), 'single integer index only'
+        assert isinstance(i, (int, slice)), "single integer index only"
 
     if isinstance(key, (tuple, list)):
         if len(key) > 1:  # drilldown
@@ -81,7 +81,7 @@ def splitconf(conf, key, i=None, dtype=float, fallback=None, sep=','):
     elif isinstance(key, str):
         val = conf.get(key, fallback=fallback)
     else:
-        raise TypeError(f'invalid key type {type(key)}')
+        raise TypeError(f"invalid key type {type(key)}")
 
     try:
         return dtype(val.split(sep)[i])
@@ -98,7 +98,7 @@ def splitconf(conf, key, i=None, dtype=float, fallback=None, sep=','):
             return fallback
 
 
-def get_camera_serial_number(files: Iterable[Path]) -> Dict[str, int]:
+def get_camera_serial_number(files: T.Iterable[Path]) -> T.Dict[str, int]:
     """
     This function assumes the serial number of the camera is in a particular place in the filename.
     This is how the original 2011 image-writing program worked, and I've
@@ -106,7 +106,7 @@ def get_camera_serial_number(files: Iterable[Path]) -> Dict[str, int]:
     """
     sn = {}
     for file in files:
-        tmp = re.search(r'(?<=CamSer)\d{3,6}', file.name)
+        tmp = re.search(r"(?<=CamSer)\d{3,6}", file.name)
         if tmp:
             sn[file.name] = int(tmp.group())
     return sn
