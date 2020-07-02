@@ -1,18 +1,17 @@
-[![DOI](https://zenodo.org/badge/30336524.svg)](https://zenodo.org/badge/latestdoi/30336524)
+# HiST Utils
 
+[![DOI](https://zenodo.org/badge/30336524.svg)](https://zenodo.org/badge/latestdoi/30336524)
 [![Build Status](https://travis-ci.com/space-physics/histutils.svg?branch=master)](https://travis-ci.com/space-physics/histutils)
-[![Coverage Status](https://coveralls.io/repos/github/space-physics/histutils/badge.svg?branch=master)](https://coveralls.io/github/space-physics/histutils?branch=master)
 [![pypi versions](https://img.shields.io/pypi/pyversions/histutils.svg)](https://pypi.python.org/pypi/histutils)
 [![PyPi Download stats](http://pepy.tech/badge/histutils)](http://pepy.tech/project/histutils)
-
-
-# HiST Utils
 
 HiST project raw video data reading utilities.
 
 ## Install
 
-    python -m pip install -e .
+```sh
+python -m pip install -e .
+```
 
 ## User Programs/Scripts
 
@@ -33,8 +32,9 @@ Simultaneous video playback of two or more cameras.
 $ python RunSimulFrame.py -i ~/data/cmos2013-01-14T1-15.h5 ~/data/ccd2013-01-14T1-15.h5
 ```
 
-using the [data from January 13, 2013
-experiment](http://heaviside.bu.edu/~mhirsch/dmc/2013-01-13/) during
+using the
+[data from January 13, 2013 experiment](http://heaviside.bu.edu/~mhirsch/dmc/2013-01-13/)
+during
 active plasma time.
 
 ### ConvertDMC2h5.py
@@ -44,9 +44,11 @@ files to human- and fast processing- friendly HDF5 files.
 
 #### Example
 
-    python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/data/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
+```sh
+python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0188679245283019 -o testframes_cam0.h5 ~/data/2013-04-14T07-00-CamSer7196_frames_363000-1-369200.DMCdata -s 2013-04-14T06:59:55Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
 
-    python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0333333333333333 -o testframes_cam1.h5 ~/data/2013-04-14T07-00-CamSer1387_frames_205111-1-208621.DMCdata -s 2013-04-14T07:00:07Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
+python ConvertDMC2h5.py -p 512 512 -b 1 1 -k 0.0333333333333333 -o testframes_cam1.h5 ~/data/2013-04-14T07-00-CamSer1387_frames_205111-1-208621.DMCdata -s 2013-04-14T07:00:07Z -t 2013-04-14T08:54:10Z 2013-04-14T08:54:10.05Z
+```
 
 ### WhenEnd.py
 
@@ -69,10 +71,7 @@ These examples are old, now we use HDF5 files. Kept for reference only.
 
 ### Read .DMCdata file from within a Python script
 
-    from histutils import rawDMCreader
-    data = rawDMCreader.goRead('myfile.DMCdata')[0]
-
-### Using rawDMCreader.py from Terminal
-
-    cd histutils/histutils
-    python3 rawDMCreader.py ~/data/
+```sh
+from histutils import rawDMCreader
+data = rawDMCreader.goRead('myfile.DMCdata')[0]
+```
